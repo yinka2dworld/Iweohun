@@ -1,0 +1,26 @@
+{
+    "sourceFile": "server/routes/userRoutes.js",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 2,
+            "patches": [
+                {
+                    "date": 1735454321663,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1735454330712,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,6 +1,6 @@\n import express from 'express';\r\n-import { signup, login, updateUser, deleteUser, resetPassword, user, users, googleAuth, googleAuthCallback } from '../controllers/userControllers.js';\r\n+import { signup, login, updateUser, deleteUser, resetPassword, user, users, } from '../controllers/userControllers.js';\r\n import {tokenChecker} from '../middleware/auth.js'\r\n  const router = express.Router();\r\n \r\n \r\n"
+                },
+                {
+                    "date": 1735454340224,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,17 @@\n+import express from 'express';\r\n+import { signup, login, updateUser, deleteUser, resetPassword, user, users } from '../controllers/userControllers.js';\r\n+import {tokenChecker} from '../middleware/auth.js'\r\n+ const router = express.Router();\r\n+\r\n+\r\n+router.post( '/signup', signup);\r\n+router.post( '/login', login);\r\n+// app.get('/auth/google', googleAuth);\r\n+// app.get('/auth/google/callback', googleAuthCallback);\r\n+router.get( '/admin/users', tokenChecker, users);\r\n+router.get( '/admin/user/:_id', tokenChecker, user);\r\n+router.put( '/admin/updateUser/:_id', tokenChecker, updateUser);\r\n+router.delete( '/admin/deleteUser/:_id', tokenChecker, deleteUser);\r\n+router.patch( '/resetPassword', resetPassword);\r\n+\r\n+export default router;\n\\ No newline at end of file\n"
+                }
+            ],
+            "date": 1735454321663,
+            "name": "Commit-0",
+            "content": "import express from 'express';\r\nimport { signup, login, updateUser, deleteUser, resetPassword, user, users, googleAuth, googleAuthCallback } from '../controllers/userControllers.js';\r\nimport {tokenChecker} from '../middleware/auth.js'\r\n const router = express.Router();\r\n\r\n\r\nrouter.post( '/signup', signup);\r\nrouter.post( '/login', login);\r\n// app.get('/auth/google', googleAuth);\r\n// app.get('/auth/google/callback', googleAuthCallback);\r\nrouter.get( '/admin/users', tokenChecker, users);\r\nrouter.get( '/admin/user/:_id', tokenChecker, user);\r\nrouter.put( '/admin/updateUser/:_id', tokenChecker, updateUser);\r\nrouter.delete( '/admin/deleteUser/:_id', tokenChecker, deleteUser);\r\nrouter.patch( '/resetPassword', resetPassword);\r\n\r\nexport default router;"
+        }
+    ]
+}

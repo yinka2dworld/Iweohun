@@ -1,0 +1,86 @@
+{
+    "sourceFile": "client/App.js",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 17,
+            "patches": [
+                {
+                    "date": 1735452194232,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1735452209158,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,1 +1,5 @@\n-e\n\\ No newline at end of file\n+const App = ()(\r\n+    <AppLayout />\r\n+);\r\n+\r\n+registerRootComponent(App);\r\n"
+                },
+                {
+                    "date": 1735452214691,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,5 +1,5 @@\n-const App = ()(\r\n+cons()(\r\n     <AppLayout />\r\n );\r\n \r\n registerRootComponent(App);\r\n"
+                },
+                {
+                    "date": 1735452221311,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,5 @@\n+const App  ()(\r\n+    <AppLayout />\r\n+);\r\n+\r\n+registerRootComponent(App);\r\n"
+                },
+                {
+                    "date": 1735452230821,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,5 @@\n+f App  ()(\r\n+    <AppLayout />\r\n+);\r\n+\r\n+registerRootComponent(App);\r\n"
+                },
+                {
+                    "date": 1735452237181,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,15 +1,5 @@\n-f App  ()(\r\n+function App  ()(\r\n     <AppLayout />\r\n );\r\n \r\n registerRootComponent(App);\r\n-const App  ()(\r\n-    <AppLayout />\r\n-);\r\n-\r\n-registerRootComponent(App);\r\n-cons()(\r\n-    <AppLayout />\r\n-);\r\n-\r\n-registerRootComponent(App);\r\n"
+                },
+                {
+                    "date": 1735452242992,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,5 +1,5 @@\n-function App  ()(\r\n+expofunction App  ()(\r\n     <AppLayout />\r\n );\r\n \r\n registerRootComponent(App);\r\n"
+                },
+                {
+                    "date": 1735452250409,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,5 @@\n+export default function App  ()(\r\n+    <AppLayout />\r\n+);\r\n+\r\n+registerRootComponent(App);\r\n"
+                },
+                {
+                    "date": 1735452256960,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,5 @@\n+export default function App ()(\r\n+    <AppLayout />\r\n+);\r\n+\r\n+registerRootComponent(App);\r\n"
+                },
+                {
+                    "date": 1735452352968,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,6 @@\n+export default function App ()(\r\n+    <AppLayout />\r\n+);\r\n+\r\n+registerRootComponent(App);\r\n+function\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1735452358890,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,8 @@\n+export default function App ()(\r\n+    <AppLayout />\r\n+);\r\n+\r\n+registerRootComponent(App);\r\n+function name(params) {\r\n+    \r\n+}\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1735452369849,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,8 @@\n+export default function App (){}\r\n+    <AppLayout />\r\n+);\r\n+\r\n+registerRootComponent(App);\r\n+function name(params) {\r\n+    \r\n+}\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1735452379367,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,8 @@\n+export default function App {\r\n+    <AppLayout />\r\n+});\r\n+\r\n+registerRootComponent(App);\r\n+function name(params) {\r\n+    \r\n+}\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1735452385405,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,5 @@\n+export default function App {\r\n+    <AppLayout />\r\n+};\r\n+\r\n+registerRootComponent(App);\r\n"
+                },
+                {
+                    "date": 1735452436103,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,9 @@\n+import { registerRootComponent } from 'expo';\r\n+import React from 'react';\r\n+\r\n+\r\n+export default function App {\r\n+    <AppLayout />\r\n+};\r\n+\r\n+registerRootComponent(App);\r\n"
+                },
+                {
+                    "date": 1735452457082,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -2,58 +2,9 @@\n import React from 'react';\r\n \r\n \r\n export default function App {\r\n+    r\r\n     <AppLayout />\r\n };\r\n \r\n registerRootComponent(App);\r\n-export default function App {\r\n-    <AppLayout />\r\n-};\r\n-\r\n-registerRootComponent(App);\r\n-export default function App {\r\n-    <AppLayout />\r\n-});\r\n-\r\n-registerRootComponent(App);\r\n-function name(params) {\r\n-    \r\n-}\n-export default function App (){}\r\n-    <AppLayout />\r\n-);\r\n-\r\n-registerRootComponent(App);\r\n-function name(params) {\r\n-    \r\n-}\n-export default function App ()(\r\n-    <AppLayout />\r\n-);\r\n-\r\n-registerRootComponent(App);\r\n-function name(params) {\r\n-    \r\n-}\n-export default function App ()(\r\n-    <AppLayout />\r\n-);\r\n-\r\n-registerRootComponent(App);\r\n-function\n-export default function App ()(\r\n-    <AppLayout />\r\n-);\r\n-\r\n-registerRootComponent(App);\r\n-export default function App  ()(\r\n-    <AppLayout />\r\n-);\r\n-\r\n-registerRootComponent(App);\r\n-expofunction App  ()(\r\n-    <AppLayout />\r\n-);\r\n-\r\n\\ No newline at end of file\n-registerRootComponent(App);\n"
+                },
+                {
+                    "date": 1735452462606,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -2,9 +2,9 @@\n import React from 'react';\r\n \r\n \r\n export default function App {\r\n-    return\r\n+    return()\r\n     <AppLayout />\r\n };\r\n \r\n registerRootComponent(App);\r\n"
+                },
+                {
+                    "date": 1735452474336,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,10 @@\n+import { registerRootComponent } from 'expo';\r\n+import React from 'react';\r\n+\r\n+\r\n+export default function App {\r\n+    return(\r\n+    <AppLayout />\r\n+)};\r\n+\r\n+registerRootComponent(App);\r\n"
+                }
+            ],
+            "date": 1735452194232,
+            "name": "Commit-0",
+            "content": "e"
+        }
+    ]
+}
