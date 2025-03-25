@@ -6,7 +6,7 @@ import {tokenChecker} from '../middleware/auth.js';
 
 
 router.post('/admin/addBook', tokenChecker, addBook);
-router.get('/books', tokenChecker, getBooks);
+router.get('/books', getBooks);
 router.get('/book/:_id', tokenChecker, getBook);
 router.put('/admin/updateBook/:_id', tokenChecker, updateBook);
 router.delete('/admin/deleteBook/:_id', tokenChecker, deleteBook);

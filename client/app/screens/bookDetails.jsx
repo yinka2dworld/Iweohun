@@ -2,37 +2,22 @@ import React, { useState } from 'react';
 import { SafeAreaView, View, Text, TouchableOpacity, Image } from 'react-native';
 import tw from 'twrnc';
 import { AirbnbRating } from 'react-native-ratings';
-import { useAppTheme } from '../themeContext';
 import Chapters from '../../components/Chapters';
 import Related from '../../components/Related';
 import Reviews from '../../components/Reviews';
 import AudioPlayer from './AudioPlayer';
+import { ThemedView } from '@/components/ThemedView.jsx';
+import { ThemedText } from '@/components/ThemedText';
 
-const BookDetails = ({
-  book = {
-    id: '7',
-    title: 'The Art of War',
-    author: 'Sun Tzu',
-    reciter: 'Moira Fogarty',
-    category: 'Military Strategy',
-    description: 'The Art of War is a Chinese military treatise written during the 6th century BC by Sun Tzu. It has long been praised as the definitive work on military strategies and tactics of its time.',
-    chapters: [
-      { id: '1', title: 'Chapter 1', audio: require('../../assets/audio.mp3') },
-      { id: '2', title: 'Chapter 2', audio: require('../../assets/audio2.mp3') },
-      { id: '3', title: 'Chapter 3', audio: require('../../assets/audio3.mp3') }
-    ],
-    coverImage: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1tf3QiePLGWrYYU0hiSD594zkUHdspxc6Og&s',
-  },
-  defaultRating = 4, // Default rating value set to 4 stars
-}) => {
-  const { background, text, placeholder } = useAppTheme();
 
-  const [selectedTab, setSelectedTab] = useState('Chapters'); // Default to the "Chapters" tab
+const BookDetails = ({ defaultRating = 4 }) => {
+ 
+  const [selectedTab, setSelectedTab] = useState('Chapters');
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [currentSound, setCurrentSound] = useState(null);
 
   const renderTabContent = () => {
-    switch (selectedTab) {
+    switch (selectedTab) { 
       case 'Chapters':
         return (
           <Chapters
@@ -53,34 +38,34 @@ const BookDetails = ({
   };
 
   return (
-    <SafeAreaView style={[tw`flex-1`, { backgroundColor: background }]}>
-      <View style={tw`p-4`}>
-        <View style={tw`flex-row mb-4 items-center`}>
+    <ThemedView style={[tw`flex-1`]}>
+      <ThemedView style={tw`p-4`}>
+        <ThemedView style={tw`flex-row mb-4 items-center`}>
           <TouchableOpacity onPress={() => console.log('Back pressed')}>
-            <Text style={[tw`text-lg mr-4`, { color: text }]}>←</Text>
+            <ThemedText style={[tw`text-lg mr-4`]}>←</ThemedText>
           </TouchableOpacity>
-          <Text style={[tw`text-3xl font-bold`, { color: text }]}>
+          <ThemedText style={[tw`text-3xl font-bold`]}>
             {book.title}
-          </Text>
-        </View>
+          </ThemedText>
+        </ThemedView>
 
-        <View style={tw`flex-row mb-4 items-center`}>
+        <ThemedView style={tw`flex-row mb-4 items-center`}>
           <Image
             source={{ uri: book.coverImage }}
             style={tw`w-30 h-30 mr-3`} // Increased width and height
             resizeMode="contain"
           />
-          <View>
-            <Text style={[tw`text-base text-[#ff1493]`]}>
+          <ThemedView>
+            <ThemedText style={[tw`text-base text-[#ff1493]`]}>
               {book.author}
-            </Text>
-            <Text style={[tw`text-base text-[#ff1493]`]}>
+            </ThemedText>
+            <ThemedText style={[tw`text-base text-[#ff1493]`]}>
               Read by: {book.reciter}
-            </Text>
-          </View>
-        </View>
+            </ThemedText>
+          </ThemedView>
+        </ThemedView>
 
-        <View style={tw`mb-3 flex-row items-center ml-4`}>
+        <ThemedView style={tw`mb-3 flex-row items-center ml-4`}>
           <AirbnbRating
             count={5} // Total number of stars
             defaultRating={defaultRating} // Use the default rating parameter
@@ -89,74 +74,74 @@ const BookDetails = ({
             selectedColor="#FFD700" // Color for selected stars
             unSelectedColor={'#323232B3'} // Color for unselected stars
           />
-        </View>
+        </ThemedView>
 
-        <Text style={[tw`text-sm mb-4`, { color: placeholder }]}>
+        <ThemedText style={[tw`text-sm mb-4`]}>
           {book.description}
-        </Text>
+        </ThemedText>
 
         {/* Tabs */}
-        <View style={[tw`flex-row justify-between mb-4 relative`]}>
+        <ThemedView style={[tw`flex-row justify-between mb-4 relative`]}>
           <TouchableOpacity onPress={() => setSelectedTab('Chapters')}>
-            <View style={tw`items-center`}>
-              <Text
+            <ThemedView style={tw`items-center`}>
+              <ThemedText
                 style={[
                   tw`text-lg p-4`,
                   { color: selectedTab === 'Chapters' ? text : placeholder },
                 ]}
               >
                 Chapters
-              </Text>
+              </ThemedText>
               {selectedTab === 'Chapters' && (
-                <View style={tw`absolute bottom-0 h-0.5 w-full bg-[#ff1493]`}></View>
+                <ThemedView style={tw`absolute bottom-0 h-0.5 w-full bg-[#ff1493]`}></ThemedView>
               )}
-            </View>
+            </ThemedView>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setSelectedTab('Reviews')}>
-            <View style={tw`items-center`}>
-              <Text
+            <ThemedView style={tw`items-center`}>
+              <ThemedText
                 style={[
                   tw`text-lg p-4`,
                   { color: selectedTab === 'Reviews' ? text : placeholder },
                 ]}
               >
                 Reviews
-              </Text>
+              </ThemedText>
               {selectedTab === 'Reviews' && (
                 <View style={tw`absolute bottom-0 h-0.5 w-full bg-[#ff1493]`}></View>
               )}
-            </View>
+            </ThemedView>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setSelectedTab('Related')}>
-            <View style={tw`items-center`}>
-              <Text
+            <ThemedView style={tw`items-center`}>
+              <ThemedText
                 style={[
                   tw`text-lg p-4`,
                   { color: selectedTab === 'Related' ? text : placeholder },
                 ]}
               >
                 Related
-              </Text>
+              </ThemedText>
               {selectedTab === 'Related' && (
                 <View style={tw`absolute bottom-0 h-0.5 w-full bg-[#ff1493]`}></View>
               )}
-            </View>
+            </ThemedView>
           </TouchableOpacity>
-        </View>
+        </ThemedView>
 
         {/* Tab Content */}
         {renderTabContent()}
-      </View>
+      </ThemedView>
 
       {selectedChapter && (
         <AudioPlayer
           audio={selectedChapter.audio}
           bookName={book.title}
           chapterTitle={selectedChapter.title}
-          onClose={() => setSelectedChapter(null)} // Close the player and reset the selected chapter
+          onClose={() => setSelectedChapter(null)}
         />
       )}
-    </SafeAreaView>
+    </ThemedView>
   );
 };
 

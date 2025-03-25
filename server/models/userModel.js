@@ -27,7 +27,6 @@ password:{
    
     phoneNumber:{
       type: String,
-      required: true,
       unique:true 
      },
 
@@ -39,21 +38,21 @@ password:{
 
    country:{
     type: String,
-    // unique:true
+    // required:true
    },
 
    preferredLanguage:{
       type: String,
-      // unique:true
+      // required:true
    },
    
-     resetToken:{
-      type: String,
-     },
+    //  resetToken:{
+    //   type: String,
+    //  },
 
-     resetExp: {
-      type: String,
-     },
+    //  resetExp: {
+    //   type: String,
+    //  },
 
      role:{
       type: String,

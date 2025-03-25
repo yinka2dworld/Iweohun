@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
-import { seedAdmin } from './utils/seeder.js';
 import bookRoutes from './routes/bookRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import dbConnecter from './utils/db.js';
@@ -12,10 +11,10 @@ dotenv.config();
 
 // Initialize Express server
 const server = express();
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 3000;
 
-// Middleware setup
-server.use(cors());
+
+server.use( cors() );
 server.use(express.json());
 server.use(bodyParser.json());
 server.use(express.urlencoded({ extended: true }));
@@ -26,8 +25,7 @@ const startServer = async () => {
         await dbConnecter();
         console.log('Database connected successfully');
 
-        // Seed admin data
-        await seedAdmin();
+        
 
         // Routes
         server.use(bookRoutes);
@@ -39,11 +37,10 @@ const startServer = async () => {
         });
     } catch (err) {
         console.error('Error starting the server:', err.message);
-        process.exit(1); // Exit with failure code
+        process.exit(1); 
     }
 };
 
-// Start the server initialization
 startServer();
 
 

@@ -1,26 +1,42 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import SplashScreen from './splashScreen';
-import Login from './auth/login';
-import Signup from './auth/signup';
-import MainTabNavigator from './tab/_layout';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { useFonts } from 'expo-font';
+import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
+import 'react-native-reanimated';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
-const Stack = createNativeStackNavigator();
+SplashScreen.preventAutoHideAsync();
 
-export default function AppLayout () { 
+export default function RootLayout() {
+  const colorScheme = useColorScheme();
+  const [loaded] = useFonts({
+    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+  });
+
+  useEffect(() => {
+    if (loaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded]);
+
+  if (!loaded) {
+    return null;
+  }
+
   return (
-  <NavigationContainer>
-    <Stack.Navigator initialRouteName="Splash">
-      <Stack.Screen name="Splash" component={SplashScreen} />
-      <Stack.Screen name="Login" component={Login} />
-      <Stack.Screen name="Signup" component={Signup} />
-      <Stack.Screen
-        name="MainTabs"
-        component={MainTabNavigator}
-        options={{ headerShown: false }} 
-      />
-    </Stack.Navigator>
-  </NavigationContainer>
-)};
+    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <Stack>
+        {/* Define the routes */}
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/signup" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="+not-found" options={{ headerShown: false }} />
+      </Stack>
+      <StatusBar style="auto" />
+    </ThemeProvider>
+  );
+}
 

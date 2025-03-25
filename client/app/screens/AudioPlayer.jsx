@@ -3,7 +3,10 @@ import { View, TouchableOpacity, Modal, Image, Text, useColorScheme } from 'reac
 import Slider from '@react-native-community/slider';
 import { Audio } from 'expo-av';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { ThemedView } from '@/components/ThemedView.jsx';
+import { ThemedText } from '@/components/ThemedText';
 import tw from 'twrnc';
+
 
 const AudioPlayer = ({ audio, bookName, chapterTitle }) => {
   const colorScheme = useColorScheme();
@@ -95,7 +98,7 @@ const AudioPlayer = ({ audio, bookName, chapterTitle }) => {
   };
 
   return (
-    <View style={[tw`absolute bottom-0 w-full p-2`, { zIndex: 10 }]}>
+    <ThemedView style={[tw`absolute bottom-0 w-full p-2`, { zIndex: 10 }]}>
       <TouchableOpacity 
         onPress={openModal} 
         style={tw`flex-row items-center justify-between p-2 rounded-lg bg-[#070c70]`}
@@ -104,10 +107,10 @@ const AudioPlayer = ({ audio, bookName, chapterTitle }) => {
           source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvnCXxT-uP1cIGWq7Scy45pzGSN9V6VoVUWw&s' }} 
           style={tw`w-16 h-16 rounded-md mr-4`}
         />
-        <View>
+        <ThemedView>
           <Text style={tw`text-lg font-bold text-[#ffffff]`}>{bookName}</Text>
           <Text style={tw`text-sm text-[#ffffff]`}>{chapterTitle}</Text>
-        </View>
+        </ThemedView>
         <TouchableOpacity style={tw`ml-15`} onPress={playPause}>
           <MaterialCommunityIcons 
             name={isPlaying ? "pause-circle" : "play-circle"} 
@@ -123,9 +126,9 @@ const AudioPlayer = ({ audio, bookName, chapterTitle }) => {
         visible={isModalVisible}
         onRequestClose={closeModal}
       >
-        <View style={[tw`flex-1 justify-center items-center`, { backgroundColor: isDarkMode ? '#000000' : '#f8f8f8' }]}>
+        <ThemedView style={[tw`flex-1 justify-center items-center`, { backgroundColor: isDarkMode ? '#000000' : '#f8f8f8' }]}>
           <TouchableOpacity onPress={closeModal} style={tw`absolute top-15 left-5`}>
-            <Text style={[tw`text-lg`, { color: isDarkMode ? '#ffffff' : '#070c70' }]}>Done</Text>
+            <ThemedText style={[tw`text-lg`, { color: isDarkMode ? '#ffffff' : '#070c70' }]}>Done</ThemedText>
           </TouchableOpacity>
           <TouchableOpacity style={tw`absolute top-15 right-5`} onPress={toggleSave}>
             <MaterialCommunityIcons 
@@ -138,8 +141,8 @@ const AudioPlayer = ({ audio, bookName, chapterTitle }) => {
             source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvnCXxT-uP1cIGWq7Scy45pzGSN9V6VoVUWw&s' }} 
             style={tw`w-64 h-64 rounded-lg mb-5`}
           />
-          <Text style={tw`text-2xl font-bold mb-5 text-[#ff1493]`}>{bookName}</Text>
-          <Text style={[tw`text-lg mb-5`, { color: isDarkMode ? '#ffffff' : '#070c70' }]}>{chapterTitle}</Text>
+          <ThemedText style={tw`text-2xl font-bold mb-5 text-[#ff1493]`}>{bookName}</ThemedText>
+          <ThemedText style={[tw`text-lg mb-5`, { color: isDarkMode ? '#ffffff' : '#070c70' }]}>{chapterTitle}</ThemedText>
           <Slider
             value={position / duration}
             onSlidingComplete={(value) => seek(value * duration)}
@@ -148,11 +151,11 @@ const AudioPlayer = ({ audio, bookName, chapterTitle }) => {
             maximumTrackTintColor="#ffffff"
             thumbTintColor="#ff1493"
           />
-          <View style={tw`flex-row justify-between w-64 mt-4`}>
-            <Text style={[tw``, { color: isDarkMode ? '#ffffff' : '#070c70' }]}>{formatTime(position / 1000)}</Text>
-            <Text style={[tw``, { color: isDarkMode ? '#ffffff' : '#070c70' }]}>{formatTime(duration / 1000)}</Text>
-          </View>
-          <View style={tw`flex-row items-center mt-5`}>
+          <ThemedView style={tw`flex-row justify-between w-64 mt-4`}>
+            <ThemedText style={[tw``, { color: isDarkMode ? '#ffffff' : '#070c70' }]}>{formatTime(position / 1000)}</ThemedText>
+            <ThemedText style={[tw``, { color: isDarkMode ? '#ffffff' : '#070c70' }]}>{formatTime(duration / 1000)}</ThemedText>
+          </ThemedView>
+          <ThemedView style={tw`flex-row items-center mt-5`}>
             <TouchableOpacity onPress={() => seek(-15000)}>
               <MaterialCommunityIcons name="rewind-15" size={30} color={isDarkMode ? '#ffffff' : '#070c70'} />
             </TouchableOpacity>
@@ -166,10 +169,10 @@ const AudioPlayer = ({ audio, bookName, chapterTitle }) => {
             <TouchableOpacity onPress={() => seek(15000)}>
               <MaterialCommunityIcons name="fast-forward-15" size={30} color={isDarkMode ? '#ffffff' : '#070c70'} />
             </TouchableOpacity>
-          </View>
-        </View>
+          </ThemedView>
+        </ThemedView>
       </Modal>
-    </View>
+    </ThemedView>
   );
 };
 

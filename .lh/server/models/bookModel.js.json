@@ -1,0 +1,22 @@
+{
+    "sourceFile": "server/models/bookModel.js",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1742922610952,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1742922640388,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -59,9 +59,9 @@\n   },\r\n   category: {\r\n     type: String,\r\n     required: true,\r\n-    \r\n+    enum: ['History & Biographies', 'Fiction & Romance', 'Kids', 'Personal Development', 'Adventure & Thrillers']\r\n   },\r\n   language: {\r\n     type: String,\r\n     required: true,\r\n"
+                }
+            ],
+            "date": 1742922610952,
+            "name": "Commit-0",
+            "content": "import mongoose from \"mongoose\";\r\nimport { Schema } from 'mongoose';\r\n\r\nconst chapterSchema = new Schema({\r\n  id: {\r\n    type: String,\r\n    required: true,\r\n  },\r\n  title: {\r\n    type: String,\r\n    required: true,\r\n  },\r\n  duration: {\r\n    type: String,\r\n  },\r\n  progress: {\r\n    type: Number, \r\n  }\r\n});\r\n\r\nconst bookSchema = new Schema({\r\n  bookCover: {\r\n    type: String,\r\n    required: true\r\n    // unique:true,\r\n  },\r\n  bookName: {\r\n    type: String,\r\n    required: true,\r\n    // unique: true,\r\n  },\r\n  bookDescription: {\r\n    type: String,\r\n    required: true,\r\n    // unique:true\r\n  },\r\n  bookAuthor: {\r\n    type: String,\r\n    required: true,\r\n  },\r\n  \r\n  audioBook: {\r\n    type: String,\r\n    // unique:true\r\n  },\r\n  status: {\r\n    type: String,\r\n    enum: ['isCertified', 'notCertified'],\r\n    default: 'notCertified',\r\n    required: true\r\n  },\r\n  likes: {\r\n    type: Number,\r\n  },\r\n  chapters: [chapterSchema], \r\n  listeners: {\r\n    type: Number,\r\n    default: 0,\r\n  },\r\n  category: {\r\n    type: String,\r\n    required: true,\r\n    \r\n  },\r\n  language: {\r\n    type: String,\r\n    required: true,\r\n  },\r\n},\r\n  { timestamps: true }\r\n);\r\n\r\nconst Book = mongoose.model('Book', bookSchema);\r\nexport default Book;\r\n"
+        }
+    ]
+}

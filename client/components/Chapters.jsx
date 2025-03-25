@@ -2,10 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import tw from 'twrnc';
 import { Audio } from 'expo-av';
-import { useAppTheme } from '../app/themeContext';
 
 const Chapters = ({ book, selectedChapter, setSelectedChapter, currentSound, setCurrentSound }) => {
-  const { text, placeholder } = useAppTheme();
   const [chapterDurations, setChapterDurations] = useState({});
 
   useEffect(() => {
@@ -58,11 +56,11 @@ const Chapters = ({ book, selectedChapter, setSelectedChapter, currentSound, set
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
         <TouchableOpacity onPress={() => handleChapterPress(item)}>
-          <View style={[tw`p-4 border-b flex-row justify-between items-center`, { borderColor: placeholder }]}>
-            <Text style={[tw`text-base`, { color: text }]}>
+          <View style={[tw`p-4 border-b flex-row justify-between items-center`]}>
+            <Text style={[tw`text-base`]}>
               {item.title}
             </Text>
-            <Text style={[tw`text-xs`, { color: placeholder }]}>
+            <Text style={[tw`text-xs`]}>
               {chapterDurations[item.id] || 'Loading...'}
             </Text>
           </View>

@@ -5,16 +5,10 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Error } from "mongoose";
 
-const generateToken = (user) => {
-    return jwt.sign(
-      { userId: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET, // Replace with your JWT secret
-      { expiresIn: '5h' }
-    );
-  };
+
 
 export const signup = async (req, res) => {
-  const  { username, phoneNumber, email, password } = req.body;
+  const  { username, email, password } = req.body;
      try {
         const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -22,7 +16,7 @@ export const signup = async (req, res) => {
     }
         const hashedPassword = await bcrypt.hash(password, 10);
     
-    const signupInfo = await User.create({ username, phoneNumber, email, password: hashedPassword })
+    const signupInfo = await User.create({ username, email, password: hashedPassword })
     if (!signupInfo) {
        console.error(error)
     }
@@ -33,25 +27,43 @@ export const signup = async (req, res) => {
     }
 }
 
-export const login = async (req, res) => {
-  const  { username, password } = req.body;
-    try {
-        const user = await User.findOne({ username });
-           if (!user) {
-            throw new Error('Incorrect username'); 
-             }   
-        const passwordMatch = await bcrypt.compare( password, user.password );   
-              if (!passwordMatch) {
-                throw new Error('Incorrect password'); 
-              }
-        const token = generateToken(user)
-        return  res.status(200).json({message:'User logged successfully', userId: user._id, role: user.role, token });   
-      } catch (error) {
-        res.status(400).json({message:'login unsuccessful', error}) 
-         console.error(error);
-      }
-}
 
+export const login = async (req, res) => {
+  console.log("Login request body:", req.body); // Debugging line
+
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ message: "Username and password are required" });
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(400).json({ message: "Incorrect username" });
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res.status(400).json({ message: "Incorrect password" });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "5h" }
+    );
+
+    return res.status(200).json({
+      message: "User logged in successfully",
+      userId: user._id,
+      role: user.role,
+      token,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 
 export const users = async (req, res) => {

@@ -1,72 +1,50 @@
-Iweohun: Orating African Literature
+# Welcome to your Expo app 👋
 
-Welcome to Iweohun, a cutting-edge software product developed by Okin Technologies. Iweohun allows users to access a rich library of audio books, beautifully orated in various African languages. Our mission is to promote African literature and languages by providing easy access to high-quality audio books for everyone.
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-Table of Contents:
-Features
-Installation
-Usage
-Subscription Tiers
-Free Tier
-Premium Tier
-Support
-License
+## Get started
 
+1. Install dependencies
 
+   ```bash
+   npm install
+   ```
 
-Features
-Extensive Library: Access a wide range of audio books in multiple African languages.
-User-Friendly Interface: Easy navigation and search functionality to find your favorite books.
-Offline Access: Download audio books to listen offline.
-Customizable Playback: Adjust playback speed, create bookmarks, and manage your listening experience.
-Regular Updates: New audio books and features are added regularly.
+2. Start the app
 
+   ```bash
+    npx expo start
+   ```
 
-Installation
-Download the App: Iweohun is available for download on Android and iOS.
-Install: Follow the on-screen instructions to install the app on your device.
-Sign Up: Create an account using your email address or sign up through your social media accounts.
+In the output, you'll find options to open the app in a
 
+- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
+- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
+- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-Usage
-Launch the App: Open the Iweohun app on your device.
-Browse or Search: Browse through categories or use the search function to find audio books.
-Select a Book: Tap on the book you want to listen to.
-Choose a Tier: Select the Free or Premium tier to access the book.
-Listen and Enjoy: Stream the audio book online or download it for offline listening.
+You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
+## Get a fresh project
 
-Subscription Tiers
-Free Tier
-Access to Limited Library: Enjoy a selection of audio books for free.
-Ad-Supported: Listen to occasional ads.
-Basic Features: Access basic playback features.
+When you're ready, run:
 
-Premium Tier
-Full Library Access: Unlock the complete library of audio books.
-Ad-Free Experience: Enjoy uninterrupted listening without ads.
-Advanced Features: Access premium features such as advanced playback controls and offline downloads.
-Subscription Plans: Choose between monthly or yearly subscription plans.
+```bash
+npm run reset-project
+```
 
+This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
-Pricing
-Monthly Subscription: ₦655.00 per month
-Yearly Subscription: ₦6550.00 per year
+## Learn more
 
+To learn more about developing your project with Expo, look at the following resources:
 
-Support
-If you have any questions or need assistance, please contact our support team:
-Email: fawazmusty247@gmail.com
-Phone: +2347085812226
-Website: https://okin.onrender.com/
+- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
+- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
+## Join the community
 
-License
-Iweohun is developed and maintained by Okin Technologies. All rights reserved. Unauthorized distribution or use is prohibited.
+Join our community of developers creating universal apps.
 
-
-Thank you for choosing Iweohun! Enjoy exploring the rich world of African audio books.
-
-Okin Technologies
-
-Promoting African literature and languages through technology.
+- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
+- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.

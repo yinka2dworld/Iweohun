@@ -22,23 +22,11 @@ export const  searchBook = async (req, res) => {
 
 
 export const getBooks = async (req, res) => {
-    const page = +req.query.page || 1;
-    const perPage = 2;
+   
     try {
-        const books = await Book.find().skip((page-1)* perPage).limit(perPage);
-        const totalBooks= await Book.find().countDocuments();
-        const lastPage = Math.ceil(totalBooks / perPage);
-        const currentPage = page;
-        const previousPage = currentPage-1;
-        const nextPage = currentPage+1; 
-          
-       return  res.status(200).json({
-              books,
-             currentPage,
-              previousPage,
-              nextPage,
-              lastPage,
-          })  
+        const books = await Book.find().sort({ createdAt: -1 });
+      
+       return  res.status(200).json({ books }); 
     } catch (error) {
       res.status(400).json({message:'Unable to fetch books', error})  
     }
@@ -57,23 +45,47 @@ export const getBook = async (req, res) => {
     }
 }
 
+
+
 export const addBook = async (req, res) => { 
-  if (req.user.role != 'superAdmin' || 'admin') {
-                  throw new Error('You are not authorized to access this.');    
-              }
-        const { bookCover, bookName,  bookDescription, bookAuthor, audioBook } = req.body;
-    try {
-        const bookCoverUrl = bookCover ? await uploadToCloudinary(bookCover) : null;
-        const audioBookUrl = audioBook ? await uploadToCloudinary(audioBook) : null;
-   const newBook = await Book.create({ bookCover: bookCoverUrl, bookName,  bookDescription, bookAuthor, audioBook: audioBookUrl })
-       if (!newBook) {
-        console.error(error)
+  try {
+    // Authorization check: Only 'superAdmin' or 'admin' can add books
+    if (req.user.role !== 'superAdmin' && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'You are not authorized to access this.' });
     }
-     return  res.status(201).json({message:'New book added successfully'})  
-    } catch (error) {
-        res.status(400).json({message:'Unable to fetch book', error})  
+
+    const { bookCover, bookName, bookDescription, bookAuthor, audioBook, category, language } = req.body;
+
+    // Upload images/audio only if provided
+    const bookCoverUrl = bookCover ? await uploadToCloudinary(bookCover) : null;
+    const audioBookUrl = audioBook ? await uploadToCloudinary(audioBook) : null;
+
+    // Create new book entry in the database
+    const newBook = await Book.create({
+      bookCover: bookCoverUrl,
+      bookName,
+      bookDescription,
+      bookAuthor,
+      category,
+      language,
+      audioBook: audioBookUrl
+    });
+
+    if (!newBook) {
+      return res.status(500).json({ message: 'Failed to create book' });
     }
-}
+
+    return res.status(201).json({
+      message: 'New book added successfully',
+      book: newBook
+    });
+
+  } catch (error) {
+    console.error('Error adding book:', error);
+    res.status(500).json({ message: 'Unable to add book', error: error.message });
+  }
+};
+
 
 
 export const updateBook = async (req, res) => {
