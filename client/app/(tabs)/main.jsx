@@ -50,7 +50,7 @@ export default function Main() {
     return (
       <ThemedView style={[tw`flex-1 items-center justify-center`, { backgroundColor }]}>
         <ActivityIndicator size="large" color={primaryColor} />
-        <ThemedText style={{ color: textColor, marginTop: 10 }}>Loading...</ThemedText>
+        <ThemedText style={{ color: textColor, marginTop: 10 }}>Loading audiobooks</ThemedText>
       </ThemedView>
     );
   }

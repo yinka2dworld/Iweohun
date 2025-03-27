@@ -3,22 +3,29 @@ import { uploadToCloudinary, deleteFromCloudinary } from "../config/cloudinary.j
 
 
 
-export const  searchBook = async (req, res) => {
-    const {searchTerm} = req.query
-    try {
-        const books = await Book.find( {
-            $or: [
-              { title: { $regex: searchTerm, $options: 'i' } },
-              { author: { $regex: searchTerm, $options: 'i' } },
-            ]
-          });
-          
-        return res.status(200).json(books)  
-    } catch (error) {
-      res.status(400).json({message:'Searched term not found.', error})  
-    }
-}
+export const searchBook = async (req, res) => {
+  try {
+      const { searchTerm } = req.query;
 
+      // Validate search term
+      if (!searchTerm) {
+          return res.status(400).json({ message: 'Search term is required.' });
+      }
+
+      // Search for books using bookName and bookAuthor
+      const books = await Book.find({
+          $or: [
+              { bookName: { $regex: searchTerm, $options: 'i' } },
+              { bookAuthor: { $regex: searchTerm, $options: 'i' } },
+          ],
+      }).select('bookName bookAuthor bookCover'); // Return only relevant fields
+
+      return res.status(200).json({ books });
+  } catch (error) {
+      console.error('Search API Error:', error);
+      return res.status(500).json({ message: 'Something went wrong. Please try again.', error: error.message });
+  }
+};
 
 
 export const getBooks = async (req, res) => {

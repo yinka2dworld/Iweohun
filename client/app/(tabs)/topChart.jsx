@@ -1,59 +1,48 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { View, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import tw from 'twrnc';
 import axios from 'axios';
-import { View, Text, FlatList, Image, TouchableOpacity } from 'react-native';
-import { useEffect, useState } from 'react';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
-import { ActivityIndicator } from 'react-native';
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function TopChart() {
-    const [books, setBooks] = useState([]); // Ensure books is an array
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const router = useRouter();
+  const disc = require('../../assets/images/disc.png');
 
   const backgroundColor = useThemeColor({}, 'background');
   const secondaryColor = useThemeColor({}, 'secondary');
   const textColor = useThemeColor({}, 'text');
-  const primaryColor = useThemeColor({}, 'primary');
   const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
 
-
   useEffect(() => {
-    const token = AsyncStorage.getItem("authToken");
-
     axios.get(`${apiUrl}/books`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       })
       .then((res) => {
-        if (Array.isArray(res.data.books)) {
-          setBooks(res.data.books); 
-        } else {
-          setBooks([]); 
-        }
+        setBooks(Array.isArray(res.data.books) ? res.data.books : []);
         setLoading(false);
       })
       .catch((error) => {
         setError(error.message);
         setLoading(false);
       });
-  }, []); // Removed unnecessary dependency array
+  }, []);
 
   if (loading) {
     return (
       <ThemedView style={[tw`flex-1 items-center justify-center`, { backgroundColor }]}>
-           <ActivityIndicator size="large" color="#ff1493" />
-           <ThemedText style={{ color: textColor, marginTop: 10 }}>Loading</ThemedText>
-         </ThemedView>
+        <ActivityIndicator size="large" color="#ff1493" />
+        <ThemedText style={{ color: textColor, marginTop: 10 }}>Loading topchart...</ThemedText>
+      </ThemedView>
     );
   }
 
@@ -65,34 +54,38 @@ export default function TopChart() {
     );
   }
 
-
-  
   return (
-    <ThemedView  style={[tw`flex-1`]}>
-      <View style={tw`mx-5 mt-8`}>
-        <ThemedText type ='title' style={{ color: textColor }}>Top Chart</ThemedText>
-        <FlatList
-          data={books}
-          keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={tw`pb-10 mt-5`}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[tw`flex-row items-center bg-white p-4 rounded-lg mb-4 shadow-md`]}
-              onPress={() => router.push(`/book/${item.id}`, { book: item })}
-            >
-              <Image
-                source={{ uri: item.bookCover }}
-                style={tw`w-16 h-20 rounded-md`}
-              />
-              <View style={tw`ml-4 flex-1`}>
-                <ThemedText type ='subtitle' >{item.bookName}</ThemedText>
-                <ThemedText style={{ color: secondaryColor }}  type='link' >by {item.bookAuthor}</ThemedText>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
+    <ThemedView style={tw`flex-1`}>
+      <FlatList
+        data={books}
+        keyExtractor={(item) => item._id?.toString() || Math.random().toString()}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={tw`pb-10`}
+        ListHeaderComponent={
+          <LinearGradient colors={['#070c70', '#ff1493']} style={tw`p-6 rounded-b-xl mb-6`}>
+            <ThemedText type='title' style={{ color: 'white' }}>Top Chart</ThemedText>
+            <View style={tw`flex-row space-x-3 mt-10`}>
+              <Image source={disc} style={tw`h-30 w-30`} resizeMode="contain" />
+              <ThemedText style={[tw`text-[#a6a6a6] text-3xl ml-3 mt-8 text-xl`, { fontStyle: 'italic' }]}>
+                Listen to the most rated audiobooks right now!
+              </ThemedText>
+            </View>
+          </LinearGradient>
+        }
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={[tw`flex-row items-center bg-white p-4 rounded-lg mb-4 shadow-md mx-5`]}
+            onPress={() => router.push(`/book/${item._id}`, { book: item })}
+          >
+            <Image source={{ uri: item.bookCover }} style={tw`w-16 h-20 rounded-md`} />
+            <View style={tw`ml-4 flex-1`}>
+              <ThemedText type='subtitle'>{item.bookName}</ThemedText>
+              <ThemedText style={{ color: secondaryColor }} type='link'>by {item.bookAuthor}</ThemedText>
+            </View>
+          </TouchableOpacity>
+        )}
+      />
     </ThemedView>
   );
 }

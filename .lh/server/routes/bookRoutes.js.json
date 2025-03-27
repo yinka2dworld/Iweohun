@@ -3,7 +3,7 @@
     "activeCommit": 0,
     "commits": [
         {
-            "activePatchIndex": 3,
+            "activePatchIndex": 4,
             "patches": [
                 {
                     "date": 1742792493638,
@@ -20,6 +20,10 @@
                 {
                     "date": 1742793340252,
                     "content": "Index: \n===================================================================\n--- \n+++ \n@@ -11,20 +11,5 @@\n router.put('/admin/updateBook/:_id', tokenChecker, updateBook);\r\n router.delete('/admin/deleteBook/:_id', tokenChecker, deleteBook);\r\n router.get('/searchBar', tokenChecker, searchBook);\r\n \r\n-export default router;\n-import express from 'express';\r\n-import { addBook, getBooks, getBook, updateBook, deleteBook, searchBook } from '../controllers/bookControllers.js';\r\n-import {tokenChecker} from '../middleware/auth.js';\r\n- const router = express.Router();\r\n-\r\n-\r\n-\r\n-router.post('/admin/addBook', tokenChecker, addBook);\r\n-router.get('/books', );\r\n-router.get('/book/:_id', tokenChecker, getBook);\r\n-router.put('/admin/updateBook/:_id', tokenChecker, updateBook);\r\n-router.delete('/admin/deleteBook/:_id', tokenChecker, deleteBook);\r\n-router.get('/searchBar', tokenChecker, searchBook);\r\n-\r\n export default router;\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1743072726393,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -9,7 +9,7 @@\n router.get('/books', getBooks);\r\n router.get('/book/:_id', tokenChecker, getBook);\r\n router.put('/admin/updateBook/:_id', tokenChecker, updateBook);\r\n router.delete('/admin/deleteBook/:_id', tokenChecker, deleteBook);\r\n-router.get('/searchBar', tokenChecker, searchBook);\r\n+router.get('/searchBar', searchBook);\r\n \r\n export default router;\n\\ No newline at end of file\n"
                 }
             ],
             "date": 1742792493638,

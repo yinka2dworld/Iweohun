@@ -16,7 +16,7 @@ export default function CategorySection({ title, books, textColor }) {
           horizontal
           showsHorizontalScrollIndicator={false}
           data={books}
-          keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+          keyExtractor={(item) => item._id?.toString() || Math.random().toString()}
           initialNumToRender={5}
           getItemLayout={(data, index) => ({
             length: 120,
@@ -25,7 +25,7 @@ export default function CategorySection({ title, books, textColor }) {
           })}
           renderItem={({ item }) => (
             <TouchableOpacity
-              onPress={() => router.push(`/book/${item.id}`)}
+              onPress={() => router.push(`/book/${item._id}`)}
               style={tw`mr-3`}
             >
               <Image

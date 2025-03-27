@@ -10,6 +10,6 @@ router.get('/books', getBooks);
 router.get('/book/:_id', tokenChecker, getBook);
 router.put('/admin/updateBook/:_id', tokenChecker, updateBook);
 router.delete('/admin/deleteBook/:_id', tokenChecker, deleteBook);
-router.get('/searchBar', tokenChecker, searchBook);
+router.get('/searchBar', searchBook);
 
 export default router;
