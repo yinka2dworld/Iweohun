@@ -12,7 +12,8 @@ export default function Home() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.replace('/auth/login');
+      // router.replace('/auth/login');
+      router.replace('/(tabs)/main');
     }, 3000); 
     return () => clearTimeout(timer);
   }, [router]);

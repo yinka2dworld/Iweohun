@@ -94,7 +94,7 @@ export default function Library() {
   return (
     <SafeAreaView style={[tw`flex-1`, { backgroundColor }]}>
       <ThemedView style={tw`p-4`}>
-        <ThemedText type="title" style={[tw`mt-2`, { color: textColor }]}>Library</ThemedText>
+        <ThemedText type="title" style={[tw` mb-10`, { color: textColor }]}>My Library</ThemedText>
         
         {books.length === 0 ? (
           <ThemedText style={{ color: textColor }}>No books available.</ThemedText>
@@ -104,7 +104,7 @@ export default function Library() {
             keyExtractor={(item) => item._id?.toString() || Math.random().toString()}
             contentContainerStyle={tw`pb-10 mt-5`}
             renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => router.push(`/book/${item._id}`)}>
+              <TouchableOpacity onPress={() => router.push(`/book-details/${item._id}`)}>
                 <LinearGradient colors={['#070c70', '#ff1493']} style={tw`mb-4 p-4 rounded-lg`}>
                   <View style={tw`flex-row`}>
                     <Image source={{ uri: item.bookCover }} style={tw`w-20 h-25 rounded-lg mr-4`} />

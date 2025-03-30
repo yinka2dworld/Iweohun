@@ -1,12 +1,11 @@
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { ScrollView, ActivityIndicator } from 'react-native';
 import tw from 'twrnc';
-import Searchbar from '../../components/Searchbar';
-import LanguageList from '../../components/LanguageList';
-import CategorySection from '../../components/CategorySection';
+import Searchbar from '@/components/Searchbar';
+import LanguageList from '@/components/LanguageList';
+import CategorySection from '@/components/CategorySection';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -67,9 +66,9 @@ export default function Main() {
     <ThemedView style={[tw`flex-1`, { backgroundColor }]}>
       <ScrollView>
         {/* Header */}
-        <ThemedView style={tw`ml-5 mt-12`}>
+        <ThemedView style={tw`ml-5 mt-5`}>
           <ThemedText type='title' style={{ color: textColor }}>Iweohun</ThemedText>
-          <ThemedText style={[tw`text-xl font-semibold`, { color: primaryColor }]}>
+          <ThemedText style={[tw`text-lg font-semibold`, { color: primaryColor }]}>
             Orating African literature
           </ThemedText>
         </ThemedView>

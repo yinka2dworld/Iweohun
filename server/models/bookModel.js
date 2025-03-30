@@ -15,8 +15,13 @@ const chapterSchema = new Schema({
   },
   progress: {
     type: Number, 
-  }
+  },
+  audioUrl: {
+    type: String,
+    required: true,
+  },
 });
+
 
 const bookSchema = new Schema({
   bookCover: {
@@ -38,10 +43,9 @@ const bookSchema = new Schema({
     type: String,
     required: true,
   },
-  
-  audioBook: {
+  reciter: {
     type: String,
-    // unique:true
+    required: true,
   },
   status: {
     type: String,

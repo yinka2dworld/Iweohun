@@ -7,7 +7,7 @@ import { ThemedView } from '@/components/ThemedView';
 
 export default function CategorySection({ title, books, textColor }) {
   const router = useRouter();
-  const logo = require('../../client/assets/images/logo.png');
+
   return (
     <ThemedView style={tw`ml-5 mb-5`}>
       <ThemedText style={[tw`text-2xl mb-3 font-bold`, { color: textColor }]}>{title}</ThemedText>
@@ -25,11 +25,11 @@ export default function CategorySection({ title, books, textColor }) {
           })}
           renderItem={({ item }) => (
             <TouchableOpacity
-              onPress={() => router.push(`/book/${item._id}`)}
+              onPress={() => router.push(`/book-details/${item._id}`)}
               style={tw`mr-3`}
             >
               <Image
-                source={{ uri: item.bookCover || logo}}
+                source={{ uri: item.bookCover }}
                 style={tw`w-24 h-36 rounded-lg`}
                 resizeMode="cover"
               />

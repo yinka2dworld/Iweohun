@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView
-} from 'react-native';
-import { useRouter } from 'expo-router';
+import axios from 'axios';
 import tw from 'twrnc';
+import Constants from 'expo-constants';
+import { useRouter } from 'expo-router';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import Constants from 'expo-constants';
+import { View, Text, Image, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+
 
 export default function Profile() {
   const router = useRouter();
@@ -48,21 +42,22 @@ export default function Profile() {
 
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
+  const primaryColor = useThemeColor({}, 'primary');
   const buttonColor = useThemeColor({}, 'text');
 
   return (
     <SafeAreaView style={[tw`flex-1`, { backgroundColor }]}> 
       <ScrollView>
         
-          <View style={tw`items-center my-15`}>
+          <View style={tw`items-center mt-10 mb-5`}>
             <Image
               source={{ uri: userData.profilePicture || testUser.profilePicture }}
-              style={tw`w-35 h-35 rounded-full border-4 border-white`}
+              style={tw`w-40 h-40 rounded-full border-4 border-white`}
             />
-            <ThemedText style={tw`text-2xl font-bold mt-3`}>
+            <ThemedText style={[tw`text-2xl font-bold mt-3`, { color: primaryColor }]}>
               {userData.fullName || testUser.name}
             </ThemedText>
-            <ThemedText style={tw`text-lg`}>{userData.email || testUser.email}</ThemedText>
+            <ThemedText style={[tw`text-lg`, { color: primaryColor }]}>{userData.email || testUser.email}</ThemedText>
           </View>
         
         <ThemedView style={tw`px-5 py-6`}>

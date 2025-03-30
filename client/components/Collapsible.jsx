@@ -37,10 +37,10 @@ const styles = StyleSheet.create({
   heading: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6, // Add space between the icon and text
+    gap: 6,
   },
   content: {
     marginTop: 6,
-    marginLeft: 24, // Indent the collapsible content
+    marginLeft: 24,
   },
 });

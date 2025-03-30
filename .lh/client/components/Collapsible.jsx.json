@@ -1,0 +1,18 @@
+{
+    "sourceFile": "client/components/Collapsible.jsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1743250654215,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1743250654215,
+            "name": "Commit-0",
+            "content": "import React, { useState } from 'react';\r\nimport { StyleSheet, TouchableOpacity } from 'react-native';\r\nimport { ThemedText } from '@/components/ThemedText';\r\nimport { ThemedView } from '@/components/ThemedView';\r\nimport { IconSymbol } from '@/components/ui/IconSymbol';\r\nimport { Colors } from '@/constants/Colors';\r\nimport { useColorScheme } from '@/hooks/useColorScheme';\r\n\r\n\r\nexport function Collapsible({ children, title }) {\r\n  const [isOpen, setIsOpen] = useState(false);\r\n  const theme = useColorScheme() || 'light';\r\n\r\n  return (\r\n    <ThemedView>\r\n      <TouchableOpacity\r\n        style={styles.heading}\r\n        onPress={() => setIsOpen((value) => !value)}\r\n        activeOpacity={0.8}\r\n      >\r\n        <IconSymbol\r\n          name=\"chevron.right\"\r\n          size={18}\r\n          weight=\"medium\"\r\n          color={theme === 'light' ? Colors.light.icon : Colors.dark.icon}\r\n          style={{ transform: [{ rotate: isOpen ? '90deg' : '0deg' }] }}\r\n        />\r\n\r\n        <ThemedText type=\"defaultSemiBold\">{title}</ThemedText>\r\n      </TouchableOpacity>\r\n      {isOpen && <ThemedView style={styles.content}>{children}</ThemedView>}\r\n    </ThemedView>\r\n  );\r\n}\r\n\r\nconst styles = StyleSheet.create({\r\n  heading: {\r\n    flexDirection: 'row',\r\n    alignItems: 'center',\r\n    gap: 6, // Add space between the icon and text\r\n  },\r\n  content: {\r\n    marginTop: 6,\r\n    marginLeft: 24,\r\n  },\r\n});\r\n"
+        }
+    ]
+}

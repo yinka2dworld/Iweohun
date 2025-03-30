@@ -42,10 +42,10 @@ export default function LanguageList() {
     }, []);
 
     return (
-        <View style={tw`w-full mt-6 mb-15`}>
+        <View style={tw`w-full mt-5 mb-15`}>
             <LinearGradient
                 colors={['#070c70', '#ff1493']}
-                style={tw`w-full rounded-t-3xl rounded-b-3xl p-4 `}
+                style={tw`w-full rounded-2xl p-4 `}
             >
                 <View style={tw`flex-row justify-between items-center mb-4`}>
                     <Text style={tw`text-[#f8f8f8] text-3xl font-bold`}>Languages</Text>

@@ -76,7 +76,7 @@ export default function TopChart() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[tw`flex-row items-center bg-white p-4 rounded-lg mb-4 shadow-md mx-5`]}
-            onPress={() => router.push(`/book/${item._id}`, { book: item })}
+            onPress={() => router.push(`/book-details/${item._id}`, { book: item })}
           >
             <Image source={{ uri: item.bookCover }} style={tw`w-16 h-20 rounded-md`} />
             <View style={tw`ml-4 flex-1`}>

@@ -44,7 +44,7 @@ export const getBook = async (req, res) => {
     try {
         const book = await Book.findById(_id)
         if (!book) {
-          console.error(error)
+          return res.status(404).json({ message: 'Book not found' });
       }
         res.status(200).json(book)  
     } catch (error) {

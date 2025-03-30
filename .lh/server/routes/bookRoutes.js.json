@@ -3,7 +3,7 @@
     "activeCommit": 0,
     "commits": [
         {
-            "activePatchIndex": 4,
+            "activePatchIndex": 5,
             "patches": [
                 {
                     "date": 1742792493638,
@@ -24,6 +24,10 @@
                 {
                     "date": 1743072726393,
                     "content": "Index: \n===================================================================\n--- \n+++ \n@@ -9,7 +9,7 @@\n router.get('/books', getBooks);\r\n router.get('/book/:_id', tokenChecker, getBook);\r\n router.put('/admin/updateBook/:_id', tokenChecker, updateBook);\r\n router.delete('/admin/deleteBook/:_id', tokenChecker, deleteBook);\r\n-router.get('/searchBar', tokenChecker, searchBook);\r\n+router.get('/searchBar', searchBook);\r\n \r\n export default router;\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1743187673207,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -6,9 +6,9 @@\n \r\n \r\n router.post('/admin/addBook', tokenChecker, addBook);\r\n router.get('/books', getBooks);\r\n-router.get('/book/:_id', tokenChecker, getBook);\r\n+router.get('/book/:_id', getBook);\r\n router.put('/admin/updateBook/:_id', tokenChecker, updateBook);\r\n router.delete('/admin/deleteBook/:_id', tokenChecker, deleteBook);\r\n router.get('/searchBar', searchBook);\r\n \r\n"
                 }
             ],
             "date": 1742792493638,
