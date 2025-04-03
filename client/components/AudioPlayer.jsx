@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import tw from 'twrnc';
 import { Audio } from 'expo-av';
 import Slider from '@react-native-community/slider';
@@ -8,9 +8,6 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 
-
-const sample = require('../../client/assets/sample.m4a');
-
 const AudioPlayer = ({ audioUrl, chapterTitle, onClose }) => {
   const [sound, setSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -18,54 +15,78 @@ const AudioPlayer = ({ audioUrl, chapterTitle, onClose }) => {
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(1);
 
-
   const primaryColor = useThemeColor({}, 'primary');
 
+  // Auto-play when `audioUrl` changes
   useEffect(() => {
-    return () => {
-      if (sound) {
-        sound.unloadAsync();
-      }
-    };
-  }, [sound]);
+    let newSound;
+    
+    const loadAndPlay = async () => {
+      if (!audioUrl) return; // Prevent errors if audioUrl is null
+      
+      setLoading(true);
 
-  const updatePosition = async () => {
-    if (sound) {
-      const status = await sound.getStatusAsync();
-      if (status.isLoaded) {
-        setPosition(status.positionMillis);
-        setDuration(status.durationMillis || 1);
-      }
-    }
-  };
+      try {
+        // Unload previous sound if it exists
+        if (sound) {
+          await sound.unloadAsync();
+        }
 
-  useEffect(() => {
-    let interval;
-    if (isPlaying) {
-      interval = setInterval(updatePosition, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isPlaying]);
+        // Load and play new audio
+        const { sound: loadedSound } = await Audio.Sound.createAsync(
+          { uri: audioUrl },
+          { shouldPlay: true }
+        );
 
-  const togglePlay = async () => {
-    try {
-      if (!sound) {
-        setLoading(true);
-        const { sound: newSound } = await Audio.Sound.createAsync({ uri: audioUrl || sample }, { shouldPlay: true });
+        newSound = loadedSound;
         setSound(newSound);
         setIsPlaying(true);
-      } else {
-        if (isPlaying) {
-          await sound.pauseAsync();
-        } else {
-          await sound.playAsync();
+
+        // Get duration
+        const status = await newSound.getStatusAsync();
+        if (status.isLoaded) {
+          setDuration(status.durationMillis || 1);
         }
-        setIsPlaying(!isPlaying);
+
+        // Listen for playback updates
+        newSound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded) {
+            setPosition(status.positionMillis);
+            setDuration(status.durationMillis || 1);
+            if (status.didJustFinish) {
+              setIsPlaying(false); // Stop when audio finishes
+            }
+          }
+        });
+
+      } catch (error) {
+        console.error('Error playing audio', error);
+      } finally {
+        setLoading(false);
       }
+    };
+
+    loadAndPlay();
+
+    return () => {
+      if (newSound) {
+        newSound.unloadAsync();
+      }
+    };
+  }, [audioUrl]); // Runs whenever audioUrl changes
+
+  // Toggle play/pause
+  const togglePlay = async () => {
+    if (!sound) return;
+    try {
+      if (isPlaying) {
+        await sound.pauseAsync();
+      } else {
+        await sound.playAsync();
+      }
+      setIsPlaying(!isPlaying);
     } catch (error) {
-      console.error('Error playing audio', error);
-    } finally {
-      setLoading(false);
+      console.error('Error toggling playback', error);
     }
   };
 
@@ -95,7 +116,7 @@ const AudioPlayer = ({ audioUrl, chapterTitle, onClose }) => {
   };
 
   return (
-    <ThemedView style={[tw`absolute bottom-0 w-full p-1 bg-[#070c70]`,]}> 
+    <ThemedView style={[tw`absolute bottom-0 w-full p-2 bg-[#070c70]`]}>
       <ThemedText style={tw`font-bold text-center text-white`}>{chapterTitle}</ThemedText>
 
       <View style={tw`flex-row justify-center items-center `}>

@@ -47,10 +47,10 @@ const BookDetails = ({ defaultRating = 0 }) => {
 
   const handleChapterSelect = (chapter) => {
     setAudioDetails({
-      audioUri: chapter.audioUri,
+      audioUrl: chapter.audioUrl, 
       chapterTitle: chapter.title,
     });
-  };
+  };  
 
   const renderTabContent = () => {
     switch (selectedTab) {
@@ -131,7 +131,7 @@ const BookDetails = ({ defaultRating = 0 }) => {
       />
 
       {audioDetails && (
-        <AudioPlayer audioUri={audioDetails.audioUri} chapterTitle={audioDetails.chapterTitle} onClose={() => setAudioDetails(null)} />
+        <AudioPlayer audioUrl={audioDetails.audioUrl} chapterTitle={audioDetails.chapterTitle} onClose={() => setAudioDetails(null)} />
       )}
     </SafeAreaView>
   );

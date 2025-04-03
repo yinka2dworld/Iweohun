@@ -9,7 +9,7 @@ const Chapters = ({ book, onChapterSelect }) => {
   if (!book?.chapters?.length) {
     return <ThemedText style={tw`text-center p-4`}>No chapters available.</ThemedText>;
   }
-
+ 
   return (
     <FlatList
       data={book.chapters}
