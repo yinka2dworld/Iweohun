@@ -8,7 +8,7 @@ import { Error } from "mongoose";
 
 
 export const signup = async (req, res) => {
-  const  { username, email, password } = req.body;
+  const  { username, email, password, phoneNumber } = req.body;
      try {
         const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -16,7 +16,7 @@ export const signup = async (req, res) => {
     }
         const hashedPassword = await bcrypt.hash(password, 10);
     
-    const signupInfo = await User.create({ username, email, password: hashedPassword })
+    const signupInfo = await User.create({ username, email, phoneNumber, password: hashedPassword })
     if (!signupInfo) {
        console.error(error)
     }
@@ -29,8 +29,6 @@ export const signup = async (req, res) => {
 
 
 export const login = async (req, res) => {
-  console.log("Login request body:", req.body); // Debugging line
-
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ message: "Username and password are required" });
@@ -38,24 +36,21 @@ export const login = async (req, res) => {
 
   try {
     const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(400).json({ message: "Incorrect username" });
-    }
+    if (!user) return res.status(400).json({ message: "Incorrect username" });
 
     const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      return res.status(400).json({ message: "Incorrect password" });
-    }
+    if (!passwordMatch) return res.status(400).json({ message: "Incorrect password" });
 
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "5h" }
+      { expiresIn: "365d" }
     );
 
     return res.status(200).json({
       message: "User logged in successfully",
       userId: user._id,
+      username: user.username,
       role: user.role,
       token,
     });
@@ -67,37 +62,34 @@ export const login = async (req, res) => {
 
 
 export const users = async (req, res) => {
-    if (req.user.role != 'superAdmin' || 'admin') {
-            throw new Error('You are not authorized to access this.');    
-      }
-    try {
-        const usersInfo = await User.find()
-        if (!usersInfo) {
-            console.error(error)
-        }
-      return  res.status(200).json({ usersInfo })  
-    } catch (error) {
-        res.status(400).json({message:'Unable to fetch users', error})  
+  if (req.user.role != 'superAdmin' || 'admin') {
+          throw new Error('You are not authorized to access this.');    
     }
-
+  try {
+      const usersInfo = await User.find()
+      if (!usersInfo) {
+          console.error(error)
+      }
+    return  res.status(200).json({ usersInfo })  
+  } catch (error) {
+      res.status(400).json({message:'Unable to fetch users', error})  
+  }
 }
 
 
 export const user = async (req, res) => {  
-    if (req.user.role != 'superAdmin' || 'admin') {
-        throw new Error('You are not authorized to access this.'); 
-       }
-        const { _id } = req.params
-    try {
-        const userInfo = await User.findById(_id)
-        if (!userInfo) {
-            console.error(error)
-        }
-       return res.status(200).json(userInfo)
-    } catch (error) {
-        res.status(400).json({message:'Unable to fetch user', error})   
+  const { _id } = req.params;
+  try {
+      const userInfo = await User.findById(_id);
+      if (!userInfo) {
+          return res.status(404).json({ message: 'User not found' });
       }
-    }
+      return res.status(200).json(userInfo);
+  } catch (error) {
+      console.error('Error fetching user:', error);
+      return res.status(500).json({ message: 'Server error while fetching user', error: error.message });
+  }
+};
 
 
 export const deleteUser = async (req, res) => { 

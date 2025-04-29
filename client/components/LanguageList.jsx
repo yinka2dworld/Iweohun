@@ -59,7 +59,7 @@ export default function LanguageList() {
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <TouchableOpacity
-                            onPress={() => router.push(`/language/${item.id}`, { language: item })}
+                            onPress={() => router.push(`/language-books/${item.name}`)}
                             style={tw`mr-3`}>
                             <View style={tw`relative w-60 h-60 rounded-lg overflow-hidden`}>
                                 <Image

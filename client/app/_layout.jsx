@@ -34,6 +34,12 @@ export default function RootLayout() {
         <Stack.Screen name="auth/signup" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="book-details/[bookId]" options={{ headerShown: false }} />
+        <Stack.Screen name="screens/about-iweohun" options={{ headerShown: false }} />
+        <Stack.Screen name="screens/about-okin" options={{ headerShown: false }} />
+        <Stack.Screen name="screens/terms-policy" options={{ headerShown: false }} />
+        <Stack.Screen name="screens/addBook" options={{ headerShown: false }} />
+        <Stack.Screen name="edit-book/[bookId]" options={{ headerShown: false }} />
+        <Stack.Screen name="language-books/[language]" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />

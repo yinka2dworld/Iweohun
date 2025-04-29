@@ -1,92 +1,73 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  SafeAreaView, FlatList, View, TouchableOpacity, 
-  Image, Modal, Pressable, Dimensions, ActivityIndicator 
-} from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { SafeAreaView, FlatList, View, TouchableOpacity, Image, Modal, Pressable, Dimensions, ActivityIndicator } from 'react-native';
 import tw from 'twrnc';
+import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import axios from 'axios';
-import Constants from 'expo-constants';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function Library() {
   const router = useRouter();
-  const [books, setBooks] = useState([]);
+  const [savedBooks, setSavedBooks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedBook, setSelectedBook] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [buttonPosition, setButtonPosition] = useState({ top: 0, right: 0 });
 
-  // Theme colors
   const backgroundColor = useThemeColor({}, 'background');
   const modalBackgroundColor = useThemeColor({}, 'modalBackground');
   const textColor = useThemeColor({}, 'text');
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
 
-  // Fetch books
-  useEffect(() => {
-    axios.get(`${apiUrl}/books`)
-      .then((res) => {
-        setBooks(Array.isArray(res.data.books) ? res.data.books : []);
-        setLoading(false);
-      })
-      .catch((error) => {
-        setError(error.message);
-        setLoading(false);
-      });
-  }, [apiUrl]);
+  // Fetch saved books every time screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      const fetchSavedBooks = async () => {
+        try {
+          const saved = await SecureStore.getItemAsync('savedBooks');
+          setSavedBooks(saved ? JSON.parse(saved) : []);
+        } catch (error) {
+          console.error('Error loading saved books:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-  // Handle book options modal
+      fetchSavedBooks();
+    }, [])
+  );
+
   const handlePress = (book, event) => {
     const { pageX, pageY } = event.nativeEvent;
     const screenWidth = Dimensions.get('window').width;
-    
+
     setSelectedBook(book);
-    setButtonPosition({ 
-      top: pageY, 
-      right: Math.max(10, screenWidth - pageX - 40) // Keeps modal inside screen
+    setButtonPosition({
+      top: pageY,
+      right: Math.max(10, screenWidth - pageX - 40),
     });
     setModalVisible(true);
   };
 
-  // Handle modal actions
-  const handleAction = (action) => {
-    setModalVisible(false);
-    if (!selectedBook) return;
-    switch (action) {
-      case 'view':
-        router.push(`/book/${selectedBook.id}`);
-        break;
-      case 'edit':
-        router.push(`/edit/${selectedBook.id}`);
-        break;
-      case 'delete':
-        alert('Book deleted');
-        break;
-      default:
-        break;
+  const handleRemove = async (bookId) => {
+    try {
+      const updatedBooks = savedBooks.filter((book) => book._id !== bookId);
+      setSavedBooks(updatedBooks);
+      await SecureStore.setItemAsync('savedBooks', JSON.stringify(updatedBooks));
+      setModalVisible(false);
+    } catch (error) {
+      console.error('Error removing book:', error);
     }
   };
 
-  // Loading/Error states
   if (loading) {
     return (
       <ThemedView style={[tw`flex-1 items-center justify-center`, { backgroundColor }]}>
         <ActivityIndicator size="large" color="#ff1493" />
-        <ThemedText style={{ color: textColor, marginTop: 10 }}>Loading library</ThemedText>
-      </ThemedView>
-    );
-  }
-
-  if (error) {
-    return (
-      <ThemedView style={[tw`flex-1 items-center justify-center`, { backgroundColor }]}>
-        <ThemedText style={{ color: textColor }}>Error: {error}</ThemedText>
+        <ThemedText style={{ color: textColor, marginTop: 10 }}>Loading library...</ThemedText>
       </ThemedView>
     );
   }
@@ -94,13 +75,13 @@ export default function Library() {
   return (
     <SafeAreaView style={[tw`flex-1`, { backgroundColor }]}>
       <ThemedView style={tw`p-4`}>
-        <ThemedText type="title" style={[tw` mb-10`, { color: textColor }]}>My Library</ThemedText>
-        
-        {books.length === 0 ? (
-          <ThemedText style={{ color: textColor }}>No books available.</ThemedText>
+        <ThemedText type="title" style={[tw`mt-5 mb-10`, { color: textColor }]}>My Library</ThemedText>
+
+        {savedBooks.length === 0 ? (
+          <ThemedText style={{ color: textColor }}>No books in your library.</ThemedText>
         ) : (
           <FlatList
-            data={books}
+            data={savedBooks}
             keyExtractor={(item) => item._id?.toString() || Math.random().toString()}
             contentContainerStyle={tw`pb-10 mt-5`}
             renderItem={({ item }) => (
@@ -112,8 +93,8 @@ export default function Library() {
                       <ThemedText style={tw`text-lg font-bold text-white`}>{item.bookName}</ThemedText>
                       <ThemedText style={tw`text-sm text-white`}>{item.bookAuthor}</ThemedText>
                     </View>
-                    <TouchableOpacity 
-                      onPress={(event) => handlePress(item, event)} 
+                    <TouchableOpacity
+                      onPress={(event) => handlePress(item, event)}
                       style={tw`justify-center pl-2`}
                     >
                       <Icon name="more-vert" size={24} color="white" />
@@ -125,21 +106,17 @@ export default function Library() {
           />
         )}
 
-        {/* Modal Positioned Near Button */}
-        {modalVisible && (
-          <Pressable 
+        {modalVisible && selectedBook && (
+          <Pressable
             style={[tw`absolute`, { top: buttonPosition.top, right: buttonPosition.right }]}
             onPress={() => setModalVisible(false)}
           >
             <View style={[tw`p-3 rounded-lg shadow-lg`, { backgroundColor: modalBackgroundColor }]}>
-              <TouchableOpacity onPress={() => handleAction('share')} style={tw`p-3 border-b`}>
+              <TouchableOpacity onPress={() => handleRemove(selectedBook._id)} style={tw`p-3`}>
+                <ThemedText style={tw`text-lg text-white`}>Remove from Library</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleAction('share')} style={tw`p-3`}>
                 <ThemedText style={tw`text-lg text-white`}>share book</ThemedText>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleAction('credits')} style={tw`p-3 border-b`}>
-                <ThemedText style={tw`text-lg text-white`}>View credits</ThemedText>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleAction('remove')} style={tw`p-3`}>
-                <ThemedText style={tw`text-lg text-white`}>Remove book</ThemedText>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -148,3 +125,4 @@ export default function Library() {
     </SafeAreaView>
   );
 }
+

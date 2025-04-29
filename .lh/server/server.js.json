@@ -3,7 +3,7 @@
     "activeCommit": 0,
     "commits": [
         {
-            "activePatchIndex": 22,
+            "activePatchIndex": 23,
             "patches": [
                 {
                     "date": 1742539379290,
@@ -96,6 +96,10 @@
                 {
                     "date": 1742792794511,
                     "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,52 @@\n+import express from 'express';\r\n+import cors from 'cors';\r\n+import dotenv from 'dotenv';\r\n+import bodyParser from 'body-parser';\r\n+import bookRoutes from './routes/bookRoutes.js';\r\n+import userRoutes from './routes/userRoutes.js';\r\n+import dbConnecter from './utils/db.js';\r\n+\r\n+// Initialize dotenv\r\n+dotenv.config();\r\n+\r\n+// Initialize Express server\r\n+const server = express();\r\n+const port = process.env.PORT || 3000;\r\n+\r\n+\r\n+server.use(  cors() );\r\n+server.use(express.json());\r\n+server.use(bodyParser.json());\r\n+server.use(express.urlencoded({ extended: true }));\r\n+\r\n+const startServer = async () => {\r\n+    try {\r\n+        // Connect to the database\r\n+        await dbConnecter();\r\n+        console.log('Database connected successfully');\r\n+\r\n+        \r\n+\r\n+        // Routes\r\n+        server.use(bookRoutes);\r\n+        server.use(userRoutes);\r\n+\r\n+        // Start the server\r\n+        server.listen(port, () => {\r\n+            console.log(`Server is running at http://localhost:${port}`);\r\n+        });\r\n+    } catch (err) {\r\n+        console.error('Error starting the server:', err.message);\r\n+        process.exit(1); \r\n+    }\r\n+};\r\n+\r\n+startServer();\r\n+\r\n+\r\n+\r\n+\r\n+\r\n+\r\n+\r\n+\r\n"
+                },
+                {
+                    "date": 1744382382367,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -13,9 +13,8 @@\n const server = express();\r\n const port = process.env.PORT || 3000;\r\n \r\n \r\n-server.use(  cors() );\r\n server.use(express.json());\r\n server.use(bodyParser.json());\r\n server.use(express.urlencoded({ extended: true }));\r\n \r\n@@ -49,58 +48,4 @@\n \r\n \r\n \r\n \r\n-import express from 'express';\r\n-import cors from 'cors';\r\n-import dotenv from 'dotenv';\r\n-import bodyParser from 'body-parser';\r\n-import bookRoutes from './routes/bookRoutes.js';\r\n-import userRoutes from './routes/userRoutes.js';\r\n-import dbConnecter from './utils/db.js';\r\n-\r\n-// Initialize dotenv\r\n-dotenv.config();\r\n-\r\n-// Initialize Express server\r\n-const server = express();\r\n-const port = process.env.PORT || 3000;\r\n-\r\n-\r\n-server.use(\r\n-    cors()\r\n-  );\r\n-server.use(express.json());\r\n-server.use(bodyParser.json());\r\n-server.use(express.urlencoded({ extended: true }));\r\n-\r\n-const startServer = async () => {\r\n-    try {\r\n-        // Connect to the database\r\n-        await dbConnecter();\r\n-        console.log('Database connected successfully');\r\n-\r\n-        \r\n-\r\n-        // Routes\r\n-        server.use(bookRoutes);\r\n-        server.use(userRoutes);\r\n-\r\n-        // Start the server\r\n-        server.listen(port, () => {\r\n-            console.log(`Server is running at http://localhost:${port}`);\r\n-        });\r\n-    } catch (err) {\r\n-        console.error('Error starting the server:', err.message);\r\n-        process.exit(1); \r\n-    }\r\n-};\r\n-\r\n-startServer();\r\n-\r\n-\r\n-\r\n-\r\n-\r\n-\r\n-\r\n-\r\n"
                 }
             ],
             "date": 1742539379290,

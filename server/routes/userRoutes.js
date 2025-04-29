@@ -9,7 +9,7 @@ router.post( '/login', login);
 // app.get('/auth/google', googleAuth);
 // app.get('/auth/google/callback', googleAuthCallback);
 router.get( '/admin/users', tokenChecker, users);
-router.get( '/user/:_id', tokenChecker, user);
+router.get( '/user/:_id', user);
 router.put( '/updateUser/:_id', tokenChecker, updateUser);
 router.delete( '/admin/deleteUser/:_id', tokenChecker, deleteUser);
 router.patch( '/resetPassword', resetPassword);

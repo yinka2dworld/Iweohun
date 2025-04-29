@@ -1,72 +1,116 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import tw from 'twrnc';
-import Constants from 'expo-constants';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  SafeAreaView,
+  ActivityIndicator,
+} from 'react-native';
 import { useRouter } from 'expo-router';
+import tw from 'twrnc';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, Text, Image, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
-
+import * as SecureStore from 'expo-secure-store';
+import axios from 'axios';
+import Constants from 'expo-constants';
 
 export default function Profile() {
   const router = useRouter();
   const [userData, setUserData] = useState({});
+  const [loading, setLoading] = useState(true);
+
   const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
 
+  const backgroundColor = useThemeColor({}, 'background');
+  const buttonColor = '#070c70';
+
+  const sampleUser = {
+    username: 'User',
+    email: 'user@example.com',
+    profilePhoto:
+      'https://static.vecteezy.com/system/resources/previews/018/765/757/original/user-profile-icon-in-flat-style-member-avatar-illustration-on-isolated-background-human-permission-sign-business-concept-vector.jpg',
+  };
+
   useEffect(() => {
+    const getUserData = async () => {
+      try {
+        const userId = await SecureStore.getItemAsync('userId');
+         const token = await SecureStore.getItemAsync('authToken');
+        if (!userId) throw new Error('User ID not found');
+
+        const response = await axios.get(`${apiUrl}/user/${userId}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+             },
+          }
+        );
+        setUserData(response.data);
+      } catch (error) {
+        console.error('Error retrieving user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     getUserData();
   }, []);
 
-  const getUserData = async () => {
+  const handleSignOut = async () => {
     try {
-      const userId = await AsyncStorage.getItem('userId');
-      const response = await axios.get(`${apiUrl}/user/${userId}`);
-      setUserData(response.data);
+      await Promise.all([
+        SecureStore.deleteItemAsync('userId'),
+        SecureStore.deleteItemAsync('authToken'), 
+        SecureStore.deleteItemAsync('userRole'), 
+      ]);
+  
+     
+      console.log('User signed out successfully');
+  
+      
+      router.replace('/auth/login'); 
+  
     } catch (error) {
-      console.error('Error retrieving user data:', error);
+      console.error('Error signing out:', error);
     }
   };
 
-  const testUser = {
-    name: 'Ali',
-    email: 'ali@example.com',
-    profilePicture:
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1tf3QiePLGWrYYU0hiSD594zkUHdspxc6Og&s',
-  };
-
-  const handleSignOut = () => {
-    router.push('/logout');
-  };
-
-  const backgroundColor = useThemeColor({}, 'background');
-  const textColor = useThemeColor({}, 'text');
-  const primaryColor = useThemeColor({}, 'primary');
-  const buttonColor = useThemeColor({}, 'text');
+  if (loading) {
+    return (
+      <ThemedView style={tw`flex-1 items-center justify-center`}>
+        <ActivityIndicator size="large" color={buttonColor} />
+        <ThemedText style={tw`mt-4`}>Loading profile</ThemedText>
+      </ThemedView>
+    );
+  }
 
   return (
-    <SafeAreaView style={[tw`flex-1`, { backgroundColor }]}> 
+    <SafeAreaView style={[tw`flex-1`, { backgroundColor }]}>
       <ScrollView>
-        
-          <View style={tw`items-center mt-10 mb-5`}>
-            <Image
-              source={{ uri: userData.profilePicture || testUser.profilePicture }}
-              style={tw`w-40 h-40 rounded-full border-4 border-white`}
-            />
-            <ThemedText style={[tw`text-2xl font-bold mt-3`, { color: primaryColor }]}>
-              {userData.fullName || testUser.name}
-            </ThemedText>
-            <ThemedText style={[tw`text-lg`, { color: primaryColor }]}>{userData.email || testUser.email}</ThemedText>
-          </View>
-        
-        <ThemedView style={tw`px-5 py-6`}>
-          <ProfileButton label="Edit Profile" onPress={() => router.push('/edit-profile')} buttonColor={buttonColor} />
+        <View style={tw`items-center my-10`}>
+          <Image
+            source={{ uri: userData.profilePhoto || sampleUser.profilePhoto }}
+            style={tw`w-30 h-30 rounded-full border-4 border-white`}
+          />
+          <ThemedText style={tw`text-2xl font-bold mt-3`}>
+            {userData.username || sampleUser.username}
+          </ThemedText>
+          <ThemedText style={tw`text-lg`}>
+            {userData.email || sampleUser.email}
+          </ThemedText>
+        </View>
+
+        <ThemedView style={tw`px-10 py-6`}>
+          <ProfileButton label="Become a creator" onPress={() => router.push('/edit-profile')} buttonColor={buttonColor} />
+          <ProfileButton label="My Dashboard" onPress={() => router.push('/settings')} buttonColor={buttonColor} />
           <ProfileButton label="Settings" onPress={() => router.push('/settings')} buttonColor={buttonColor} />
-          <ProfileButton label="Privacy Policy" onPress={() => router.push('/privacy-policy')} buttonColor={buttonColor} />
-          <ProfileButton label="Terms of Service" onPress={() => router.push('/terms-of-service')} buttonColor={buttonColor} />
-          <ProfileButton label="About Iweohun" onPress={() => router.push('/about-iweohun')} buttonColor={buttonColor} />
-          <ProfileButton label="About Okin Technologies" onPress={() => router.push('/about-okin-technologies')} buttonColor={buttonColor} />
+          <ProfileButton label="Terms and Privacy Policy" onPress={() => router.push('/screens/terms-policy')} buttonColor={buttonColor} />
+          <ProfileButton label="About Iweohun" onPress={() => router.push('/screens/about-iweohun')} buttonColor={buttonColor} />
+          <ProfileButton label="About Okin Technologies" onPress={() => router.push('/screens/about-okin')} buttonColor={buttonColor} />
           <ProfileButton label="Sign Out" onPress={handleSignOut} buttonColor="red" />
         </ThemedView>
       </ScrollView>
@@ -77,10 +121,12 @@ export default function Profile() {
 function ProfileButton({ label, onPress, buttonColor }) {
   return (
     <TouchableOpacity
-      style={[tw`rounded-3xl px-6 py-3 mb-6`, { backgroundColor: buttonColor }]}
+      style={[tw`rounded-3xl px-3 py-3 mb-6`, { backgroundColor: buttonColor }]}
       onPress={onPress}
     >
-      <Text style={tw`text-white text-lg font-semibold text-center`}>{label}</Text>
+      <ThemedText style={tw`text-white text-lg font-semibold text-center`}>
+        {label}
+      </ThemedText>
     </TouchableOpacity>
   );
 }

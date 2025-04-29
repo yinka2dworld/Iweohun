@@ -1,0 +1,42 @@
+{
+    "sourceFile": "server/models/ratingModel.js",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 6,
+            "patches": [
+                {
+                    "date": 1745751635998,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1745751649001,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,9 +7,9 @@\n     required: true,\r\n   },\r\n   user: {\r\n     type: mongoose.Schema.Types.ObjectId,\r\n-    ref: 'User', // assuming you have a User model\r\n+    ref: 'User', \r\n     required: true,\r\n   },\r\n   rating: {\r\n     type: Number,\r\n"
+                },
+                {
+                    "date": 1745751671091,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -2,9 +2,9 @@\n \r\n const RatingSchema = new mongoose.Schema({\r\n   audiobook: {\r\n     type: mongoose.Schema.Types.ObjectId,\r\n-    ref: 'Audiobook',\r\n+    ref: '',\r\n     required: true,\r\n   },\r\n   user: {\r\n     type: mongoose.Schema.Types.ObjectId,\r\n"
+                },
+                {
+                    "date": 1745751690519,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -2,9 +2,9 @@\n \r\n const RatingSchema = new mongoose.Schema({\r\n   audiobook: {\r\n     type: mongoose.Schema.Types.ObjectId,\r\n-    ref: '',\r\n+    ref: 'Book',\r\n     required: true,\r\n   },\r\n   user: {\r\n     type: mongoose.Schema.Types.ObjectId,\r\n@@ -22,8 +22,7 @@\n     default: Date.now,\r\n   },\r\n });\r\n \r\n-// Optional: prevent a user from rating the same audiobook twice\r\n RatingSchema.index({ audiobook: 1, user: 1 }, { unique: true });\r\n \r\n export default mongoose.model('Rating', RatingSchema);\r\n"
+                },
+                {
+                    "date": 1745751699192,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,8 +1,8 @@\n import mongoose from 'mongoose';\r\n \r\n const RatingSchema = new mongoose.Schema({\r\n-  audiobook: {\r\n+  book: {\r\n     type: mongoose.Schema.Types.ObjectId,\r\n     ref: 'Book',\r\n     required: true,\r\n   },\r\n"
+                },
+                {
+                    "date": 1745751707613,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -22,7 +22,7 @@\n     default: Date.now,\r\n   },\r\n });\r\n \r\n-RatingSchema.index({ book: 1, user: 1 }, { unique: true });\r\n+RatingSchema.index({book: 1, user: 1 }, { unique: true });\r\n \r\n export default mongoose.model('Rating', RatingSchema);\r\n"
+                },
+                {
+                    "date": 1745781694243,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -24,5 +24,5 @@\n });\r\n \r\n RatingSchema.index({ book: 1, user: 1 }, { unique: true });\r\n \r\n-export default mongoose.model('Rating', RatingSchema) ;\r\n+export default mongoose.model('Rating', RatingSchema) || mongoose.model('Rating', ratingSchema);;\r\n"
+                }
+            ],
+            "date": 1745751635998,
+            "name": "Commit-0",
+            "content": "import mongoose from 'mongoose';\r\n\r\nconst RatingSchema = new mongoose.Schema({\r\n  audiobook: {\r\n    type: mongoose.Schema.Types.ObjectId,\r\n    ref: 'Audiobook',\r\n    required: true,\r\n  },\r\n  user: {\r\n    type: mongoose.Schema.Types.ObjectId,\r\n    ref: 'User', // assuming you have a User model\r\n    required: true,\r\n  },\r\n  rating: {\r\n    type: Number,\r\n    required: true,\r\n    min: 1,\r\n    max: 5,\r\n  },\r\n  createdAt: {\r\n    type: Date,\r\n    default: Date.now,\r\n  },\r\n});\r\n\r\n// Optional: prevent a user from rating the same audiobook twice\r\nRatingSchema.index({ audiobook: 1, user: 1 }, { unique: true });\r\n\r\nexport default mongoose.model('Rating', RatingSchema);\r\n"
+        }
+    ]
+}

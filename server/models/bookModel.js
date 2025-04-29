@@ -6,19 +6,25 @@ const chapterSchema = new Schema({
     type: String,
     required: true,
   },
+
   title: {
     type: String,
     required: true,
   },
+
   duration: {
     type: String,
+    // required: true,
   },
+
   progress: {
     type: Number, 
+    default: 0, 
   },
+  
   audioUrl: {
     type: String,
-    required: true,
+    // required: true,
   },
 });
 
@@ -26,53 +32,71 @@ const chapterSchema = new Schema({
 const bookSchema = new Schema({
   bookCover: {
     type: String,
-    required: true
+    // required: true
     // unique:true,
   },
+
   bookName: {
     type: String,
     required: true,
     // unique: true,
   },
+
   bookDescription: {
     type: String,
     required: true,
     // unique:true
   },
+
   bookAuthor: {
     type: String,
     required: true,
   },
+
   reciter: {
     type: String,
     required: true,
   },
+
   status: {
     type: String,
     enum: ['isCertified', 'notCertified'],
     default: 'notCertified',
     required: true
-  },
-  likes: {
-    type: Number,
-  },
+  },  
+
   chapters: [chapterSchema], 
+
+  listenersList: [{ 
+    type: [mongoose.Schema.Types.ObjectId],
+    default: [],
+    ref: 'User' 
+  }],
+
   listeners: {
     type: Number,
     default: 0,
   },
+
   category: {
     type: String,
     required: true,
     enum: ['History & Biographies', 'Fiction & Romance', 'Kids', 'Personal Development', 'Adventure & Thrillers']
   },
+
   language: {
     type: String,
     required: true,
-  },
+  }, 
+  
+  postedBy:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User', 
+      required: true,
+       },
 },
   { timestamps: true }
 );
 
-const Book = mongoose.model('Book', bookSchema);
+const Book = mongoose.models.Book || mongoose.model('Book', bookSchema);
 export default Book;

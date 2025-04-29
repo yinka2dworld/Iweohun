@@ -56,7 +56,7 @@ password:{
 
      role:{
       type: String,
-       enum: ['admin', 'user', 'superAdmin'],
+       enum: ['admin', 'user', 'creator', 'superAdmin'],
       default: 'user',
        required: true
      },
@@ -73,5 +73,5 @@ password:{
 );
 
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.models.User || mongoose.model('User', userSchema);
 export default User;

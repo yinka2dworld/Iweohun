@@ -4,24 +4,27 @@ import tw from 'twrnc';
 import axios from 'axios';
 import Constants from 'expo-constants';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import StarRating from 'react-native-star-rating-widget';
 import Chapters from '@/components/Chapters';
 import Related from '@/components/Related';
 import Reviews from '@/components/Reviews';
 import AudioPlayer from '@/components/AudioPlayer';
+import BookRatings from '@/components/BookRatings';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import * as SecureStore from 'expo-secure-store';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const BookDetails = ({ defaultRating = 0 }) => {
+
+const BookDetails = ({ }) => {
   const { bookId } = useLocalSearchParams();
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedTab, setSelectedTab] = useState('Chapters');
   const [audioDetails, setAudioDetails] = useState(null);
-  const [rating, setRating] = useState(defaultRating);
+  const [isSaved, setIsSaved] = useState(false);
+  const [hasListened, setHasListened] = useState(false);
 
   const router = useRouter();
   const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
@@ -29,41 +32,119 @@ const BookDetails = ({ defaultRating = 0 }) => {
   const backgroundColor = useThemeColor({}, 'background');
   const primaryColor = useThemeColor({}, 'primary');
 
+  
   useEffect(() => {
-    if (!bookId) return;
-    setLoading(true);
+    const fetchBook = async () => {
+      if (!bookId) return;
 
-    axios
-      .get(`${apiUrl}/book/${bookId}`)
-      .then((res) => {
-        setBook(res.data);
+      try {
+        setLoading(true);
+        setError(null);
+        const token = await SecureStore.getItemAsync('authToken');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+        const response = await axios.get(`${apiUrl}/book/${bookId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        setBook(response.data);
+        setHasListened(false);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      } finally {
         setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
+      }
+    };
+    fetchBook();
   }, [bookId]);
 
-  const handleChapterSelect = (chapter) => {
+
+  const handleChapterSelect = async (chapter) => {
     setAudioDetails({
-      audioUrl: chapter.audioUrl, 
+      audioUrl: chapter.audioUrl,
       chapterTitle: chapter.title,
     });
-  };  
+
+    if (book?._id && !hasListened) { 
+      await handleListen(book._id);
+      setHasListened(true); 
+    }
+  };
+
+
+  const handleListen = async (bookId) => {
+    try {
+      const userId = await SecureStore.getItemAsync('userId');
+      const token = await SecureStore.getItemAsync('authToken');
+      
+      if (!userId || !token) {
+        console.warn('User ID or Token not found.');
+        return;
+      }
+  
+      await axios.post(`${apiUrl}/addListener/${bookId}`, { userId }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      });
+  
+      console.log('Listener counted successfully.');
+    } catch (error) {
+      console.error('Error counting listener:', error);
+    }
+  };
+
 
   const renderTabContent = () => {
     switch (selectedTab) {
       case 'Chapters':
         return <Chapters book={book} onChapterSelect={handleChapterSelect} />;
       case 'Related':
-        return <Related />;
+        return <Related bookId={book._id} />;
       case 'Reviews':
-        return <Reviews />;
+        return <Reviews bookId={book._id} />;
       default:
         return null;
     }
   };
+
+  
+  useEffect(() => {
+    const checkIfSaved = async () => {
+      const saved = await SecureStore.getItemAsync('savedBooks');
+      const savedBooks = saved ? JSON.parse(saved) : [];
+      const exists = savedBooks.some((b) => b._id === book?._id);
+      setIsSaved(exists);
+    };
+    if (book) checkIfSaved();
+  }, [book]);
+
+  const handleSave = async () => {
+    try {
+      const saved = await SecureStore.getItemAsync('savedBooks');
+      let savedBooks = saved ? JSON.parse(saved) : [];
+
+      const exists = savedBooks.some((b) => b._id === book._id);
+
+      if (exists) {
+        // Remove if already saved
+        savedBooks = savedBooks.filter((b) => b._id !== book._id);
+      } else {
+        // Add if not saved
+        savedBooks.push(book);
+      }
+
+      await SecureStore.setItemAsync('savedBooks', JSON.stringify(savedBooks));
+      setIsSaved(!exists); // Toggle button
+    } catch (error) {
+      console.error('Error saving book:', error);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -87,10 +168,17 @@ const BookDetails = ({ defaultRating = 0 }) => {
       <FlatList
         ListHeaderComponent={
           <ThemedView>
-            {/* Header */}
-            <ThemedView style={tw`flex-row items-center my-3`}>
+
+            <ThemedView style={tw`flex-row items-center my-8 mx-2`}>
               <TouchableOpacity onPress={() => router.back()} style={tw`p-2`}>
                 <MaterialCommunityIcons name="arrow-left" size={28} color={primaryColor} />
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={handleSave} style={tw`ml-auto p-2`}>
+                <MaterialCommunityIcons
+                  name={isSaved ? 'bookmark' : 'bookmark-outline'}
+                  size={28}
+                  color={primaryColor} />
               </TouchableOpacity>
             </ThemedView>
 
@@ -105,10 +193,7 @@ const BookDetails = ({ defaultRating = 0 }) => {
               <ThemedText style={tw`text-xl font-bold mt-3`}>{book.bookName}</ThemedText>
               <ThemedText style={[tw`text-sm font-semibold`, { color: primaryColor }]}>Author: {book.bookAuthor}</ThemedText>
               <ThemedText style={tw`text-sm`}>Reciter: {book.reciter || 'N/A'}</ThemedText>
-
-              <ThemedView style={tw`mt-2`}>
-                <StarRating rating={rating} onChange={setRating} starSize={20} color={primaryColor} />
-              </ThemedView>
+                 <BookRatings/>
             </ThemedView>
 
             {/* Tabs */}

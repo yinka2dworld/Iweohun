@@ -1,32 +1,31 @@
-import jwt from 'jsonwebtoken';
-const secretString = process.env.SECRET_STRING
-
-
+import jwt from 'jsonwebtoken'; 
 
 export const tokenChecker = (req, res, next) => {
+  
     const authHeader = req.get('Authorization');
-    
+  
     if (!authHeader) {
-        return res.status(401).json({ error: 'No token provided, please log in.' }); // Add `return` here
+      return res.status(401).json({ error: 'No token provided' });
     }
-
+  
     const token = authHeader.split(' ')[1];
-    let decodedToken;
-
+  
     try {
-        decodedToken = jwt.verify(token, secretString);
-        if (!decodedToken) {
-            return res.status(401).json({ error: 'Invalid token, please log in again.' }); // Add `return` here
-        }
+      const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
-            req.user = {
-            _id: decodedToken.id,
-            role: decodedToken.role,
-        };
-              console.log(req.user)
-        next(); 
+      if (!decodedToken || !decodedToken.userId) {
+        return res.status(401).json({ error: 'Invalid token' });
+      }
+  
+      req.user = {
+        _id: decodedToken.userId,
+        role: decodedToken.role,
+      };
+  
+      next();
     } catch (error) {
-        return res.status(400).json({ error: error.message });
+      console.error('JWT Error:', error.message); 
+      return res.status(400).json({ error: 'Token verification failed: ' + error.message });
     }
-};
-
+  };
+  

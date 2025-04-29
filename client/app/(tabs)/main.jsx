@@ -1,7 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState, useCallback } from 'react';
+import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
-import { ScrollView, ActivityIndicator } from 'react-native';
+import { ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import tw from 'twrnc';
 import Searchbar from '@/components/Searchbar';
 import LanguageList from '@/components/LanguageList';
@@ -9,9 +9,11 @@ import CategorySection from '@/components/CategorySection';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 
 export default function Main() {
+    const router = useRouter();
   const [books, setBooks] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,9 +32,18 @@ export default function Main() {
     }
 
     try {
-      const response = await axios.get(`${apiUrl}/books`, {
-        headers: { 'Content-Type': 'application/json' },
-      });
+       const token = await SecureStore.getItemAsync('authToken');
+              if (!token) {
+                throw new Error('No authentication token found');
+              }
+      const response = await axios.get(`${apiUrl}/books`, 
+        {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+         },
+      }
+    );
       setBooks(response.data.books || []);
     } catch (error) {
       setError(error.message || "Failed to fetch books.");
@@ -66,7 +77,7 @@ export default function Main() {
     <ThemedView style={[tw`flex-1`, { backgroundColor }]}>
       <ScrollView>
         {/* Header */}
-        <ThemedView style={tw`ml-5 mt-5`}>
+        <ThemedView style={tw`ml-5 mt-8`}>
           <ThemedText type='title' style={{ color: textColor }}>Iweohun</ThemedText>
           <ThemedText style={[tw`text-lg font-semibold`, { color: primaryColor }]}>
             Orating African literature
@@ -75,6 +86,21 @@ export default function Main() {
 
         {/* Search & Language List */}
         <Searchbar />
+
+        <ThemedView style={tw`flex-row justify-end mb-4 mr-5`}>
+  <TouchableOpacity
+    style={[
+      tw`rounded-3xl px-4 py-2`,
+      { backgroundColor: primaryColor }
+    ]}
+    onPress={() => router.push('/screens/addBook')}
+  >
+    <ThemedText style={tw`text-white text-lg font-semibold text-center`}>
+      + Create
+    </ThemedText>
+  </TouchableOpacity>
+</ThemedView>
+
         <LanguageList />
 
         {/* Category Sections */}

@@ -3,7 +3,7 @@
     "activeCommit": 0,
     "commits": [
         {
-            "activePatchIndex": 2,
+            "activePatchIndex": 7,
             "patches": [
                 {
                     "date": 1743065742479,
@@ -16,6 +16,26 @@
                 {
                     "date": 1743065760255,
                     "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,17 @@\n+import express from 'express';\r\n+import { signup, login, updateUser, deleteUser, resetPassword, user, users } from '../controllers/userControllers.js';\r\n+import {tokenChecker} from '../middleware/auth.js'\r\n+ const router = express.Router();\r\n+\r\n+\r\n+router.post( '/signup', signup);\r\n+router.post( '/login', login);\r\n+// app.get('/auth/google', googleAuth);\r\n+// app.get('/auth/google/callback', googleAuthCallback);\r\n+router.get( '/admin/users', tokenChecker, users);\r\n+router.get( '/user/:_id', tokenChecker, user);\r\n+router.put( '/updateUser/:_id', tokenChecker, updateUser);\r\n+router.delete( '/admin/deleteUser/:_id', tokenChecker, deleteUser);\r\n+router.patch( '/resetPassword', resetPassword);\r\n+\r\n+export default router;\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1744367458693,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -5,49 +5,14 @@\n \r\n \r\n router.post( '/signup', signup);\r\n router.post( '/login', login);\r\n+\r\n // app.get('/auth/google', googleAuth);\r\n // app.get('/auth/google/callback', googleAuthCallback);\r\n router.get( '/admin/users', tokenChecker, users);\r\n router.get( '/user/:_id', tokenChecker, user);\r\n router.put( '/updateUser/:_id', tokenChecker, updateUser);\r\n router.delete( '/admin/deleteUser/:_id', tokenChecker, deleteUser);\r\n router.patch( '/resetPassword', resetPassword);\r\n \r\n-export default router;\n-import express from 'express';\r\n-import { signup, login, updateUser, deleteUser, resetPassword, user, users } from '../controllers/userControllers.js';\r\n-import {tokenChecker} from '../middleware/auth.js'\r\n- const router = express.Router();\r\n-\r\n-\r\n-router.post( '/signup', signup);\r\n-router.post( '/login', login);\r\n-// app.get('/auth/google', googleAuth);\r\n-// app.get('/auth/google/callback', googleAuthCallback);\r\n-router.get( '/admin/users', tokenChecker, users);\r\n-router.get( '/user/:_id', tokenChecker, user);\r\n-router.put( '/admin\r\n-    \r\n-    /updateUser/:_id', tokenChecker, updateUser);\r\n-router.delete( '/admin/deleteUser/:_id', tokenChecker, deleteUser);\r\n-router.patch( '/resetPassword', resetPassword);\r\n-\r\n-export default router;\n-import express from 'express';\r\n-import { signup, login, updateUser, deleteUser, resetPassword, user, users } from '../controllers/userControllers.js';\r\n-import {tokenChecker} from '../middleware/auth.js'\r\n- const router = express.Router();\r\n-\r\n-\r\n-router.post( '/signup', signup);\r\n-router.post( '/login', login);\r\n-// app.get('/auth/google', googleAuth);\r\n-// app.get('/auth/google/callback', googleAuthCallback);\r\n-router.get( '/admin/users', tokenChecker, users);\r\n-router.get( '//user/:_id', tokenChecker, user);\r\n-router.put( '/admin/updateUser/:_id', tokenChecker, updateUser);\r\n-router.delete( '/admin/deleteUser/:_id', tokenChecker, deleteUser);\r\n-router.patch( '/resetPassword', resetPassword);\r\n-\r\n export default router;\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1744367477426,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,18 @@\n+import express from 'express';\r\n+import { signup, login, updateUser, deleteUser, resetPassword, user, users } from '../controllers/userControllers.js';\r\n+import {tokenChecker} from '../middleware/auth.js'\r\n+ const router = express.Router();\r\n+\r\n+\r\n+router.post( '/signup', signup);\r\n+router.post( '/login', login);\r\n+router.post( '/login', logout);\r\n+// app.get('/auth/google', googleAuth);\r\n+// app.get('/auth/google/callback', googleAuthCallback);\r\n+router.get( '/admin/users', tokenChecker, users);\r\n+router.get( '/user/:_id', tokenChecker, user);\r\n+router.put( '/updateUser/:_id', tokenChecker, updateUser);\r\n+router.delete( '/admin/deleteUser/:_id', tokenChecker, deleteUser);\r\n+router.patch( '/resetPassword', resetPassword);\r\n+\r\n+export default router;\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1744367483169,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,18 @@\n+import express from 'express';\r\n+import { signup, login, updateUser, deleteUser, resetPassword, user, users } from '../controllers/userControllers.js';\r\n+import {tokenChecker} from '../middleware/auth.js'\r\n+ const router = express.Router();\r\n+\r\n+\r\n+router.post( '/signup', signup);\r\n+router.post( '/login', login);\r\n+router.post( '/logout', logout);\r\n+// app.get('/auth/google', googleAuth);\r\n+// app.get('/auth/google/callback', googleAuthCallback);\r\n+router.get( '/admin/users', tokenChecker, users);\r\n+router.get( '/user/:_id', tokenChecker, user);\r\n+router.put( '/updateUser/:_id', tokenChecker, updateUser);\r\n+router.delete( '/admin/deleteUser/:_id', tokenChecker, deleteUser);\r\n+router.patch( '/resetPassword', resetPassword);\r\n+\r\n+export default router;\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1744367489355,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -14,5 +14,5 @@\n router.put( '/updateUser/:_id', tokenChecker, updateUser);\r\n router.delete( '/admin/deleteUser/:_id', tokenChecker, deleteUser);\r\n router.patch( '/resetPassword', resetPassword);\r\n \r\n-export default router\n\\ No newline at end of file\n+export default router;\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1744372468787,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -3,12 +3,8 @@\n import {tokenChecker} from '../middleware/auth.js'\r\n  const router = express.Router();\r\n \r\n \r\n-router.post( '/signup', signup);\r\n-router.post( '/login', login);\r\n-router.post( '/logout', logout);\r\n-// app.get('/auth/google', googleAuth);\r\n // app.get('/auth/google/callback', googleAuthCallback);\r\n router.get( '/admin/users', tokenChecker, users);\r\n router.get( '/user/:_id', tokenChecker, user);\r\n router.put( '/updateUser/:_id', tokenChecker, updateUser);\r\n"
                 }
             ],
             "date": 1743065742479,
