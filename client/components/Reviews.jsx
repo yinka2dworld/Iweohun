@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, TextInput, FlatList, ActivityIndicator, TouchableOpacity, Keyboard } from 'react-native';
 import axios from 'axios';
 import tw from 'twrnc';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { useColorScheme } from 'react-native'; // Use for detecting the current theme
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
+// Assuming you have your Colors object in a separate file and imported here
+import { Colors } from '@/constants/Colors';
 
 const Reviews = ({ bookId }) => {
   const [reviews, setReviews] = useState([]);
@@ -16,9 +16,13 @@ const Reviews = ({ bookId }) => {
   const [replyTo, setReplyTo] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const inputRef = useRef(null);
+  const colorScheme = useColorScheme(); // Get the current theme (light or dark)
+
   const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
-  const backgroundColor = useThemeColor({}, 'background');
-  const primaryColor = useThemeColor({}, 'primary');
+
+  // Use the Colors object to get the correct colors based on the current theme
+  const currentColors = Colors[colorScheme || 'light']; // Default to light theme
 
   useEffect(() => {
     fetchReviews();
@@ -29,10 +33,10 @@ const Reviews = ({ bookId }) => {
     setLoading(true);
     try {
       const { data } = await axios.get(`${apiUrl}/bookReviews/${bookId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setReviews(data);
     } catch (error) {
       console.error('Error fetching reviews:', error);
@@ -43,6 +47,11 @@ const Reviews = ({ bookId }) => {
 
   const handleAddReview = async () => {
     if (!reviewText.trim()) return;
+
+    const sendingText = reviewText; // Store for submission
+    setReviewText('');
+    const replyingTo = replyTo;
+    setReplyTo(null);
 
     try {
       const token = await SecureStore.getItemAsync('authToken');
@@ -58,8 +67,8 @@ const Reviews = ({ bookId }) => {
         bookId,
         reviewedBy,
         userId,
-        review: reviewText,
-        parentReview: replyTo,
+        review: sendingText,
+        parentReview: replyingTo,
       };
 
       await axios.post(`${apiUrl}/addReview`, payload, {
@@ -68,34 +77,37 @@ const Reviews = ({ bookId }) => {
         },
       });
 
-      setReviewText('');
-      setReplyTo(null);
-      fetchReviews(); // refresh after post
+      fetchReviews();
     } catch (error) {
       console.error('Error adding review:', error);
     }
   };
 
   const renderReview = ({ item }) => (
-    <View style={tw`mb-4 p-3 rounded-lg`}>
-
-      <Text style={tw`font-bold text-base mb-1 text-[${primaryColor}]`}>
+    <View style={tw`mb-2 p-2  rounded-lg shadow-md bg-[${currentColors.background}]`}>
+      <Text style={tw`font-bold text-base text-[${currentColors.primary}] mb-2 dark:text-[${currentColors.text}]`}>
         {item.reviewedBy}
       </Text>
-      <Text style={tw`text-sm text-gray-700 mb-2`}>
+      <Text style={tw`text-md p-2 text-gray-700 mb-2 dark:text-[${currentColors.text}]`}>
         {item.review}
       </Text>
 
+      {/* Reply Button */}
       <TouchableOpacity
-        style={tw`self-start`}
-        onPress={() => setReplyTo(item._id)}
+        style={tw`self-end mb-3 mr-2`}
+        onPress={() => {
+          setReplyTo(item._id);
+          setTimeout(() => {
+            inputRef.current?.focus();
+          }, 100);
+        }}
       >
-        <Text style={tw`text-blue-500 text-xs`}>Reply</Text>
+        <Text style={tw`text-blue-500 text-xs dark:text-blue-300`}>Reply</Text>
       </TouchableOpacity>
 
-      {/* Render Replies */}
+      {/* Nested Replies */}
       {item.replies && item.replies.length > 0 && (
-        <View style={tw`mt-2 pl-4 border-l border-gray-300`}>
+        <View style={tw`mt-4 pl-4 border-l border-gray-300 dark:border-gray-600`}>
           <FlatList
             data={item.replies}
             keyExtractor={(reply) => reply._id}
@@ -107,38 +119,48 @@ const Reviews = ({ bookId }) => {
   );
 
   return (
-    <ThemedView style={[tw`p-4`, { backgroundColor }]}>
+    <View style={[tw`p-4`, { backgroundColor: currentColors.background }]}>
+      {/* Input Section */}
+      <View style={tw`flex-row items-center  pb-4 mb-6 `}>
+        <TextInput
+          ref={inputRef}
+          style={[
+            tw`border rounded-lg px-3 py-2 flex-1 text-base`,
+            {
+              minHeight: 40,
+              maxHeight: 100,
+              color: currentColors.text, // Use dynamic text color
+            },
+          ]}
+          placeholder={replyTo ? 'Write a reply...' : 'Write a review...'}
+          value={reviewText}
+          onChangeText={setReviewText}
+          multiline
+          placeholderTextColor={currentColors.placeholder} 
+        />
+        <TouchableOpacity onPress={handleAddReview} style={tw`ml-3`}>
+          <MaterialCommunityIcons name="send" size={28} color={currentColors.primary} />
+        </TouchableOpacity>
+      </View>
 
+      {/* Review List */}
       {loading ? (
-        <ActivityIndicator size="large" color={primaryColor} />
+        <View style={tw`items-center justify-center`}>
+          <ActivityIndicator size="large" color={currentColors.primary} />
+        </View>
       ) : (
         <FlatList
           data={reviews}
           keyExtractor={(item) => item._id}
           renderItem={renderReview}
-          ListEmptyComponent={<ThemedText>No reviews yet. Be the first!</ThemedText>}
+          ListEmptyComponent={
+            <Text style={tw`text-center text-gray-400 dark:text-gray-500`}>
+              No reviews yet. Be the first!
+            </Text>
+          }
         />
       )}
-
-<ThemedView style={tw`mt-6 flex-row items-center`}>
-  <TextInput
-    style={[
-      tw`border rounded-lg px-3 py-2 mb-3 flex-1 text-base text-black`, // add padding + fontSize + text color
-      { minHeight: 40, maxHeight: 100 }, // allow multiple lines but prevent overflow
-    ]}
-    placeholder={replyTo ? 'Write a reply...' : 'Write a review...'}
-    value={reviewText}
-    onChangeText={setReviewText}
-    multiline
-    placeholderTextColor="#999"
-  />
-  <TouchableOpacity onPress={handleAddReview} style={tw`ml-2 mb-3`}>
-    <MaterialCommunityIcons name="send" size={28} color={primaryColor} />
-  </TouchableOpacity>
-</ThemedView>
-
-       
-    </ThemedView>
+    </View>
   );
 };
 

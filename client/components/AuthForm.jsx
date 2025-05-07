@@ -118,7 +118,7 @@ export default function AuthForm({ type }) {
         if (isSignup) {
           router.replace('/auth/login');
         } else {
-          const { userId, role, token } = response.data;
+          const { userId, role, token, username } = response.data;
   
           await SecureStore.setItemAsync('userId', userId.toString());
           await SecureStore.setItemAsync('userRole', role);

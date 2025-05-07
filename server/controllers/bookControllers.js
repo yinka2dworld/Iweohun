@@ -67,22 +67,22 @@ export const topChart = async (req, res) => {
 
 export const getBookRatings = async (req, res) => {
   const { bookId } = req.params;
+  const userId = req.user?.id; // assuming auth middleware sets req.user
 
   try {
     const ratings = await Rating.find({ bookId });
     const total = ratings.length;
-    const avgRating = total === 0
-      ? 0
-      : ratings.reduce((sum, r) => sum + r.rating, 0) / total;
-      
-    const userRating = await Rating.findOne({ userId: req.userId, bookId });
+    const avgRating = total === 0 ? 0 : ratings.reduce((sum, r) => sum + r.rating, 0) / total;
 
-    res.json({
-      avgRating,
-      total,
-      userRating: userRating || null, 
-    });
+    let userRating = null;
+    if (userId) {
+      const userRated = await Rating.findOne({ bookId, userId });
+      userRating = userRated?.rating || 0;
+    }
+
+    res.json({ avgRating, total, userRating });
   } catch (err) {
+    console.error('Error fetching ratings:', err);
     res.status(500).json({ error: 'Failed to fetch rating stats' });
   }
 };
@@ -91,22 +91,39 @@ export const getBookRatings = async (req, res) => {
 export const addBookRatings = async (req, res) => {
   const { userId, bookId, rating } = req.body;
 
+  if (!userId || !bookId || rating === undefined) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
   try {
-    // Check if the user has already rated the book
-    const existing = await Rating.findOne({ userId, bookId });
+    // Check if the user has already rated this book
+    let existing = await Rating.findOne({ userId, bookId });
+
     if (existing) {
-      return res.status(400).json({ message: 'You have already rated this book.' });
+      // If the user has already rated, update the existing rating
+      existing.rating = rating;
+      await existing.save(); // Save the updated rating
+    } else {
+      // If the user has not rated this book, create a new rating
+      await Rating.create({ userId, bookId, rating });
     }
 
-    const newRating = new Rating({ userId, bookId, rating });
-    await newRating.save();
+    // Recalculate the average and total ratings
+    const ratings = await Rating.find({ bookId });
+    const total = ratings.length;
+    const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / total;
 
-    // Optionally return the new rating object or updated stats
-    res.status(201).json({ message: 'Rating submitted successfully.', rating: newRating });
+    res.status(201).json({
+      message: 'Rating submitted successfully.',
+      avgRating,
+      total,
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to submit rating', error });
+    console.error('Failed to submit rating:', error);
+    res.status(500).json({ message: 'Failed to submit rating', error: error.message });
   }
 };
+
 
 
 export const getReviews = async (req, res) => {
@@ -149,8 +166,7 @@ export const addReview = async (req, res) => {
 
     return res.status(201).json(newReview);
   } catch (error) {
-    console.error('Error adding review:', error);
-    return res.status(400).json({ message: 'Unable to add review', error: error.message });
+   return  console.error('Error adding review:', error.response?.data || error.message);
   }
 };
 
@@ -352,10 +368,10 @@ export const deleteBook = async (req, res) => {
         return res.status(404).json({ message: 'Book not found' });
       }
   
-      if (!book.listeners.includes(userId)) {
-        book.listeners.push(userId);
+      if (!book.listenersList.includes(userId)) {
+        book.listenersList.push(userId);
         book.listenersCount += 1;
-        await book.save();
+        await book.save({ validateModifiedOnly: true });
       }
   
       return res.status(200).json({ message: 'Listener added', listenersCount: book.listenersCount });

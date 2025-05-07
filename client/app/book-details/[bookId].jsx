@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, TouchableOpacity, Image, ActivityIndicator, FlatList } from 'react-native';
+import { SafeAreaView, TouchableOpacity, Image, ActivityIndicator, FlatList, View } from 'react-native';
 import tw from 'twrnc';
 import axios from 'axios';
 import Constants from 'expo-constants';
@@ -15,8 +15,7 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import * as SecureStore from 'expo-secure-store';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-
-const BookDetails = ({ }) => {
+const BookDetails = () => {
   const { bookId } = useLocalSearchParams();
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -32,7 +31,6 @@ const BookDetails = ({ }) => {
   const backgroundColor = useThemeColor({}, 'background');
   const primaryColor = useThemeColor({}, 'primary');
 
-  
   useEffect(() => {
     const fetchBook = async () => {
       if (!bookId) return;
@@ -62,7 +60,6 @@ const BookDetails = ({ }) => {
     fetchBook();
   }, [bookId]);
 
-
   const handleChapterSelect = async (chapter) => {
     setAudioDetails({
       audioUrl: chapter.audioUrl,
@@ -74,7 +71,6 @@ const BookDetails = ({ }) => {
       setHasListened(true); 
     }
   };
-
 
   const handleListen = async (bookId) => {
     try {
@@ -98,7 +94,6 @@ const BookDetails = ({ }) => {
     }
   };
 
-
   const renderTabContent = () => {
     switch (selectedTab) {
       case 'Chapters':
@@ -112,7 +107,6 @@ const BookDetails = ({ }) => {
     }
   };
 
-  
   useEffect(() => {
     const checkIfSaved = async () => {
       const saved = await SecureStore.getItemAsync('savedBooks');
@@ -145,7 +139,6 @@ const BookDetails = ({ }) => {
     }
   };
 
-
   if (loading) {
     return (
       <SafeAreaView style={[tw`flex-1 justify-center items-center`, { backgroundColor }]}>
@@ -167,9 +160,9 @@ const BookDetails = ({ }) => {
     <SafeAreaView style={[tw`flex-1`, { backgroundColor }]}>
       <FlatList
         ListHeaderComponent={
-          <ThemedView>
-
-            <ThemedView style={tw`flex-row items-center my-8 mx-2`}>
+          <View style={[tw`w-full`, { backgroundColor }]}>
+            {/* Fixed Header Section */}
+            <ThemedView style={tw`flex-row items-center my-5 mx-2`}>
               <TouchableOpacity onPress={() => router.back()} style={tw`p-2`}>
                 <MaterialCommunityIcons name="arrow-left" size={28} color={primaryColor} />
               </TouchableOpacity>
@@ -178,22 +171,25 @@ const BookDetails = ({ }) => {
                 <MaterialCommunityIcons
                   name={isSaved ? 'bookmark' : 'bookmark-outline'}
                   size={28}
-                  color={primaryColor} />
+                  color={primaryColor}
+                />
               </TouchableOpacity>
             </ThemedView>
 
             {/* Book Details */}
-            <ThemedView style={tw`items-center mb-6`}>
+            <ThemedView style={tw`items-center`}>
               {book.bookCover ? (
-                <Image source={{ uri: book.bookCover }} style={tw`w-50 h-60 rounded-lg shadow-lg`} resizeMode="cover" />
+                <Image
+                  source={{ uri: book.bookCover }}
+                  style={tw`w-35 h-45 rounded-lg shadow-lg`}
+                  resizeMode="cover"
+                />
               ) : (
                 <ThemedText style={tw`text-lg font-bold`}>No Cover Available</ThemedText>
               )}
 
               <ThemedText style={tw`text-xl font-bold mt-3`}>{book.bookName}</ThemedText>
-              <ThemedText style={[tw`text-sm font-semibold`, { color: primaryColor }]}>Author: {book.bookAuthor}</ThemedText>
-              <ThemedText style={tw`text-sm`}>Reciter: {book.reciter || 'N/A'}</ThemedText>
-                 <BookRatings/>
+              <BookRatings bookId={bookId} />
             </ThemedView>
 
             {/* Tabs */}
@@ -201,18 +197,28 @@ const BookDetails = ({ }) => {
               {['Chapters', 'Reviews', 'Related'].map((tab) => (
                 <TouchableOpacity key={tab} onPress={() => setSelectedTab(tab)} style={tw`flex-1`}>
                   <ThemedView style={tw`items-center`}>
-                    <ThemedText style={[tw`text-lg p-2 font-semibold`, { color: selectedTab === tab ? primaryColor : '#999' }]}>{tab}</ThemedText>
-                    {selectedTab === tab && <ThemedView style={[tw`h-1 w-10 rounded-full`, { backgroundColor: primaryColor }]} />}
+                    <ThemedText
+                      style={[
+                        tw`text-lg p-2 font-semibold`,
+                        { color: selectedTab === tab ? primaryColor : '#999' },
+                      ]}
+                    >
+                      {tab}
+                    </ThemedText>
+                    {selectedTab === tab && (
+                      <ThemedView style={[tw`h-1 w-10 rounded-full`, { backgroundColor: primaryColor }]} />
+                    )}
                   </ThemedView>
                 </TouchableOpacity>
               ))}
             </ThemedView>
-          </ThemedView>
+          </View>
         }
         data={[]}
         renderItem={null}
         ListFooterComponent={renderTabContent()}
         keyExtractor={(item, index) => index.toString()}
+        stickyHeaderIndices={[0]}  // Make the first item (the header) sticky
       />
 
       {audioDetails && (

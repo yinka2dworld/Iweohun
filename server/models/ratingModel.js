@@ -20,6 +20,6 @@ const RatingSchema = new mongoose.Schema({
 },
 { timestamps: true });
 
-RatingSchema.index({ book: 1, user: 1 }, { unique: true });
+RatingSchema.index({ bookId: 1, userId: 1 }, { unique: true });
 
 export default mongoose.models.Rating || mongoose.model('Rating', RatingSchema);

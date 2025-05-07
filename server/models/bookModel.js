@@ -73,7 +73,7 @@ const bookSchema = new Schema({
     ref: 'User' 
   }],
 
-  listeners: {
+  listenersCount: {
     type: Number,
     default: 0,
   },

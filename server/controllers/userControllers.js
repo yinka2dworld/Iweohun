@@ -8,57 +8,81 @@ import { Error } from "mongoose";
 
 
 export const signup = async (req, res) => {
-  const  { username, email, password, phoneNumber } = req.body;
-     try {
-        const existingUser = await User.findOne({ email });
+  try {
+    const username = req.body.username.trim();
+    const email = req.body.email.trim().toLowerCase();
+    const password = req.body.password.trim();
+    const phoneNumber = req.body.phoneNumber.trim();
+
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email is already registered' });
     }
-        const hashedPassword = await bcrypt.hash(password, 10);
-    
-    const signupInfo = await User.create({ username, email, phoneNumber, password: hashedPassword })
-    if (!signupInfo) {
-       console.error(error)
-    }
-      return  res.status(201).json({message:'User signup successful'})  
-    } catch (error) {
-        res.status(400).json({message:'User signup unsuccessful', error})  
-    
-    }
-}
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const signupInfo = await User.create({
+      username,
+      email,
+      phoneNumber,
+      password: hashedPassword,
+    });
+
+    return res.status(201).json({ message: 'User signup successful' });
+
+  } catch (error) {
+    console.error('Signup error:', error);
+    return res.status(400).json({ message: 'User signup unsuccessful', error: error.message });
+  }
+};
+
 
 
 export const login = async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).json({ message: "Username and password are required" });
-  }
-
   try {
+    const { username, password } = req.body;
+
+    // Validate input
+    if (!username || !password) {
+      return res.status(400).json({ message: "Username and password are required." });
+    }
+
+    // Check if user exists
     const user = await User.findOne({ username });
-    if (!user) return res.status(400).json({ message: "Incorrect username" });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid username or password." });
+    }
 
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) return res.status(400).json({ message: "Incorrect password" });
+    // Compare passwords
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: "Invalid username or password." });
+    }
 
+    // Generate JWT
     const token = jwt.sign(
-      { userId: user._id, email: user.email, role: user.role },
+      {
+        userId: user._id,
+        email: user.email,
+        role: user.role,
+      },
       process.env.JWT_SECRET,
-      { expiresIn: "365d" }
+      { expiresIn: '365d' }
     );
 
     return res.status(200).json({
-      message: "User logged in successfully",
+      message: "Login successful.",
       userId: user._id,
-      username: user.username,
+      username: username,
       role: user.role,
       token,
     });
   } catch (error) {
-    console.error("Login error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Login error:", error.message);
+    return res.status(500).json({ message: "Something went wrong. Please try again later." });
   }
 };
+
 
 
 export const users = async (req, res) => {

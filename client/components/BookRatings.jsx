@@ -8,48 +8,36 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 
-const BookRatings = ({ bookId, userId }) => {
-  const [rating, setRating] = useState(0);
-  const [hasRated, setHasRated] = useState(false);
+const BookRatings = ({ bookId }) => {
   const [avgRating, setAvgRating] = useState(0);
-  const [totalRatings, setTotalRatings] = useState(0);
+  const [totalRating, setTotalRating] = useState(0);
+  const [userRating, setUserRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
-
-  if (!apiUrl) {
-    console.error('API_BASE_URL is not defined in app config');
-  }
-
+  const apiUrl = Constants?.expoConfig?.extra?.API_BASE_URL;
   const primaryColor = useThemeColor({}, 'primary');
 
   useEffect(() => {
-    if (apiUrl) {
-      fetchRatings();
-    }
-  }, [apiUrl]);
+    if (apiUrl && bookId) fetchRatings();
+  }, [apiUrl, bookId]);
 
   const fetchRatings = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const token = await SecureStore.getItemAsync('authToken');
-      if (!token) {
-        setError('No auth token found');
-        return;
-      }
-
       const res = await axios.get(`${apiUrl}/getRatings/${bookId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
       });
 
-      const { userRating, avgRating, total } = res.data;
-
-      if (userRating) {
-        setRating(userRating.rating);
-        setHasRated(true);
-      }
-      setAvgRating(avgRating);
-      setTotalRatings(total);
+      const { avgRating, total, userRating } = res.data;
+      setAvgRating(avgRating || 0);
+      setTotalRating(total || 0);
+      setUserRating(userRating || 0);
     } catch (error) {
       setError('Error fetching rating stats');
       console.error('Error fetching rating stats:', error.message);
@@ -59,16 +47,24 @@ const BookRatings = ({ bookId, userId }) => {
   };
 
   const submitRating = async (newRating) => {
+    if (userRating > 0) return; // Only allow one rating
+
     try {
+      const userId = await SecureStore.getItemAsync('userId');
       const token = await SecureStore.getItemAsync('authToken');
-      if (!token) {
-        setError('No auth token found');
+
+      if (!userId || !bookId) {
+        setError('Missing user or book information');
         return;
       }
 
-      await axios.post(
+      const res = await axios.post(
         `${apiUrl}/addRatings`,
-        { userId, bookId, rating: newRating },
+        {
+          userId,
+          bookId,
+          rating: Math.round(newRating),
+        },
         {
           headers: {
             'Content-Type': 'application/json',
@@ -77,37 +73,36 @@ const BookRatings = ({ bookId, userId }) => {
         }
       );
 
-      setRating(newRating);
-      setHasRated(true);
-      fetchRatings(); // Refresh stats
+      setUserRating(Math.round(newRating));
+      setAvgRating(res.data.avgRating || newRating);
+      setTotalRating(res.data.total || 1);
     } catch (error) {
       setError('Failed to submit rating');
-      console.error('Failed to submit rating', error);
+      console.error('Failed to submit rating:', error.message);
     }
   };
 
-  const handleRatingChange = (newRating) => {
-    if (!hasRated) {
-      submitRating(newRating);
-    }
-  };
-
-  if (loading) {
-    return <ThemedText>Loading...</ThemedText>;
-  }
+  if (loading) return <ThemedText>Loading ratings...</ThemedText>;
 
   return (
-    <ThemedView style={tw`mt-4`}>
-      {error && <ThemedText style={tw`text-red-500`}>{error}</ThemedText>}
+    <ThemedView style={tw`mt-2`}>
+      {error && <ThemedText style={tw`text-red-500 text-center`}>{error}</ThemedText>}
       <StarRating
-        rating={rating}
-        onChange={hasRated ? undefined : handleRatingChange}
-        starSize={28}
+        rating={userRating}
+        onChange={(newRating) => {
+          if (userRating === 0) submitRating(newRating);
+        }}
+        maxStars={5}
+        starSize={25}
         color={primaryColor}
-        enableSwiping={!hasRated}
+        starStyle={{ marginHorizontal: 3 }}
+        enableSwiping={false}
+        starFraction={1}
+        readonly={userRating > 0}
+        accessibilityLabel="Book Rating"
       />
       <ThemedText style={tw`text-center text-sm mt-2 text-gray-400`}>
-        {avgRating.toFixed(1)} stars • {totalRatings} rating{totalRatings !== 1 ? 's' : ''}
+        {avgRating.toFixed(1)} stars • {totalRating} rating{totalRating !== 1 ? 's' : ''}
       </ThemedText>
     </ThemedView>
   );

@@ -66,6 +66,8 @@ export default function Profile() {
         SecureStore.deleteItemAsync('userId'),
         SecureStore.deleteItemAsync('authToken'), 
         SecureStore.deleteItemAsync('userRole'), 
+        SecureStore.deleteItemAsync('username'),
+        
       ]);
   
      
