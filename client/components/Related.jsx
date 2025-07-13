@@ -1,6 +1,12 @@
 import tw from 'twrnc';
 import React, { useEffect, useState } from 'react';
-import { TouchableOpacity, Image, ActivityIndicator, FlatList, View } from 'react-native';
+import {
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  FlatList,
+  View,
+} from 'react-native';
 import axios from 'axios';
 import Constants from 'expo-constants';
 import { ThemedText } from '@/components/ThemedText';
@@ -11,9 +17,12 @@ import { useRouter } from 'expo-router';
 
 const Related = ({ bookId }) => {
   const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
-   const router = useRouter();
+  const router = useRouter();
+
   const backgroundColor = useThemeColor({}, 'background');
   const primaryColor = useThemeColor({}, 'primary');
+  const secondaryColor = useThemeColor({}, 'secondary');
+  const textColor = '#070c70';
 
   const [relatedBooks, setRelatedBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +30,7 @@ const Related = ({ bookId }) => {
   useEffect(() => {
     const fetchRelatedBooks = async () => {
       try {
-        const token = await SecureStore.getItemAsync('authToken'); 
+        const token = await SecureStore.getItemAsync('authToken');
         const response = await axios.get(`${apiUrl}/relatedBooks/${bookId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -48,22 +57,29 @@ const Related = ({ bookId }) => {
 
   return (
     <ThemedView style={[tw`p-4`, { backgroundColor }]}>
-
       <FlatList
         data={relatedBooks}
         keyExtractor={(item) => item._id}
-        horizontal
-        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
-          <TouchableOpacity style={tw`mr-4`}  onPress={() => router.push(`/book-details/${item._id}`)} >
+          <TouchableOpacity
+            style={[
+              tw`flex-row items-center p-4 rounded-lg mb-4 border border-gray-300`]}
+            onPress={() => router.push(`/book-details/${item._id}`)}
+          >
             <Image
-              source={{ uri: item.coverImage }}
-              style={tw`w-24 h-36 rounded-lg`}
+              source={{ uri: item.bookCover }}
+              style={tw`w-10 h-15 rounded-md`}
               resizeMode="cover"
             />
-            <ThemedText style={tw`mt-2 text-center text-xs`} numberOfLines={2}>
-              {item.title}
-            </ThemedText>
+            <View style={tw`ml-4 flex-1`}>
+              <ThemedText type="subtitle" style={{ color: primaryColor }}>
+                {item.bookName}
+              </ThemedText>
+              <ThemedText type="link" style={{ color: secondaryColor }}>
+                by {item.bookAuthor}
+              </ThemedText>
+            </View>
           </TouchableOpacity>
         )}
       />

@@ -54,7 +54,7 @@ export const getBook = async (req, res) => {
 export const topChart = async (req, res) => { 
   try {
     const books = await Book.find()
-      .sort({ listeners: -1 }) 
+      .sort({ listenersCount: -1 }) 
       .limit(20); 
 
     return res.status(200).json({ books });
@@ -88,6 +88,7 @@ export const getBookRatings = async (req, res) => {
 };
 
 
+
 export const addBookRatings = async (req, res) => {
   const { userId, bookId, rating } = req.body;
 
@@ -96,20 +97,16 @@ export const addBookRatings = async (req, res) => {
   }
 
   try {
-    // Check if the user has already rated this book
-    let existing = await Rating.findOne({ userId, bookId });
+    const existing = await Rating.findOne({ userId, bookId });
 
     if (existing) {
-      // If the user has already rated, update the existing rating
       existing.rating = rating;
-      await existing.save(); // Save the updated rating
+      await existing.save({ validateModifiedOnly: true });
     } else {
-      // If the user has not rated this book, create a new rating
       await Rating.create({ userId, bookId, rating });
     }
 
-    // Recalculate the average and total ratings
-    const ratings = await Rating.find({ bookId });
+     const ratings = await Rating.find({ bookId });
     const total = ratings.length;
     const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / total;
 
@@ -215,11 +212,10 @@ export const getLanguageBooks = async (req, res) => {
 export const addBook = async (req, res) => {
   try {
     if (!['superAdmin', 'admin'].includes(req.user.role)) {
-      return res.status(403).json({ message: 'You are not authorized to access this.' });
+      return res.status(403).json({ message: 'Unauthorized access' });
     }
 
     const {
-      bookCover,
       bookName,
       bookDescription,
       bookAuthor,
@@ -232,16 +228,15 @@ export const addBook = async (req, res) => {
     if (!bookName || !bookAuthor || !category || !language) {
       return res.status(400).json({ message: 'Missing required fields.' });
     }
-
-    const bookCoverUrl = bookCover ? await uploadToCloudinary(bookCover) : null;
+const bookCoverFile = req.files?.bookCover?.[0]; 
+    const bookCoverUrl = bookCoverFile ? await uploadToCloudinary(bookCoverFile) : null;
 
     const processedChapters = await Promise.all(
       chapters.map(async (chapter) => ({
-        id: chapter.id || `chap-${Date.now()}`,
-        title: chapter.title,
+          title: chapter.title,
         duration: chapter.duration || '',
-        progress: chapter.progress || 0,
-        audioUrl: chapter.audioUrl ? await uploadToCloudinary(chapter.audioUrl) : ''
+          progress: chapter.progress || 0,
+        audioUrl: chapter.audioFile ? await uploadToCloudinary(chapter.audioFile) : ''
       }))
     );
 
@@ -272,7 +267,6 @@ export const updateBook = async (req, res) => {
     if (!['superAdmin', 'admin'].includes(req.user.role)) {
       return res.status(403).json({ message: 'You are not authorized to access this.' });
     }
-
     const { bookId } = req.params;
     const {
       bookCover,
@@ -294,12 +288,12 @@ export const updateBook = async (req, res) => {
 
     const processedChapters = await Promise.all(
       chapters.map(async (chapter) => ({
-        id: chapter.id || `chap-${Date.now()}`,
-        title: chapter.title || '',
-        duration: chapter.duration || '',
-        progress: chapter.progress || 0,
-        audioUrl: chapter.audioUrl
-          ? await uploadToCloudinary(chapter.audioUrl)
+          id: chapter.id || `chap-${Date.now()}`,
+          title: chapter.title || '',
+          duration: chapter.duration || '',
+          progress: chapter.progress || 0,
+        audioUrl: chapter. audioFile
+          ? await uploadToCloudinary(chapter.audioFile)
           : chapter.existingAudioUrl || ''
       }))
     );

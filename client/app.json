@@ -1,24 +1,22 @@
 {
   "expo": {
-    "name": "client",
-    "slug": "client",
+    "name": "iweohun",
+    "slug": "iweohun",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
-    "scheme": "myapp",
+    "icon": "./assets/images/icon.png",
+    "scheme": "iweohun",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "extra": {
-      "API_BASE_URL": "http://192.168.43.146:3000"
-    },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.png",
+        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "bundler": "metro",
@@ -30,16 +28,20 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/okinlm.png",
+          "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "API_BASE_URL": "http://192.168.43.126:3000"
     }
   }
 }

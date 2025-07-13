@@ -1,0 +1,106 @@
+{
+    "sourceFile": "server/package.json",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 22,
+            "patches": [
+                {
+                    "date": 1752403312039,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1752403320596,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -20,9 +20,9 @@\n     \"express\": \"^4.18.2\",\n     \"graphql\": \"^15.8.0\",graphq\n     \"graphql-upload\": \"^13.0.0\",\n     \"jsonwebtoken\": \"^9.0.2\",\n-    \"mongoose\": \"^8.8.3\",\n+    \"mongoose\": \"^8l.8.3\",\n     \"multer\": \"^1.4.5-lts.1\",\n     \"multer-storage-cloudinary\": \"^4.0.0\",\n     \"nodemailer\": \"^6.9.7\",\n     \"nodemailer-sendgrid-transport\": \"^0.2.0\",\n"
+                },
+                {
+                    "date": 1752403335764,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -17,12 +17,12 @@\n     \"cloudinary\": \"^1.41.3\",\n     \"cors\": \"^2.8.5\",\n     \"dotenv\": \"^16.3.1\",\n     \"express\": \"^4.18.2\",\n-    \"graphql\": \"^15.8.0\",graphq\n+    \"graphql\": \"^15.8.0\",graphql graphql-upload\n     \"graphql-upload\": \"^13.0.0\",\n     \"jsonwebtoken\": \"^9.0.2\",\n-    \"mongoose\": \"^8l.8.3\",\n+    \"mongoose\": \"^8.8.3\",\n     \"multer\": \"^1.4.5-lts.1\",\n     \"multer-storage-cloudinary\": \"^4.0.0\",\n     \"nodemailer\": \"^6.9.7\",\n     \"nodemailer-sendgrid-transport\": \"^0.2.0\",\n"
+                },
+                {
+                    "date": 1752403353277,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -17,9 +17,9 @@\n     \"cloudinary\": \"^1.41.3\",\n     \"cors\": \"^2.8.5\",\n     \"dotenv\": \"^16.3.1\",\n     \"express\": \"^4.18.2\",\n-    \"graphql\": \"^15.8.0\",graphql graphql-upload\n+    \"graphql\": \"^15.8.0\",graphql graphql-upload apollo-server-express\n     \"graphql-upload\": \"^13.0.0\",\n     \"jsonwebtoken\": \"^9.0.2\",\n     \"mongoose\": \"^8.8.3\",\n     \"multer\": \"^1.4.5-lts.1\",\n"
+                },
+                {
+                    "date": 1752403359260,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -17,9 +17,9 @@\n     \"cloudinary\": \"^1.41.3\",\n     \"cors\": \"^2.8.5\",\n     \"dotenv\": \"^16.3.1\",\n     \"express\": \"^4.18.2\",\n-    \"graphql\": \"^15.8.0\",graphql graphql-upload apollo-server-express\n+    \"graphql\": \"^15.8.0\",nm i graphql graphql-upload apollo-server-express\n     \"graphql-upload\": \"^13.0.0\",\n     \"jsonwebtoken\": \"^9.0.2\",\n     \"mongoose\": \"^8.8.3\",\n     \"multer\": \"^1.4.5-lts.1\",\n"
+                },
+                {
+                    "date": 1752403379880,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -17,9 +17,9 @@\n     \"cloudinary\": \"^1.41.3\",\n     \"cors\": \"^2.8.5\",\n     \"dotenv\": \"^16.3.1\",\n     \"express\": \"^4.18.2\",\n-    \"graphql\": \"^15.8.0\",nm i graphql graphql-upload apollo-server-express\n+    \"graphql\": \"^15.8.0\",nm i graphql graphql-upload apollo-server-express sequelize\n     \"graphql-upload\": \"^13.0.0\",\n     \"jsonwebtoken\": \"^9.0.2\",\n     \"mongoose\": \"^8.8.3\",\n     \"multer\": \"^1.4.5-lts.1\",\n"
+                },
+                {
+                    "date": 1752403391781,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -17,9 +17,9 @@\n     \"cloudinary\": \"^1.41.3\",\n     \"cors\": \"^2.8.5\",\n     \"dotenv\": \"^16.3.1\",\n     \"express\": \"^4.18.2\",\n-    \"graphql\": \"^15.8.0\",nm i graphql graphql-upload apollo-server-express sequelize\n+    \"graphql\": \"^15.8.0\",npm i graphql graphql-upload apollo-server-express sequelize\n     \"graphql-upload\": \"^13.0.0\",\n     \"jsonwebtoken\": \"^9.0.2\",\n     \"mongoose\": \"^8.8.3\",\n     \"multer\": \"^1.4.5-lts.1\",\n"
+                },
+                {
+                    "date": 1752403410423,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -17,9 +17,9 @@\n     \"cloudinary\": \"^1.41.3\",\n     \"cors\": \"^2.8.5\",\n     \"dotenv\": \"^16.3.1\",\n     \"express\": \"^4.18.2\",\n-    \"graphql\": \"^15.8.0\",npm i graphql graphql-upload apollo-server-express sequelize\n+    \"graphql\": \"^15.8.0\",npm un graphql graphql-upload apollo-server-express sequelize\n     \"graphql-upload\": \"^13.0.0\",\n     \"jsonwebtoken\": \"^9.0.2\",\n     \"mongoose\": \"^8.8.3\",\n     \"multer\": \"^1.4.5-lts.1\",\n"
+                },
+                {
+                    "date": 1752403417359,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -17,9 +17,9 @@\n     \"cloudinary\": \"^1.41.3\",\n     \"cors\": \"^2.8.5\",\n     \"dotenv\": \"^16.3.1\",\n     \"express\": \"^4.18.2\",\n-    \"graphql\": \"^15.8.0\",npm un graphql graphql-upload apollo-server-express sequelize\n+    \"graphql\": \"^15.8.0\",\n     \"graphql-upload\": \"^13.0.0\",\n     \"jsonwebtoken\": \"^9.0.2\",\n     \"mongoose\": \"^8.8.3\",\n     \"multer\": \"^1.4.5-lts.1\",\n"
+                },
+                {
+                    "date": 1752403425759,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,9 +7,9 @@\n     \"start\": \"node server\",\n     \"dev\": \"nodemon server\"\n   },\n   \"keywords\": [],\n-  \"author\": \"الأوفوي\",\n+  \"author\": \"\",\n   \"license\": \"ISC\",\n   \"type\": \"module\",\n   \"dependencies\": {\n     \"apollo-server-express\": \"^3.13.0\",\n"
+                },
+                {
+                    "date": 1752403586440,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,9 +7,9 @@\n     \"start\": \"node server\",\n     \"dev\": \"nodemon server\"\n   },\n   \"keywords\": [],\n-  \"author\": \"\",\n+  \"author\": \"Adeyinka\",\n   \"license\": \"ISC\",\n   \"type\": \"module\",\n   \"dependencies\": {\n     \"apollo-server-express\": \"^3.13.0\",\n@@ -27,9 +27,8 @@\n     \"nodemailer\": \"^6.9.7\",\n     \"nodemailer-sendgrid-transport\": \"^0.2.0\",\n     \"passport\": \"^0.7.0\",\n     \"passport-google-oauth20\": \"^2.0.0\",\n-    \"sequelize\": \"^6.37.1\"\n   },\n   \"devDependencies\": {\n     \"nodemon\": \"^3.0.1\"\n   }\n"
+                },
+                {
+                    "date": 1752403593765,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,9 +7,9 @@\n     \"start\": \"node server\",\n     \"dev\": \"nodemon server\"\n   },\n   \"keywords\": [],\n-  \"author\": \"Adeyinka\",\n+  \"author\": \"\",\n   \"license\": \"ISC\",\n   \"type\": \"module\",\n   \"dependencies\": {\n     \"apollo-server-express\": \"^3.13.0\",\n@@ -27,8 +27,9 @@\n     \"nodemailer\": \"^6.9.7\",\n     \"nodemailer-sendgrid-transport\": \"^0.2.0\",\n     \"passport\": \"^0.7.0\",\n     \"passport-google-oauth20\": \"^2.0.0\",\n+    \"sequelize\": \"^6.37.1\"\n   },\n   \"devDependencies\": {\n     \"nodemon\": \"^3.0.1\"\n   }\n"
+                },
+                {
+                    "date": 1752403599075,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,9 +7,9 @@\n     \"start\": \"node server\",\n     \"dev\": \"nodemon server\"\n   },\n   \"keywords\": [],\n-  \"author\": \"\",\n+  \"author\": \"Adeyinka\",\n   \"license\": \"ISC\",\n   \"type\": \"module\",\n   \"dependencies\": {\n     \"apollo-server-express\": \"^3.13.0\",\n@@ -26,10 +26,9 @@\n     \"multer-storage-cloudinary\": \"^4.0.0\",\n     \"nodemailer\": \"^6.9.7\",\n     \"nodemailer-sendgrid-transport\": \"^0.2.0\",\n     \"passport\": \"^0.7.0\",\n-    \"passport-google-oauth20\": \"^2.0.0\",\n-    \"sequelize\": \"^6.37.1\"\n+    \"passport-google-oauth20\": \"^2.0.0\"\n   },\n   \"devDependencies\": {\n     \"nodemon\": \"^3.0.1\"\n   }\n"
+                },
+                {
+                    "date": 1752403606405,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -17,10 +17,8 @@\n     \"cloudinary\": \"^1.41.3\",\n     \"cors\": \"^2.8.5\",\n     \"dotenv\": \"^16.3.1\",\n     \"express\": \"^4.18.2\",\n-    \"graphql\": \"^15.8.0\",\n-    \"graphql-upload\": \"^13.0.0\",\n     \"jsonwebtoken\": \"^9.0.2\",\n     \"mongoose\": \"^8.8.3\",\n     \"multer\": \"^1.4.5-lts.1\",\n     \"multer-storage-cloudinary\": \"^4.0.0\",\n"
+                },
+                {
+                    "date": 1752403620691,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -11,9 +11,8 @@\n   \"author\": \"Adeyinka\",\n   \"license\": \"ISC\",\n   \"type\": \"module\",\n   \"dependencies\": {\n-    \"apollo-server-express\": \"^3.13.0\",\n     \"bcrypt\": \"^5.1.1\",\n     \"cloudinary\": \"^1.41.3\",\n     \"cors\": \"^2.8.5\",\n     \"dotenv\": \"^16.3.1\",\n"
+                },
+                {
+                    "date": 1752407791128,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,26 +7,23 @@\n     \"start\": \"node server\",\n     \"dev\": \"nodemon server\"\n   },\n   \"keywords\": [],\n-  \"author\": \"Adeyinka\",\n+  \"author\": \"الأوفوي\",\n   \"license\": \"ISC\",\n   \"type\": \"module\",\n   \"dependencies\": {\n-    \"bcrypt\": \"^5.1.1\",\n+    \"bcrypt\": \"^6.0.0\",\n     \"cloudinary\": \"^1.41.3\",\n     \"cors\": \"^2.8.5\",\n-    \"dotenv\": \"^16.3.1\",\n-    \"express\": \"^4.18.2\",\n+    \"dotenv\": \"^17.2.0\",\n+    \"express\": \"^5.1.0\",\n     \"jsonwebtoken\": \"^9.0.2\",\n-    \"mongoose\": \"^8.8.3\",\n-    \"multer\": \"^1.4.5-lts.1\",\n+    \"mongoose\": \"^8.16.3\",\n+    \"multer\": \"^2.0.1\",\n     \"multer-storage-cloudinary\": \"^4.0.0\",\n-    \"nodemailer\": \"^6.9.7\",\n+    \"nodemailer\": \"^7.0.5\",\n     \"nodemailer-sendgrid-transport\": \"^0.2.0\",\n     \"passport\": \"^0.7.0\",\n     \"passport-google-oauth20\": \"^2.0.0\"\n-  },\n-  \"devDependencies\": {\n-    \"nodemon\": \"^3.0.1\"\n   }\n }\n"
+                },
+                {
+                    "date": 1752407819565,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,9 +7,9 @@\n     \"start\": \"node server\",\n     \"dev\": \"nodemon server\"\n   },\n   \"keywords\": [],\n-  \"author\": \"الأوفوي\",\n+  \"author\": \",\n   \"license\": \"ISC\",\n   \"type\": \"module\",\n   \"dependencies\": {\n     \"bcrypt\": \"^6.0.0\",\n"
+                },
+                {
+                    "date": 1752407829733,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,9 +7,9 @@\n     \"start\": \"node server\",\n     \"dev\": \"nodemon server\"\n   },\n   \"keywords\": [],\n-  \"author\": \",\n+  \"author\": \"الي\",\n   \"license\": \"ISC\",\n   \"type\": \"module\",\n   \"dependencies\": {\n     \"bcrypt\": \"^6.0.0\",\n"
+                },
+                {
+                    "date": 1752407836980,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,9 +7,9 @@\n     \"start\": \"node server\",\n     \"dev\": \"nodemon server\"\n   },\n   \"keywords\": [],\n-  \"author\": \"الي\",\n+  \"author\": \"ي\",\n   \"license\": \"ISC\",\n   \"type\": \"module\",\n   \"dependencies\": {\n     \"bcrypt\": \"^6.0.0\",\n"
+                },
+                {
+                    "date": 1752407842220,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,9 +7,9 @@\n     \"start\": \"node server\",\n     \"dev\": \"nodemon server\"\n   },\n   \"keywords\": [],\n-  \"author\": \"ي\",\n+  \"author\" ي\",\n   \"license\": \"ISC\",\n   \"type\": \"module\",\n   \"dependencies\": {\n     \"bcrypt\": \"^6.0.0\",\n"
+                },
+                {
+                    "date": 1752407851038,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,9 +7,9 @@\n     \"start\": \"node server\",\n     \"dev\": \"nodemon server\"\n   },\n   \"keywords\": [],\n-  \"author\" ي\",\n+  \"author\": \"Adeyiina\",\n   \"license\": \"ISC\",\n   \"type\": \"module\",\n   \"dependencies\": {\n     \"bcrypt\": \"^6.0.0\",\n"
+                },
+                {
+                    "date": 1752407856326,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,9 +7,9 @@\n     \"start\": \"node server\",\n     \"dev\": \"nodemon server\"\n   },\n   \"keywords\": [],\n-  \"author\": \"Adeyiina\",\n+  \"author\": \"Adeyina\",\n   \"license\": \"ISC\",\n   \"type\": \"module\",\n   \"dependencies\": {\n     \"bcrypt\": \"^6.0.0\",\n"
+                },
+                {
+                    "date": 1752407862817,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -7,9 +7,9 @@\n     \"start\": \"node server\",\n     \"dev\": \"nodemon server\"\n   },\n   \"keywords\": [],\n-  \"author\": \"Adeyina\",\n+  \"author\": \"Adeyinka\",\n   \"license\": \"ISC\",\n   \"type\": \"module\",\n   \"dependencies\": {\n     \"bcrypt\": \"^6.0.0\",\n"
+                }
+            ],
+            "date": 1752403312039,
+            "name": "Commit-0",
+            "content": "{\n  \"name\": \"backend\",\n  \"version\": \"1.0.0\",\n  \"description\": \"\",\n  \"main\": \"server.js\",\n  \"scripts\": {\n    \"start\": \"node server\",\n    \"dev\": \"nodemon server\"\n  },\n  \"keywords\": [],\n  \"author\": \"الأوفوي\",\n  \"license\": \"ISC\",\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"apollo-server-express\": \"^3.13.0\",\n    \"bcrypt\": \"^5.1.1\",\n    \"cloudinary\": \"^1.41.3\",\n    \"cors\": \"^2.8.5\",\n    \"dotenv\": \"^16.3.1\",\n    \"express\": \"^4.18.2\",\n    \"graphql\": \"^15.8.0\",graphq\n    \"graphql-upload\": \"^13.0.0\",\n    \"jsonwebtoken\": \"^9.0.2\",\n    \"mongoose\": \"^8.8.3\",\n    \"multer\": \"^1.4.5-lts.1\",\n    \"multer-storage-cloudinary\": \"^4.0.0\",\n    \"nodemailer\": \"^6.9.7\",\n    \"nodemailer-sendgrid-transport\": \"^0.2.0\",\n    \"passport\": \"^0.7.0\",\n    \"passport-google-oauth20\": \"^2.0.0\",\n    \"sequelize\": \"^6.37.1\"\n  },\n  \"devDependencies\": {\n    \"nodemon\": \"^3.0.1\"\n  }\n}\n"
+        }
+    ]
+}

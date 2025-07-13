@@ -60,6 +60,22 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
         }}
       />
-    </Tabs>
+
+       <Tabs.Screen
+        name="book-details/[bookId]"
+        options={{
+          href: null,
+        }}
+      />
+
+       <Tabs.Screen
+        name="addBook" 
+        options={{  href: null }} />
+              
+        <Tabs.Screen 
+        name="edit-book/[bookId]" 
+        options={{  href: null, }} />
+      
+</Tabs>
   );
 }

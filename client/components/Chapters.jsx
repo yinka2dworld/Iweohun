@@ -52,7 +52,7 @@ const Chapters = ({ book, onChapterSelect }) => {
               size={16}
               style={[{ color: primaryColor }]}
             />
-            <ThemedText style={tw`text-md text-gray-400`}>
+            <ThemedText style={tw`text-md text-gray-600`}>
               {book.bookAuthor}
             </ThemedText>
 
@@ -62,12 +62,12 @@ const Chapters = ({ book, onChapterSelect }) => {
               size={16}
               style={[{ color: primaryColor }]}
             />
-            <ThemedText style={tw`text-md text-gray-400`}>
+            <ThemedText style={tw`text-md text-gray-600`}>
               {book.reciter || 'N/A'}
             </ThemedText>
           </ThemedView>
 
-          <ThemedText style={tw`text-sm text-gray-400 text-left my-3 mx-4`}>
+          <ThemedText style={tw`text-sm text-gray-600 text-left my-3 mx-4`}>
             {book.bookDescription || 'N/A'}
           </ThemedText>
         </ThemedView>

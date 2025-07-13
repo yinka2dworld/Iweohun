@@ -74,26 +74,25 @@ export default function TopChart() {
 
   return (
     <ThemedView style={tw`flex-1`}>
+       <LinearGradient colors={['#070c70', '#ff1493']} style={tw`p-6 rounded-b-xl`}>
+            <ThemedText type='title' style={[{ color: 'white' }, tw`pt-3`]}>Top Chart</ThemedText>
+            <View style={tw`flex-row space-x-2 mt-7`}>
+              <Image source={disc} style={tw`h-25 w-25`} resizeMode="contain" />
+              <ThemedText style={[tw` text-xl pl-3 pt-5 text-xl`, { fontStyle: 'italic' }]}>
+                Listen to the most rated audiobooks right now!
+              </ThemedText>
+            </View>
+          </LinearGradient>
+
       <FlatList
         data={books}
         keyExtractor={(item) => item._id?.toString() || Math.random().toString()}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={tw`pb-10`}
-        ListHeaderComponent={
-          <LinearGradient colors={['#070c70', '#ff1493']} style={tw`p-6 rounded-b-xl mb-6`}>
-            <ThemedText type='title' style={[{ color: 'white' }, tw`mt-3`]}>Top Chart</ThemedText>
-            <View style={tw`flex-row space-x-2 mt-7`}>
-              <Image source={disc} style={tw`h-25 w-25`} resizeMode="contain" />
-              <ThemedText style={[tw` text-xl ml-3 mt-5 text-xl`, { fontStyle: 'italic' }]}>
-                Listen to the most rated audiobooks right now!
-              </ThemedText>
-            </View>
-          </LinearGradient>
-        }
+        contentContainerStyle={tw`px-6 py-6`}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={[tw`flex-row items-center bg-white p-4 rounded-lg mb-4 shadow-md mx-5`]}
+            style={[tw`flex-row items-center bg-white p-4 rounded-lg mb-4 shadow-md`]}
             onPress={() => router.push(`/book-details/${item._id}`)}
           >
             <Image source={{ uri: item.bookCover }} style={tw`w-16 h-20 rounded-md`} />

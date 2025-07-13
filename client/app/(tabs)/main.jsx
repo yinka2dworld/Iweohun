@@ -75,16 +75,15 @@ export default function Main() {
 
   return (
     <ThemedView style={[tw`flex-1`, { backgroundColor }]}>
-      <ScrollView>
-        {/* Header */}
-        <ThemedView style={tw`ml-5 mt-8`}>
+
+      <ThemedView style={tw`px-6 pt-8 pb-3`}>
           <ThemedText type='title' style={{ color: textColor }}>Iweohun</ThemedText>
           <ThemedText style={[tw`text-lg font-semibold`, { color: primaryColor }]}>
             Orating African literature
           </ThemedText>
         </ThemedView>
-
-        {/* Search & Language List */}
+        
+      <ScrollView>
         <Searchbar />
 
         <ThemedView style={tw`flex-row justify-end mb-4 mr-5`}>
@@ -93,7 +92,7 @@ export default function Main() {
       tw`rounded-3xl px-4 py-2`,
       { backgroundColor: primaryColor }
     ]}
-    onPress={() => router.push('/screens/addBook')}
+    onPress={() => router.push('/addBook')}
   >
     <ThemedText style={tw`text-white text-lg font-semibold text-center`}>
       + Create
@@ -104,8 +103,8 @@ export default function Main() {
         <LanguageList />
 
         {/* Category Sections */}
-        <ThemedView style={tw`mb-10 w-full mx-5`}>
-          {['History & Biographies', 'Fiction & Romance', 'Kids', 'Personal Development', 'Adventure & Thrillers'].map((category) => (
+        <ThemedView style={tw`mb-10 w-full px-5`}>
+          {['History & Biographies', 'Fiction', 'Romance', 'Kids', 'Personal Development', 'Adventure & Thrillers'].map((category) => (
             <CategorySection
               key={category}
               title={category}

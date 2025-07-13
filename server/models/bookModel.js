@@ -2,14 +2,9 @@ import mongoose from "mongoose";
 import { Schema } from 'mongoose';
 
 const chapterSchema = new Schema({
-  id: {
+title: {
     type: String,
-    required: true,
-  },
-
-  title: {
-    type: String,
-    required: true,
+    // required: true,
   },
 
   duration: {
@@ -81,18 +76,19 @@ const bookSchema = new Schema({
   category: {
     type: String,
     required: true,
-    enum: ['History & Biographies', 'Fiction & Romance', 'Kids', 'Personal Development', 'Adventure & Thrillers']
+    enum: ['History & Biographies', 'Fiction', 'Romance', 'Kids', 'Personal Development', 'Adventure & Thrillers']
   },
 
   language: {
     type: String,
     required: true,
+    enum: ['Swahili', 'Yoruba', 'Zulu', 'Amharic', 'Hausa', 'Igbo', 'Amazigh', 'Shona', 'Fulani', 'Malagasy', 'Oromo']
   }, 
   
   postedBy:{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User', 
-      required: true,
+      // required: true,
        },
 },
   { timestamps: true }

@@ -21,24 +21,24 @@ export default function Home() {
       }
     };
 
-    const timer = setTimeout(navigateBasedOnAuth, 3000);
+    const timer = setTimeout(navigateBasedOnAuth, 2000);
     return () => clearTimeout(timer);
   }, [router]);
 
   return (
-    <ThemedView style={[tw`flex-1 justify-center items-center`, { backgroundColor }]}>
+    <ThemedView style={[tw`flex-1 justify-center items-center pt-40`, { backgroundColor }]}>
       {/* App Logo */}
       <Image
         source={require('../assets/images/logo.png')}
-        style={tw`w-50 h-70 mt-55`}
+        style={tw`w-50 h-60 `}
         resizeMode="contain"
       />
 
       {/* Footer Branding */}
-      <ThemedText style={tw`mt-20 text-base text-gray-500`}>Powered by</ThemedText>
+      <ThemedText style={tw`pt-30 text-base text-gray-500`}>Powered by</ThemedText>
       <Image
         source={require('../assets/images/Okinlm.png')}
-        style={tw`w-30 h-30 mt-2`}
+        style={tw`w-30 h-30 pt-2`}
         resizeMode="contain"
       />
     </ThemedView>

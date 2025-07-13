@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'; 
 import { SafeAreaView, TouchableOpacity, Image, ActivityIndicator, FlatList, View } from 'react-native';
 import tw from 'twrnc';
 import axios from 'axios';
@@ -15,7 +15,7 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import * as SecureStore from 'expo-secure-store';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const BookDetails = () => {
+export default function BookDetails () {
   const { bookId } = useLocalSearchParams();
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -60,6 +60,13 @@ const BookDetails = () => {
     fetchBook();
   }, [bookId]);
 
+  // Reset tab to "Chapters" when book changes
+  useEffect(() => {
+    if (book) {
+      setSelectedTab('Chapters');
+    }
+  }, [book]);
+
   const handleChapterSelect = async (chapter) => {
     setAudioDetails({
       audioUrl: chapter.audioUrl,
@@ -81,13 +88,13 @@ const BookDetails = () => {
         console.warn('User ID or Token not found.');
         return;
       }
-  
+
       await axios.post(`${apiUrl}/addListener/${bookId}`, { userId }, {
         headers: {
           Authorization: `Bearer ${token}`,
         }
       });
-  
+
       console.log('Listener counted successfully.');
     } catch (error) {
       console.error('Error counting listener:', error);
@@ -125,15 +132,13 @@ const BookDetails = () => {
       const exists = savedBooks.some((b) => b._id === book._id);
 
       if (exists) {
-        // Remove if already saved
         savedBooks = savedBooks.filter((b) => b._id !== book._id);
       } else {
-        // Add if not saved
         savedBooks.push(book);
       }
 
       await SecureStore.setItemAsync('savedBooks', JSON.stringify(savedBooks));
-      setIsSaved(!exists); // Toggle button
+      setIsSaved(!exists);
     } catch (error) {
       console.error('Error saving book:', error);
     }
@@ -161,12 +166,11 @@ const BookDetails = () => {
       <FlatList
         ListHeaderComponent={
           <View style={[tw`w-full`, { backgroundColor }]}>
-            {/* Fixed Header Section */}
-            <ThemedView style={tw`flex-row items-center my-5 mx-2`}>
+            {/* Header */}
+            <ThemedView style={tw`flex-row items-center pt-8 pb-2 px-2`}>
               <TouchableOpacity onPress={() => router.back()} style={tw`p-2`}>
                 <MaterialCommunityIcons name="arrow-left" size={28} color={primaryColor} />
               </TouchableOpacity>
-
               <TouchableOpacity onPress={handleSave} style={tw`ml-auto p-2`}>
                 <MaterialCommunityIcons
                   name={isSaved ? 'bookmark' : 'bookmark-outline'}
@@ -176,7 +180,7 @@ const BookDetails = () => {
               </TouchableOpacity>
             </ThemedView>
 
-            {/* Book Details */}
+            {/* Book Info */}
             <ThemedView style={tw`items-center`}>
               {book.bookCover ? (
                 <Image
@@ -218,14 +222,20 @@ const BookDetails = () => {
         renderItem={null}
         ListFooterComponent={renderTabContent()}
         keyExtractor={(item, index) => index.toString()}
-        stickyHeaderIndices={[0]}  // Make the first item (the header) sticky
+        stickyHeaderIndices={[0]}
       />
 
       {audioDetails && (
-        <AudioPlayer audioUrl={audioDetails.audioUrl} chapterTitle={audioDetails.chapterTitle} onClose={() => setAudioDetails(null)} />
+        <AudioPlayer
+          audioUrl={audioDetails.audioUrl}
+          chapterTitle={audioDetails.chapterTitle}
+          onClose={() => setAudioDetails(null)}
+          book={book}
+        />
       )}
     </SafeAreaView>
   );
 };
 
-export default BookDetails;
+ 
+

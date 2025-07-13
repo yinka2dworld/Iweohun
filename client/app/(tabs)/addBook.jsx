@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ScrollView,
   TextInput,
@@ -8,23 +8,49 @@ import {
   Image,
   View,
   Text,
-  Switch,
+  Modal,
+  Pressable,
+  FlatList
 } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import axios from 'axios';
 import Constants from 'expo-constants';
-import { useLocalSearchParams } from 'expo-router';
+import {  useRouter } from 'expo-router';
 import tw from 'twrnc';
 import { MaterialIcons, FontAwesome, Ionicons, Entypo } from '@expo/vector-icons';
-import * as Audio from 'expo-av';
+import { Audio } from 'expo-av';
 
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
-export default function BookForm({ type = 'add' }) {
+
+const CATEGORIES = [
+  'History & Biographies',
+  'Fiction',
+  'Romance',
+  'Kids',
+  'Personal Development',
+  'Adventure & Thrillers'
+];
+
+const LANGUAGES = [
+  'Swahili',
+  'Yoruba',
+  'Zulu',
+  'Amharic',
+  'Hausa',
+  'Igbo',
+  'Amazigh',
+  'Shona',
+  'Fulani',
+  'Malagasy',
+  'Oromo'
+];
+
+export default function AddScreen() {
   const [formData, setFormData] = useState({
     bookName: '',
     bookDescription: '',
@@ -36,13 +62,18 @@ export default function BookForm({ type = 'add' }) {
   });
 
   const [bookCoverUri, setBookCoverUri] = useState(null);
-  const [loading, setLoading] = useState(type === 'edit');
+  const [bookCoverFile, setBookCoverFile] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [chapterTitle, setChapterTitle] = useState('');
   const [chapterAudioUri, setChapterAudioUri] = useState('');
+  const [chapterAudioFile, setChapterAudioFile] = useState(null);
   const [calculatingDuration, setCalculatingDuration] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
 
-  const { bookId } = useLocalSearchParams();
+  
+  const router = useRouter();
   const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
 
   const backgroundColor = useThemeColor({}, 'background');
@@ -50,62 +81,59 @@ export default function BookForm({ type = 'add' }) {
   const primaryColor = useThemeColor({}, 'primary');
   const borderColor = useThemeColor({}, 'border');
 
-  useEffect(() => {
-    if (type === 'edit' && bookId) {
-      const fetchBook = async () => {
-        try {
-          const token = await SecureStore.getItemAsync('authToken');
-          const res = await axios.get(`${apiUrl}/books/${bookId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const book = res.data;
-          setFormData({
-            bookName: book.bookName || '',
-            bookDescription: book.bookDescription || '',
-            bookAuthor: book.bookAuthor || '',
-            reciter: book.reciter || '',
-            category: book.category || '',
-            language: book.language || '',
-            chapters: book.chapters || [],
-          });
-          setBookCoverUri(book.bookCover);
-        } catch (err) {
-          Alert.alert('Error', 'Failed to load book details');
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchBook();
-    }
-  }, [type, bookId]);
-
+  
   const handleChange = (key, value) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
+    setFormData(prev => ({ ...prev, [key]: value }));
   };
+
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-      // allowsEditing: true,
-      aspect: [4, 3],
-    });
-    if (!result.canceled) {
-      setBookCoverUri(result.assets[0].uri);
-    }
-  };
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (status !== 'granted') {
+    Alert.alert('Permission required', 'We need camera roll permissions to select an image');
+    return;
+  }
+
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes:  ImagePicker.MediaTypeOptions.Images,
+    quality: 1,
+    aspect: [4, 3],
+  });
+
+  if (!result.canceled && result.assets.length > 0) {
+    const imageAsset = result.assets[0];
+    setBookCoverUri(imageAsset.uri);
+
+    const file = {
+      uri: imageAsset.uri,
+      type: imageAsset.type || 'image/jpeg',
+      name: imageAsset.fileName || 'bookCover.jpg',
+    };
+    setBookCoverFile(file);
+  }
+};
+
 
   const pickAudio = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({ type: 'audio/*' });
-      if (result.type === 'success') {
-        setChapterAudioUri(result.uri);
-        await calculateAudioDuration(result.uri); // Optional: for preview
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to pick audio file');
+  try {
+    const result = await DocumentPicker.getDocumentAsync({ type: 'audio/*' });
+    if (result.assets && result.assets.length > 0) {
+      const audioAsset = result.assets[0];
+      const uri = audioAsset.uri;
+      setChapterAudioUri(uri);
+      const file = {
+        uri,
+        type: audioAsset.mimeType || 'audio/mpeg',
+        name: audioAsset.name || 'chapterAudio.mp3',
+      };
+      setChapterAudioFile(file);
+      await calculateAudioDuration(uri);
     }
-  };
+  } catch (error) {
+    Alert.alert('Error', 'Failed to pick audio file', error.message);
+  }
+};
+
 
   const calculateAudioDuration = async (uri) => {
     try {
@@ -119,8 +147,8 @@ export default function BookForm({ type = 'add' }) {
       const minutes = Math.floor(durationInSeconds / 60);
       const seconds = Math.floor(durationInSeconds % 60);
       const formattedDuration = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-      
-      sound.unloadAsync();
+
+      await sound.unloadAsync();
       return formattedDuration;
     } catch (error) {
       console.error('Error calculating duration:', error);
@@ -144,79 +172,104 @@ export default function BookForm({ type = 'add' }) {
         title: chapterTitle,
         duration,
         progress: 0,
-        audioUrl: chapterAudioUri,
+        audioFile: chapterAudioFile,
       };
 
-      setFormData((prev) => ({
+      setFormData(prev => ({
         ...prev,
         chapters: [...prev.chapters, newChapter],
       }));
 
       setChapterTitle('');
-      setChapterAudioUri('');
+      setChapterAudioFile(null);
     } catch (error) {
+      console.log(error)
       Alert.alert('Error', 'Failed to add chapter');
     }
   };
 
   const handleRemoveChapter = (chapterId) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       chapters: prev.chapters.filter(chap => chap.id !== chapterId),
     }));
   };
 
-  const handleSubmit = async () => {
-    if (!formData.bookName || !formData.bookAuthor) {
-      Alert.alert('Error', 'Book name and author are required');
-      return;
+  
+ const handleSubmit = async () => {
+  if (!formData.bookName || !formData.bookAuthor || !formData.category || !formData.language) {
+    Alert.alert('Error', 'Book name, author, category, and language are required');
+    return;
+  }
+
+  try {
+    setLoading(true);
+    const token = await SecureStore.getItemAsync('authToken');
+
+    const form = new FormData();
+
+    // Append basic fields
+    form.append('bookName', formData.bookName);
+    form.append('bookDescription', formData.bookDescription);
+    form.append('bookAuthor', formData.bookAuthor);
+    form.append('reciter', formData.reciter);
+    form.append('category', formData.category);
+    form.append('language', formData.language);
+
+    // Append book cover
+    if (bookCoverFile) {
+      form.append('bookCover', {
+        uri: bookCoverFile.uri,
+        type: bookCoverFile.type || 'image/jpeg',
+        name: bookCoverFile.name || 'cover.jpg',
+      });
     }
 
-    try {
-      setLoading(true);
-      const token = await SecureStore.getItemAsync('authToken');
-      const form = new FormData();
+    // Strip file from chapter data
+    const chapterMeta = formData.chapters.map((chapter) => ({
+      title: chapter.title,
+      duration: chapter.duration,
+      progress: chapter.progress,
+    }));
 
-      // Add all form data fields
-      Object.entries(formData).forEach(([key, value]) => {
-        if (key === 'chapters') {
-          form.append('chapters', JSON.stringify(value));
-        } else {
-          form.append(key, value);
-        }
-      });
+    // Append chapters JSON
+    form.append('chapters', JSON.stringify(chapterMeta));
 
-      // Add book cover if it's a new image
-      if (bookCoverUri && !bookCoverUri.startsWith('http')) {
-        form.append('bookCover', {
-          uri: bookCoverUri,
-          name: 'cover.jpg',
-          type: 'image/jpeg',
+    // Append audio files
+    formData.chapters.forEach((chapter) => {
+      if (chapter.audioFile) {
+        form.append('audioFile', {
+          uri: chapter.audioFile.uri,
+          name: chapter.audioFile.name || 'chapter.mp3',
+          type: chapter.audioFile.type || 'audio/mpeg',
         });
       }
+    });
 
-      const url =
-        type === 'edit'
-          ? `${apiUrl}/updateBook/${bookId}`
-          : `${apiUrl}/addBook`;
+    const url = `${apiUrl}/addBook`;
 
-      await axios({
-        method: type === 'edit' ? 'put' : 'post',
-        url,
-        data: form,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      timeout: 30000
+    };
 
-      Alert.alert('Success', `Book ${type === 'edit' ? 'updated' : 'added'}!`);
-    } catch (err) {
-      Alert.alert('Error', err.message || 'Submission failed');
-    } finally {
-      setLoading(false);
+    const response = await axios.post(url, form, config);
+
+    if (response.data) {
+      Alert.alert('Success', 'Book added successfully!');
+      router.push('/(tabs)/main');
     }
-  };
+
+  } catch (error) {
+    console.error('Submission error:', error.toJSON?.() || error);
+    Alert.alert('Error', error?.message || 'Submission failed');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   if (loading) {
     return (
@@ -226,14 +279,38 @@ export default function BookForm({ type = 'add' }) {
     );
   }
 
+  const renderCategoryItem = ({ item }) => (
+    <Pressable
+      style={tw`p-3 border-b ${borderColor}`}
+      onPress={() => {
+        handleChange('category', item);
+        setShowCategoryModal(false);
+      }}
+    >
+      <Text style={{ color: textColor }}>{item}</Text>
+    </Pressable>
+  );
+
+  const renderLanguageItem = ({ item }) => (
+    <Pressable
+      style={tw`p-3 border-b ${borderColor}`}
+      onPress={() => {
+        handleChange('language', item);
+        setShowLanguageModal(false);
+      }}
+    >
+      <Text style={{ color: textColor }}>{item}</Text>
+    </Pressable>
+  );
+
   return (
     <View style={[tw`flex-1`, { backgroundColor }]}>
       {/* Tab Navigation */}
-      <View style={tw`flex-row border-b mt-5 border-[${borderColor}]`}>
+      <View style={tw`flex-row border-b mt-5 ${borderColor}`}>
         <TouchableOpacity
           style={[
             tw`flex-1 items-center py-3`,
-            activeTab === 'details' && tw`border-b-2 border-[${primaryColor}]`,
+            activeTab === 'details' && tw`border-b-2 ${primaryColor}`,
           ]}
           onPress={() => setActiveTab('details')}
         >
@@ -247,7 +324,7 @@ export default function BookForm({ type = 'add' }) {
         <TouchableOpacity
           style={[
             tw`flex-1 items-center py-3`,
-            activeTab === 'chapters' && tw`border-b-2 border-[${primaryColor}]`,
+            activeTab === 'chapters' && tw`border-b-2 ${primaryColor}`,
           ]}
           onPress={() => setActiveTab('chapters')}
         >
@@ -260,11 +337,11 @@ export default function BookForm({ type = 'add' }) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={tw`p-10`}>
+      <ScrollView style={tw`p-4`}>
         {activeTab === 'details' ? (
           <>
             <ThemedText style={tw`text-xl mb-4 text-center font-bold`}>
-              {type === 'edit' ? 'Edit Book' : 'Add New Book'}
+               Add New Book
             </ThemedText>
 
             {/* Book Cover */}
@@ -290,14 +367,11 @@ export default function BookForm({ type = 'add' }) {
               </TouchableOpacity>
             </View>
 
-        
             {/* Book Details Form */}
             {[
               { key: 'bookName', label: 'Book Name', icon: 'book', required: true },
               { key: 'bookAuthor', label: 'Author', icon: 'person', required: true },
-              { key: 'reciter', label: 'Reciter', icon: 'mic' },
-              { key: 'category', label: 'Category', icon: 'category' },
-              { key: 'language', label: 'Language', icon: 'language' },
+              { key: 'reciter', label: 'Reciter', icon: 'mic', required: true },
             ].map(({ key, label, icon, required }) => (
               <View key={key} style={tw`mb-4`}>
                 <View style={tw`flex-row items-center mb-1`}>
@@ -317,10 +391,10 @@ export default function BookForm({ type = 'add' }) {
             ))}
 
             {/* Description */}
-            <View style={tw`mb-10`}>
+            <View style={tw`mb-4`}>
               <View style={tw`flex-row items-center mb-1`}>
                 <MaterialIcons name="description" size={18} color={textColor} />
-                <Text style={[tw`ml-2`, { color: textColor }]}>Description</Text>
+                <Text style={[tw`ml-2`, { color: textColor }]}>Description{<Text style={tw`text-red-500`}> *</Text>}</Text>
               </View>
               <TextInput
                 placeholder="Enter book description"
@@ -334,16 +408,60 @@ export default function BookForm({ type = 'add' }) {
                 ]}
               />
             </View>
+
+
+            {/* Category Dropdown */}
+            <View style={tw`mb-4`}>
+              <View style={tw`flex-row items-center mb-1`}>
+                <MaterialIcons name="category" size={18} color={textColor} />
+                <Text style={[tw`ml-2`, { color: textColor }]}>Category{!formData.category && <Text style={tw`text-red-500`}> *</Text>}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowCategoryModal(true)}
+                style={[
+                  tw`border rounded-lg p-3 flex-row items-center justify-between`,
+                  { borderColor }
+                ]}
+              >
+                <Text style={{ color: formData.category ? textColor : textColor + '80' }}>
+                  {formData.category || 'Select Category'}
+                </Text>
+                <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
+              </TouchableOpacity>
+            </View>
+
+
+          
+            {/* Language Dropdown */}
+            <View style={tw`mb-20`}>
+              <View style={tw`flex-row items-center mb-1`}>
+                <MaterialIcons name="language" size={18} color={textColor} />
+                <Text style={[tw`ml-2`, { color: textColor }]}>Language{!formData.language && <Text style={tw`text-red-500`}> *</Text>}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowLanguageModal(true)}
+                style={[
+                  tw`border rounded-lg p-3 flex-row items-center justify-between`,
+                  { borderColor }
+                ]}
+              >
+                <Text style={{ color: formData.language ? textColor : textColor + '80' }}>
+                  {formData.language || 'Select Language'}
+                </Text>
+                <MaterialIcons name="arrow-drop-down" size={24} color={textColor} />
+              </TouchableOpacity>
+            </View>
+
+            
           </>
         ) : (
           <>
             <ThemedText style={tw`text-xl mb-4 text-center font-bold`}>
-            Add Chapters
+              Add Chapters
             </ThemedText>
 
             {/* Add Chapter Form */}
             <View style={tw`mb-6 p-4 rounded-lg`}>
-              
               <View style={tw`mb-3`}>
                 <View style={tw`flex-row items-center mb-1`}>
                   <Text style={[tw`ml-2`, { color: textColor }]}>Chapter Title</Text>
@@ -365,7 +483,7 @@ export default function BookForm({ type = 'add' }) {
                   <Text style={[tw`ml-2`, { color: textColor }]}>Chapter Audio</Text>
                 </View>
                 <TouchableOpacity
-                  onPress={() => pickAudio(setChapterAudioUri)}
+                  onPress={pickAudio}
                   style={[
                     tw`border rounded-lg p-3 flex-row items-center justify-between mb-2`,
                     { borderColor }
@@ -427,7 +545,7 @@ export default function BookForm({ type = 'add' }) {
                 ))}
               </View>
             ) : (
-              <View style={tw`items-center py-8 `}>
+              <View style={tw`items-center py-8`}>
                 <MaterialIcons name="info-outline" size={32} color={textColor} />
                 <Text style={[tw`mt-2 text-center`, { color: textColor }]}>
                   No chapters added yet. Add your first chapter above.
@@ -438,9 +556,65 @@ export default function BookForm({ type = 'add' }) {
         )}
       </ScrollView>
 
+      {/* Category Selection Modal */}
+      <Modal
+        visible={showCategoryModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowCategoryModal(false)}
+      >
+        <View style={[tw`flex-1 justify-center`, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+          <View style={[tw`m-6 bg-white rounded-lg`, { backgroundColor }]}>
+            <View style={tw`p-4 border-b ${borderColor}`}>
+              <Text style={[tw`text-lg font-bold`, { color: textColor }]}>Select Category</Text>
+            </View>
+            <FlatList
+              data={CATEGORIES}
+              renderItem={renderCategoryItem}
+              keyExtractor={(item) => item}
+              style={tw`max-h-64`}
+            />
+            <TouchableOpacity
+              style={tw`p-3 border-t ${borderColor} items-center`}
+              onPress={() => setShowCategoryModal(false)}
+            >
+              <Text style={{ color: primaryColor }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Language Selection Modal */}
+      <Modal
+        visible={showLanguageModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowLanguageModal(false)}
+      >
+        <View style={[tw`flex-1 justify-center`, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+          <View style={[tw`m-6 bg-white rounded-lg`, { backgroundColor }]}>
+            <View style={tw`p-4 border-b ${borderColor}`}>
+              <Text style={[tw`text-lg font-bold`, { color: textColor }]}>Select Language</Text>
+            </View>
+            <FlatList
+              data={LANGUAGES}
+              renderItem={renderLanguageItem}
+              keyExtractor={(item) => item}
+              style={tw`max-h-64`}
+            />
+            <TouchableOpacity
+              style={tw`p-3 border-t ${borderColor} items-center`}
+              onPress={() => setShowLanguageModal(false)}
+            >
+              <Text style={{ color: primaryColor }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Submit Button */}
-      {activeTab === 'details' && (
-        <View style={tw`p-4 border-[${borderColor}]`}>
+      {activeTab === 'chapters' && (
+        <View style={tw`p-4`}>
           <TouchableOpacity
             onPress={handleSubmit}
             disabled={loading}
@@ -452,10 +626,10 @@ export default function BookForm({ type = 'add' }) {
             {loading ? (
               <ActivityIndicator color="white" style={tw`mr-2`} />
             ) : (
-              <MaterialIcons name={type === 'edit' ? "save" : "add"} size={20} color="white" />
+              <MaterialIcons name={"add"} size={20} color="white" />
             )}
             <Text style={tw`text-white ml-2 text-lg font-medium`}>
-              {type === 'edit' ? 'Update Book' : 'Submit Book'}
+              Submit Book
             </Text>
           </TouchableOpacity>
         </View>

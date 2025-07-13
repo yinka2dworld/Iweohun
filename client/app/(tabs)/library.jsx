@@ -1,5 +1,14 @@
 import React, { useState, useCallback } from 'react';
-import { SafeAreaView, FlatList, View, TouchableOpacity, Image, Modal, Pressable, Dimensions, ActivityIndicator } from 'react-native';
+import {
+  SafeAreaView,
+  FlatList,
+  View,
+  TouchableOpacity,
+  Image,
+  Pressable,
+  Dimensions,
+  ActivityIndicator,
+} from 'react-native';
 import tw from 'twrnc';
 import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
@@ -22,7 +31,6 @@ export default function Library() {
   const modalBackgroundColor = useThemeColor({}, 'modalBackground');
   const textColor = useThemeColor({}, 'text');
 
-  // Fetch saved books every time screen is focused
   useFocusEffect(
     useCallback(() => {
       const fetchSavedBooks = async () => {
@@ -74,54 +82,78 @@ export default function Library() {
 
   return (
     <SafeAreaView style={[tw`flex-1`, { backgroundColor }]}>
-      <ThemedView style={tw`p-4`}>
-        <ThemedText type="title" style={[tw`mt-5 mb-10`, { color: textColor }]}>My Library</ThemedText>
-
-        {savedBooks.length === 0 ? (
-          <ThemedText style={{ color: textColor }}>No books in your library.</ThemedText>
-        ) : (
-          <FlatList
-            data={savedBooks}
-            keyExtractor={(item) => item._id?.toString() || Math.random().toString()}
-            contentContainerStyle={tw`pb-10 mt-5`}
-            renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => router.push(`/book-details/${item._id}`)}>
-                <LinearGradient colors={['#070c70', '#ff1493']} style={tw`mb-4 p-4 rounded-lg`}>
-                  <View style={tw`flex-row`}>
-                    <Image source={{ uri: item.bookCover }} style={tw`w-20 h-25 rounded-lg mr-4`} />
-                    <View style={tw`flex-1 justify-center`}>
-                      <ThemedText style={tw`text-lg font-bold text-white`}>{item.bookName}</ThemedText>
-                      <ThemedText style={tw`text-sm text-white`}>{item.bookAuthor}</ThemedText>
-                    </View>
-                    <TouchableOpacity
-                      onPress={(event) => handlePress(item, event)}
-                      style={tw`justify-center pl-2`}
-                    >
-                      <Icon name="more-vert" size={24} color="white" />
-                    </TouchableOpacity>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            )}
-          />
-        )}
-
-        {modalVisible && selectedBook && (
-          <Pressable
-            style={[tw`absolute`, { top: buttonPosition.top, right: buttonPosition.right }]}
-            onPress={() => setModalVisible(false)}
-          >
-            <View style={[tw`p-3 rounded-lg shadow-lg`, { backgroundColor: modalBackgroundColor }]}>
-              <TouchableOpacity onPress={() => handleRemove(selectedBook._id)} style={tw`p-3`}>
-                <ThemedText style={tw`text-lg text-white`}>Remove from Library</ThemedText>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleAction('share')} style={tw`p-3`}>
-                <ThemedText style={tw`text-lg text-white`}>share book</ThemedText>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
-        )}
+      {/* Header */}
+      <ThemedView style={tw`px-6 pt-6 pb-4`}>
+        <ThemedText type="title" style={[tw`text-2xl font-bold`, { color: textColor }]}>
+          My Library
+        </ThemedText>
       </ThemedView>
+
+      {/* Book List */}
+      {savedBooks.length === 0 ? (
+        <View style={tw`px-4`}>
+          <ThemedText style={{ color: textColor }}>No books in your library.</ThemedText>
+        </View>
+      ) : (
+        <FlatList
+          data={savedBooks}
+          keyExtractor={(item) => item._id?.toString() || Math.random().toString()}
+          contentContainerStyle={tw`py-6 px-6`}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => router.push(`/book-details/${item._id}`)}>
+              <LinearGradient colors={['#070c70', '#ff1493']} style={tw`mb-4 p-4 rounded-lg`}>
+                <View style={tw`flex-row`}>
+                  <Image source={{ uri: item.bookCover }} style={tw`w-20 h-25 rounded-lg mr-4`} />
+                  <View style={tw`flex-1 justify-center`}>
+                    <ThemedText style={tw`text-lg font-bold text-white`}>
+                      {item.bookName}
+                    </ThemedText>
+                    <ThemedText style={tw`text-sm text-white`}>
+                      {item.bookAuthor}
+                    </ThemedText>
+                  </View>
+                  <TouchableOpacity
+                    onPress={(event) => handlePress(item, event)}
+                    style={tw`justify-center pl-2`}
+                  >
+                    <Icon name="more-vert" size={24} color="white" />
+                  </TouchableOpacity>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+        />
+      )}
+
+      {/* Modal Overlay */}
+      {modalVisible && selectedBook && (
+        <Pressable
+          style={[
+            tw`absolute inset-0`,
+            { backgroundColor: 'rgba(0, 0, 0, 0.3)' },
+          ]}
+          onPress={() => setModalVisible(false)}
+        >
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={[
+              tw`absolute p-3 rounded-lg shadow-lg`,
+              {
+                top: buttonPosition.top,
+                right: buttonPosition.right,
+                backgroundColor: modalBackgroundColor,
+              },
+            ]}
+          >
+            <TouchableOpacity onPress={() => handleRemove(selectedBook._id)} style={tw`p-3`}>
+              <ThemedText style={tw`text-lg text-white`}>Remove from Library</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => {}} style={tw`p-3`}>
+              <ThemedText style={tw`text-lg text-white`}>Share book</ThemedText>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      )}
     </SafeAreaView>
   );
 }

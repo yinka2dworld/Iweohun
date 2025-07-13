@@ -9,7 +9,7 @@ export default function CategorySection({ title, books, textColor }) {
   const router = useRouter();
 
   return (
-    <ThemedView style={tw`ml-5 mb-5`}>
+    <ThemedView style={tw`mb-5`}>
       <ThemedText style={[tw`text-2xl mb-3 font-bold`, { color: textColor }]}>{title}</ThemedText>
       {books.length > 0 ? (
         <FlatList

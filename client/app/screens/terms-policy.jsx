@@ -12,8 +12,8 @@ export default function TermsAndPolicy() {
   return (
     <SafeAreaView style={tw`flex-1`}>
       <ThemedView style={tw`flex-1 px-4 pt-4`}>
+      <ThemedText style={[tw`text-xl font-bold py-5`, { color: primaryColor }]} type="title">Terms of Use – Iweohun</ThemedText>
         <ScrollView showsVerticalScrollIndicator={false}>
-          <ThemedText style={[tw`text-xl font-bold my-5`, { color: primaryColor }]} type="title">Terms of Use – Iweohun</ThemedText>
 
           <ThemedText style={[tw`font-bold mb-1`, { color: primaryColor }]} type="defaultSemiBold">1. Eligibility</ThemedText>
           <ThemedText style={tw`mb-3`} type="default">

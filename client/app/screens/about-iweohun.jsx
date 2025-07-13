@@ -11,13 +11,11 @@ export default function AboutIweohun() {
   return (
     <SafeAreaView style={tw`flex-1`}>
       <ThemedView style={tw`flex-1 px-4 pt-4`}>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Title */}
-          <ThemedText style={[tw`text-xl font-bold my-5`, { color: primaryColor }]} type="title">
+        <ThemedText style={[tw`text-xl font-bold py-5`, { color: primaryColor }]} type="title">
             About Iweohun
           </ThemedText>
 
-          {/* Mission Section */}
+        <ScrollView showsVerticalScrollIndicator={false}>
           <ThemedText style={[tw`font-bold mb-1`, { color: primaryColor }]} type="defaultSemiBold">
             Our Mission
           </ThemedText>

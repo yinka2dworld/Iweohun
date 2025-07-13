@@ -1,5 +1,5 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": "expo/jsconfig.base",
   "compilerOptions": {
     "strict": true,
     "paths": {
@@ -9,10 +9,10 @@
     }
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx",
     ".expo/types/**/*.js",
     "expo-env.d.js"
-  ],
+, "components/ExternalLink.tsx", "components/HapticTab.tsx", "components/ParallaxScrollView.tsx"  ],
   "exclude": ["node_modules", "build"]
 }

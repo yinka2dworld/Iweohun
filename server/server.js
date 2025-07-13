@@ -14,7 +14,7 @@ const server = express();
 const port = process.env.PORT || 3000;
 
 
-server.use( cors() );
+server.use( cors({ origin: '*' }) );
 server.use(express.json());
 server.use(bodyParser.json());
 server.use(express.urlencoded({ extended: true }));
