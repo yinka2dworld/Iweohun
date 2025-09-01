@@ -1,0 +1,26 @@
+{
+    "sourceFile": "client/components/AudioPlayerWrapper.js",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 2,
+            "patches": [
+                {
+                    "date": 1756420699535,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1756554193524,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,21 +1,12 @@\n-// components/AudioPlayerWrapper.js\r\n+// components/AudioPlayerWrapper.jsx\r\n import React from 'react';\r\n import AudioPlayer from './AudioPlayer';\r\n import { useAudio } from '@/context/AudioContext';\r\n \r\n const AudioPlayerWrapper = () => {\r\n-  const { audioDetails, stopChapter } = useAudio();\r\n-\r\n+  const { audioDetails } = useAudio();\r\n   if (!audioDetails) return null;\r\n-\r\n-  return (\r\n-    <AudioPlayer\r\n-      audioUrl={audioDetails.audioUrl}\r\n-      chapterTitle={audioDetails.chapterTitle}\r\n-      book={audioDetails.book}\r\n-      onClose={stopChapter}\r\n-    />\r\n-  );\r\n+  return <AudioPlayer />;\r\n };\r\n \r\n export default AudioPlayerWrapper;\r\n"
+                },
+                {
+                    "date": 1756554201399,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,11 @@\n+import React from 'react';\r\n+import AudioPlayer from './AudioPlayer';\r\n+import { useAudio } from '@/context/AudioContext';\r\n+\r\n+const AudioPlayerWrapper = () => {\r\n+  const { audioDetails } = useAudio();\r\n+  if (!audioDetails) return null;\r\n+  return <AudioPlayer />;\r\n+};\r\n+\r\n+export default AudioPlayerWrapper;\r\n"
+                }
+            ],
+            "date": 1756420699535,
+            "name": "Commit-0",
+            "content": "// components/AudioPlayerWrapper.js\r\nimport React from 'react';\r\nimport AudioPlayer from './AudioPlayer';\r\nimport { useAudio } from '@/context/AudioContext';\r\n\r\nconst AudioPlayerWrapper = () => {\r\n  const { audioDetails, stopChapter } = useAudio();\r\n\r\n  if (!audioDetails) return null;\r\n\r\n  return (\r\n    <AudioPlayer\r\n      audioUrl={audioDetails.audioUrl}\r\n      chapterTitle={audioDetails.chapterTitle}\r\n      book={audioDetails.book}\r\n      onClose={stopChapter}\r\n    />\r\n  );\r\n};\r\n\r\nexport default AudioPlayerWrapper;\r\n"
+        }
+    ]
+}

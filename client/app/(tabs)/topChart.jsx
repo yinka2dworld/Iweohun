@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import tw from 'twrnc';
 import axios from 'axios';
@@ -9,52 +9,51 @@ import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function TopChart() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   const router = useRouter();
   const disc = require('../../assets/images/disc.png');
-
   const backgroundColor = useThemeColor({}, 'background');
   const secondaryColor = useThemeColor({}, 'secondary');
   const textColor = '#070c70';
   const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
 
+  // ✅ Properly wrapped useFocusEffect
+  useFocusEffect(
+    useCallback(() => {
+      const fetchBooks = async () => {
+        try {
+          setLoading(true);
+          setError(null);
 
-  useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        setLoading(true);
-        setError(null); 
-  
-        const token = await SecureStore.getItemAsync('authToken');
-        if (!token) {
-          throw new Error('No authentication token found');
+          const token = await SecureStore.getItemAsync('authToken');
+          if (!token) throw new Error('No authentication token found');
+
+          const response = await axios.get(`${apiUrl}/topChart`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          const booksData = Array.isArray(response.data?.books) ? response.data.books : [];
+          setBooks(booksData);
+        } catch (err) {
+          setError(err?.message || 'Failed to fetch books');
+        } finally {
+          setLoading(false);
         }
-  
-        const response = await axios.get(`${apiUrl}/topChart`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        const booksData = Array.isArray(response.data?.books) 
-          ? response.data.books 
-          : [];
-        setBooks(booksData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch books');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchBooks();
-  }, [apiUrl]);
+      };
 
-  
+      fetchBooks();
+    }, [])
+  );
+
   if (loading) {
     return (
       <ThemedView style={[tw`flex-1 items-center justify-center`, { backgroundColor }]}>
@@ -74,15 +73,15 @@ export default function TopChart() {
 
   return (
     <ThemedView style={tw`flex-1`}>
-       <LinearGradient colors={['#070c70', '#ff1493']} style={tw`p-6 rounded-b-xl`}>
-            <ThemedText type='title' style={[{ color: 'white' }, tw`pt-3`]}>Top Chart</ThemedText>
-            <View style={tw`flex-row space-x-2 mt-7`}>
-              <Image source={disc} style={tw`h-25 w-25`} resizeMode="contain" />
-              <ThemedText style={[tw` text-xl pl-3 pt-5 text-xl`, { fontStyle: 'italic' }]}>
-                Listen to the most rated audiobooks right now!
-              </ThemedText>
-            </View>
-          </LinearGradient>
+      <LinearGradient colors={['#070c70', '#ff1493']} style={tw`p-5 rounded-b-xl`}>
+        <ThemedText type='title' style={[{ color: 'white' }, tw`pt-9`]}>Top Chart</ThemedText>
+        <View style={tw`flex-row space-x-2 mx-3 mt-2`}>
+          <Image source={disc} style={tw`h-25 w-25`} resizeMode="contain" />
+          <ThemedText style={[tw` text-xl pl-3 pt-5`, { fontStyle: 'italic', color: 'white' }]}>
+            Listen to the most rated audiobooks right now!
+          </ThemedText>
+        </View>
+      </LinearGradient>
 
       <FlatList
         data={books}
@@ -97,7 +96,7 @@ export default function TopChart() {
           >
             <Image source={{ uri: item.bookCover }} style={tw`w-16 h-20 rounded-md`} />
             <View style={tw`ml-4 flex-1`}>
-              <ThemedText type='subtitle' style={{ color: textColor }} >{item.bookName}</ThemedText>
+              <ThemedText type='subtitle' style={{ color: textColor }}>{item.bookName}</ThemedText>
               <ThemedText style={{ color: secondaryColor }} type='link'>by {item.bookAuthor}</ThemedText>
             </View>
           </TouchableOpacity>
@@ -106,8 +105,6 @@ export default function TopChart() {
     </ThemedView>
   );
 }
-
-
 
 
 

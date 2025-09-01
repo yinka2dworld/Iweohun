@@ -12,6 +12,7 @@ export const searchBook = async (req, res) => {
           return res.status(400).json({ message: 'Search term is required.' });
       }
       const books = await Book.find({
+          status: "isCertified",
           $or: [
               { bookName: { $regex: searchTerm, $options: 'i' } },
               { bookAuthor: { $regex: searchTerm, $options: 'i' } },
@@ -28,7 +29,7 @@ export const searchBook = async (req, res) => {
 
 export const getBooks = async (req, res) => { 
     try {
-        const books = await Book.find().sort({ createdAt: -1 });
+        const books = await Book.find({ status: "isCertified" }).sort({ createdAt: -1 });
       
        return  res.status(200).json({ books }); 
     } catch (error) {
@@ -53,7 +54,7 @@ export const getBook = async (req, res) => {
 
 export const topChart = async (req, res) => { 
   try {
-    const books = await Book.find()
+    const books = await Book.find({ status: "isCertified" })
       .sort({ listenersCount: -1 }) 
       .limit(20); 
 
@@ -178,6 +179,7 @@ export const getRelatedBooks = async (req, res) => {
     }
     const relatedBooks = await Book.find({
       _id: { $ne: bookId }, 
+      status: "isCertified",
       $or: [
         { author: mainBook.author },
         { category: mainBook.category }
@@ -197,7 +199,7 @@ export const getLanguageBooks = async (req, res) => {
     if (!language) {
       return res.status(400).json({ message: 'No language specified' });
     }
-    const books = await Book.find({ language: language }); 
+    const books = await Book.find({ language: language, status: "isCertified" }); 
     if (books.length === 0) {
       return res.status(404).json({ message: 'No books found for the specified language' });
     }
@@ -211,44 +213,51 @@ export const getLanguageBooks = async (req, res) => {
 
 export const addBook = async (req, res) => {
   try {
-    if (!['superAdmin', 'admin'].includes(req.user.role)) {
-      return res.status(403).json({ message: 'Unauthorized access' });
+
+    if (!['creator', 'admin'].includes(req.user.role)) {
+      return res.status(403).json({ message: 'You are not authorized to access this.' });
     }
 
-    const {
-      bookName,
-      bookDescription,
-      bookAuthor,
-      reciter,
-      category,
-      language,
-      chapters = []
-    } = req.body;
+    const { bookName, bookDescription, bookAuthor, reciter, category, language } = req.body;
 
     if (!bookName || !bookAuthor || !category || !language) {
       return res.status(400).json({ message: 'Missing required fields.' });
     }
-const bookCoverFile = req.files?.bookCover?.[0]; 
-    const bookCoverUrl = bookCoverFile ? await uploadToCloudinary(bookCoverFile) : null;
 
-    const processedChapters = await Promise.all(
-      chapters.map(async (chapter) => ({
-          title: chapter.title,
-        duration: chapter.duration || '',
-          progress: chapter.progress || 0,
-        audioUrl: chapter.audioFile ? await uploadToCloudinary(chapter.audioFile) : ''
-      }))
-    );
+    const bookCoverFile = req.files.find(f => f.fieldname === 'bookCover');
+    const bookCover = bookCoverFile
+      ? (await uploadToCloudinary(bookCoverFile)).secureUrl
+      : null;
+
+    const chaptersMeta = JSON.parse(req.body.chaptersMeta || '[]');
+    const processedChapters = [];
+
+    for (const meta of chaptersMeta) {
+      const fileField = `chapterAudio_${meta.index}`;
+      const audioFile = req.files.find(f => f.fieldname === fileField);
+
+      const audioUrl = audioFile
+        ? (await uploadToCloudinary(audioFile)).secureUrl
+        : '';
+
+      processedChapters.push({
+        title: meta.title,
+        duration: meta.duration,
+        progress: meta.progress,
+        bookAudio: audioUrl,
+      });
+    }
 
     const newBook = await Book.create({
-      bookCover: bookCoverUrl,
+      bookCover,
       bookName,
       bookDescription,
       bookAuthor,
       reciter,
       category,
       language,
-      chapters: processedChapters
+      postedBy: req.user._id,
+      chapters: processedChapters,
     });
 
     return res.status(201).json({
@@ -264,51 +273,63 @@ const bookCoverFile = req.files?.bookCover?.[0];
 
 export const updateBook = async (req, res) => {
   try {
-    if (!['superAdmin', 'admin'].includes(req.user.role)) {
+     if (!['creator', 'admin'].includes(req.user.role)) {
       return res.status(403).json({ message: 'You are not authorized to access this.' });
     }
+
     const { bookId } = req.params;
-    const {
-      bookCover,
-      bookName,
-      bookDescription,
-      bookAuthor,
-      reciter,
-      category,
-      language,
-      chapters = []
-    } = req.body;
 
     const existingBook = await Book.findById(bookId);
     if (!existingBook) {
       return res.status(404).json({ message: 'Book not found' });
     }
 
-    const bookCoverUrl = bookCover ? await uploadToCloudinary(bookCover) : existingBook.bookCover;
+    let bookCoverUrl = existingBook.bookCover;
+    const bookCoverFile = req.files.find(f => f.fieldname === 'bookCover');
 
-    const processedChapters = await Promise.all(
-      chapters.map(async (chapter) => ({
-          id: chapter.id || `chap-${Date.now()}`,
-          title: chapter.title || '',
-          duration: chapter.duration || '',
-          progress: chapter.progress || 0,
-        audioUrl: chapter. audioFile
-          ? await uploadToCloudinary(chapter.audioFile)
-          : chapter.existingAudioUrl || ''
-      }))
-    );
+    if (bookCoverFile) {
+      // if (existingBook.bookCover) {
+      //   const publicId = extractPublicId(existingBook.bookCover);
+      //   await deleteFromCloudinary(publicId);
+      // }
+      bookCoverUrl = (await uploadToCloudinary(bookCoverFile)).secureUrl;
+    }
+
+    const chaptersMeta = JSON.parse(req.body.chaptersMeta || '[]');
+    const processedChapters = [];
+
+    for (const meta of chaptersMeta) {
+      const fileField = `chapterAudio_${meta.index}`;
+      const audioFile = req.files.find(f => f.fieldname === fileField);
+
+      let audioUrl = meta.existingAudioUrl || '';
+
+      if (audioFile) { 
+        // if (meta.existingAudioUrl) {
+        //   const publicId = extractPublicId(meta.existingAudioUrl);
+        //   await deleteFromCloudinary(publicId);
+        // }
+        audioUrl = (await uploadToCloudinary(audioFile)).secureUrl;
+      }
+
+      processedChapters.push({
+        title: meta.title,
+        duration: meta.duration,
+        progress: meta.progress,
+        bookAudio: audioUrl,
+      });
+    }
 
     existingBook.bookCover = bookCoverUrl;
-    existingBook.bookName = bookName || existingBook.bookName;
-    existingBook.bookDescription = bookDescription || existingBook.bookDescription;
-    existingBook.bookAuthor = bookAuthor || existingBook.bookAuthor;
-    existingBook.reciter = reciter || existingBook.reciter;
-    existingBook.category = category || existingBook.category;
-    existingBook.language = language || existingBook.language;
-    existingBook.chapters = chapters.length ? processedChapters : existingBook.chapters;
+    existingBook.bookName = req.body.bookName || existingBook.bookName;
+    existingBook.bookDescription = req.body.bookDescription || existingBook.bookDescription;
+    existingBook.bookAuthor = req.body.bookAuthor || existingBook.bookAuthor;
+    existingBook.reciter = req.body.reciter || existingBook.reciter;
+    existingBook.category = req.body.category || existingBook.category;
+    existingBook.language = req.body.language || existingBook.language;
+    existingBook.chapters = processedChapters.length ? processedChapters : existingBook.chapters;
 
     const updatedBook = await existingBook.save();
-
     return res.status(200).json({
       message: 'Book updated successfully',
       book: updatedBook,
@@ -321,27 +342,27 @@ export const updateBook = async (req, res) => {
 
 
 export const deleteBook = async (req, res) => {
-   if (req.user.role != 'superAdmin' || 'admin') {
-              throw new Error('You are not authorized to access this.');    
-          }
+      if (!['superAdmin', 'admin'].includes(req.user.role)) {
+      return res.status(403).json({ message: 'You are not authorized to access this.' });
+    }
      const { _id } = req.params;
     try {
       const book = await Book.findById(_id);
       if (!book) {
         return res.status(404).json({ message: 'Book not found' });
       }
-     const { bookCover, audioBook } = book;
-         try {
-             if (audioBook) {
-             await deleteFromCloudinary(audioBook);
-             }
-         if (bookCover) {
-             await deleteFromCloudinary(bookCover);
-            }
-         } catch (fileError) {
-            console.error('Error deleting files from Cloudinary:', fileError.message);
-            return res.status(500).json({ message: 'Error deleting associated files', error: fileError.message });
-         }
+    //  const { bookCover, bookAudio } = book;
+    //      try {
+    //          if (bookAudio) {
+    //          await deleteFromCloudinary(bookAudio);
+    //          }
+    //      if (bookCover) {
+    //          await deleteFromCloudinary(bookCover);
+    //         }
+    //      } catch (fileError) {
+    //         console.error('Error deleting files from Cloudinary:', fileError.message);
+    //         return res.status(500).json({ message: 'Error deleting associated files', error: fileError.message });
+    //      }
       await Book.findByIdAndDelete(_id);
       res.status(200).json({ message: 'Book deleted successfully' });
     } catch (error) {

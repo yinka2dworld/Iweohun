@@ -4,43 +4,42 @@ import { Schema } from 'mongoose';
 const chapterSchema = new Schema({
 title: {
     type: String,
-    // required: true,
+    required: true,
   },
 
   duration: {
     type: String,
-    // required: true,
+    required: true,
   },
 
   progress: {
     type: Number, 
     default: 0, 
   },
-  
-  audioUrl: {
-    type: String,
-    // required: true,
-  },
+
+  bookAudio: {
+      type: String,
+      required: true,
+    }
 });
 
 
 const bookSchema = new Schema({
   bookCover: {
-    type: String,
-    // required: true
-    // unique:true,
-  },
+      type: String,
+      required: true,
+},
 
   bookName: {
     type: String,
     required: true,
-    // unique: true,
+    unique: true,
   },
 
   bookDescription: {
     type: String,
     required: true,
-    // unique:true
+    unique:true
   },
 
   bookAuthor: {
@@ -88,7 +87,6 @@ const bookSchema = new Schema({
   postedBy:{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User', 
-      // required: true,
        },
 },
   { timestamps: true }

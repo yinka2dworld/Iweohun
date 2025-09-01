@@ -1,21 +1,29 @@
 import React from 'react';
 import tw from 'twrnc';
-import { ScrollView, SafeAreaView, View } from 'react-native';
+import { ScrollView, SafeAreaView, View, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useRouter } from 'expo-router';
 
 export default function AboutOkínTechnologies() {
   const primaryColor = useThemeColor({}, 'primary');
+  const router= useRouter();
 
   return (
     <SafeAreaView style={tw`flex-1`}>
-      <ThemedView style={tw`flex-1 px-4 pt-4`}>
-      <ThemedText style={[tw`text-xl font-bold py-5`, { color: primaryColor }]} type="title">
-            About Ọkín Technologies
-          </ThemedText>
+      <ThemedView style={tw`flex-1 px-3 pt-3`}>
+      
+
+<ThemedView style={tw`flex-row items-center gap-5`}>
+        <TouchableOpacity onPress={() => router.back()} style={tw`p-2`}>
+     <MaterialCommunityIcons name="arrow-left" size={28} color={primaryColor} />
+                      </TouchableOpacity>
+ <ThemedText style={[tw`text-xl font-bold py-5`, { color: primaryColor }]} type="title">About Ọkín Technologies</ThemedText>       
+    </ThemedView>
+
         <ScrollView showsVerticalScrollIndicator={false}>
-       
           <ThemedText style={[tw`font-bold mb-1`, { color: primaryColor }]} type="defaultSemiBold">
             Our Mission
           </ThemedText>
@@ -81,7 +89,7 @@ export default function AboutOkínTechnologies() {
           <ThemedText style={tw`mb-3`} type="default">
             To learn more about our work or get in touch with our team:
           </ThemedText>
-          <View style={tw`mb-8`}>
+          <View style={tw`mb-15`}>
             <ThemedText style={[tw`text-center text-sm`, { color: primaryColor }]} type="link">
               🌐 Website: www.okintech.com
             </ThemedText>

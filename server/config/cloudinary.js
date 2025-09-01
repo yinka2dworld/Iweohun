@@ -1,11 +1,20 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable } from 'stream';
+import dotenv from 'dotenv';
+dotenv.config();
+
+
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.API_KEY,
   api_secret: process.env.SECRET_KEY,
 });
+
+if (!process.env.CLOUD_NAME || !process.env.API_KEY || !process.env.SECRET_KEY) {
+  throw new Error('Cloudinary configuration is missing. Please check your environment variables.');
+}
+
 
 export const uploadToCloudinary = async (file) => {
   if (!file || !file.buffer || !file.mimetype) {
@@ -40,25 +49,36 @@ export const uploadToCloudinary = async (file) => {
 };
 
 
+const extractPublicId = (url) => {
+  try {
+    const urlObj = new URL(url);
+    const path = urlObj.pathname; // e.g., /directories/gallery/252/large_4875d7cc3a057af74dafef6cb66f9d62.jpg
+    const withoutExt = path.replace(/\.[^/.]+$/, ''); // remove file extension
+    return withoutExt.slice(1); // remove leading slash
+  } catch (err) {
+    throw new Error('Invalid URL format for extracting public ID.');
+  }
+};
 
-  export const deleteFromCloudinary = async (publicId) => {
-    if (!publicId) {
-      throw new Error('Public ID is required for deletion.');
+
+export const deleteFromCloudinary = async (input) => {
+  if (!input) {
+    throw new Error('Public ID or URL is required for deletion.');
+  }
+
+  const publicId = input.startsWith('http') ? extractPublicId(input) : input;
+
+  try {
+    const result = await cloudinary.uploader.destroy(publicId);
+
+    if (result.result !== 'ok') {
+      throw new Error(`Failed to delete file with Public ID: ${publicId}. Result: ${result.result}`);
     }
-  
-    try {
-      const result = await cloudinary.uploader.destroy(publicId);
-  
-      // Check if the deletion was successful
-      if (result.result !== 'ok') {
-        throw new Error(`Failed to delete file with Public ID: ${publicId}. Result: ${result.result}`);
-      }
-  
-      console.log(`File with Public ID: ${publicId} deleted successfully.`);
-      return { success: true, message: `File with Public ID: ${publicId} deleted successfully.` };
-    } catch (error) {
-      console.error(`Error deleting file with Public ID: ${publicId}`, error);
-      throw new Error(`File deletion failed: ${error.message}`);
-    }
-  };
-  
+
+    console.log(`File with Public ID: ${publicId} deleted successfully.`);
+    return { success: true, message: `File with Public ID: ${publicId} deleted successfully.` };
+  } catch (error) {
+    console.error(`Error deleting file with Public ID: ${publicId}`, error);
+    throw new Error(`File deletion failed: ${error.message}`);
+  }
+};

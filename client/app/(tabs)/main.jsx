@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
 import { ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import tw from 'twrnc';
 import Searchbar from '@/components/Searchbar';
 import LanguageList from '@/components/LanguageList';
@@ -13,15 +14,15 @@ import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 
 export default function Main() {
-    const router = useRouter();
+  const router = useRouter();
   const [books, setBooks] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [role, setRole] = useState(null);
 
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
   const primaryColor = useThemeColor({}, 'primary');
-
   const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
 
   const fetchBooks = useCallback(async () => {
@@ -32,18 +33,21 @@ export default function Main() {
     }
 
     try {
-       const token = await SecureStore.getItemAsync('authToken');
-              if (!token) {
-                throw new Error('No authentication token found');
-              }
-      const response = await axios.get(`${apiUrl}/books`, 
-        {
+      const token = await SecureStore.getItemAsync('authToken');
+      const role = await SecureStore.getItemAsync('userRole');
+      setRole(role);
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await axios.get(`${apiUrl}/books`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
-         },
-      }
-    );
+        },
+      });
+
       setBooks(response.data.books || []);
     } catch (error) {
       setError(error.message || "Failed to fetch books.");
@@ -52,9 +56,12 @@ export default function Main() {
     }
   }, [apiUrl]);
 
-  useEffect(() => {
-    fetchBooks();
-  }, [fetchBooks]);
+  // ✅ Auto-refresh books when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      fetchBooks();
+    }, [fetchBooks])
+  );
 
   if (loading) {
     return (
@@ -75,30 +82,31 @@ export default function Main() {
 
   return (
     <ThemedView style={[tw`flex-1`, { backgroundColor }]}>
+      <ThemedView style={tw`px-6 pt-15 pb-1`}>
+        <ThemedText type='title' style={{ color: textColor }}>Iweohun</ThemedText>
+        <ThemedText style={[tw`text-lg font-semibold`, { color: primaryColor }]}>
+          Orating African literature
+        </ThemedText>
+      </ThemedView>
 
-      <ThemedView style={tw`px-6 pt-8 pb-3`}>
-          <ThemedText type='title' style={{ color: textColor }}>Iweohun</ThemedText>
-          <ThemedText style={[tw`text-lg font-semibold`, { color: primaryColor }]}>
-            Orating African literature
-          </ThemedText>
-        </ThemedView>
-        
       <ScrollView>
         <Searchbar />
 
-        <ThemedView style={tw`flex-row justify-end mb-4 mr-5`}>
-  <TouchableOpacity
-    style={[
-      tw`rounded-3xl px-4 py-2`,
-      { backgroundColor: primaryColor }
-    ]}
-    onPress={() => router.push('/addBook')}
-  >
-    <ThemedText style={tw`text-white text-lg font-semibold text-center`}>
-      + Create
-    </ThemedText>
-  </TouchableOpacity>
-</ThemedView>
+        {role === 'creator' && (
+          <ThemedView style={tw`flex-row justify-end mb-4 mr-5`}>
+            <TouchableOpacity
+              style={[
+                tw`rounded-3xl px-4 py-2`,
+                { backgroundColor: primaryColor }
+              ]}
+              onPress={() => router.push('/addBook')}
+            >
+              <ThemedText style={tw`text-white text-lg font-semibold text-center`}>
+                ✚ Create
+              </ThemedText>
+            </TouchableOpacity>
+          </ThemedView>
+        )}
 
         <LanguageList />
 

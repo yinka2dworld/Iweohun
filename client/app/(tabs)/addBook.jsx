@@ -65,7 +65,7 @@ export default function AddScreen() {
   const [bookCoverFile, setBookCoverFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [chapterTitle, setChapterTitle] = useState('');
-  const [chapterAudioUri, setChapterAudioUri] = useState('');
+  const [chapterAudioUri, setChapterAudioUri] = useState(null);
   const [chapterAudioFile, setChapterAudioFile] = useState(null);
   const [calculatingDuration, setCalculatingDuration] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
@@ -168,7 +168,6 @@ export default function AddScreen() {
       const duration = await calculateAudioDuration(chapterAudioUri);
       
       const newChapter = {
-        id: `chap-${Date.now()}`,
         title: chapterTitle,
         duration,
         progress: 0,
@@ -181,6 +180,7 @@ export default function AddScreen() {
       }));
 
       setChapterTitle('');
+      setChapterAudioUri(null);
       setChapterAudioFile(null);
     } catch (error) {
       console.log(error)
@@ -188,27 +188,24 @@ export default function AddScreen() {
     }
   };
 
-  const handleRemoveChapter = (chapterId) => {
-    setFormData(prev => ({
-      ...prev,
-      chapters: prev.chapters.filter(chap => chap.id !== chapterId),
-    }));
-  };
+  const handleRemoveChapter = (indexToRemove) => {
+  setFormData(prev => ({
+    ...prev,
+    chapters: prev.chapters.filter((_, index) => index !== indexToRemove),
+  }));
+};
 
-  
- const handleSubmit = async () => {
+  const handleSubmit = async () => {
   if (!formData.bookName || !formData.bookAuthor || !formData.category || !formData.language) {
     Alert.alert('Error', 'Book name, author, category, and language are required');
     return;
   }
-
   try {
     setLoading(true);
     const token = await SecureStore.getItemAsync('authToken');
-
     const form = new FormData();
 
-    // Append basic fields
+    // Base fields
     form.append('bookName', formData.bookName);
     form.append('bookDescription', formData.bookDescription);
     form.append('bookAuthor', formData.bookAuthor);
@@ -216,60 +213,54 @@ export default function AddScreen() {
     form.append('category', formData.category);
     form.append('language', formData.language);
 
-    // Append book cover
+    // Book cover
     if (bookCoverFile) {
       form.append('bookCover', {
         uri: bookCoverFile.uri,
-        type: bookCoverFile.type || 'image/jpeg',
         name: bookCoverFile.name || 'cover.jpg',
+        type: bookCoverFile.type || 'image/jpeg',
       });
     }
 
-    // Strip file from chapter data
-    const chapterMeta = formData.chapters.map((chapter) => ({
+    // 📌 Send chapters metadata as JSON
+    const chaptersMeta = formData.chapters.map((chapter, index) => ({
+      index,
       title: chapter.title,
       duration: chapter.duration,
       progress: chapter.progress,
     }));
+    form.append('chaptersMeta', JSON.stringify(chaptersMeta));
 
-    // Append chapters JSON
-    form.append('chapters', JSON.stringify(chapterMeta));
-
-    // Append audio files
-    formData.chapters.forEach((chapter) => {
+    // 📌 Send chapter audio files separately
+    formData.chapters.forEach((chapter, index) => {
       if (chapter.audioFile) {
-        form.append('audioFile', {
+        form.append(`chapterAudio_${index}`, {
           uri: chapter.audioFile.uri,
-          name: chapter.audioFile.name || 'chapter.mp3',
+          name: chapter.audioFile.name || `chapter-${index}.mp3`,
           type: chapter.audioFile.type || 'audio/mpeg',
         });
       }
     });
-
-    const url = `${apiUrl}/addBook`;
-
-    const config = {
+    
+    const response = await axios.post(`${apiUrl}/addBook`, form, {
       headers: {
         Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
       },
-      timeout: 30000
-    };
-
-    const response = await axios.post(url, form, config);
+      timeout: 60000, 
+    });
 
     if (response.data) {
       Alert.alert('Success', 'Book added successfully!');
       router.push('/(tabs)/main');
     }
-
   } catch (error) {
-    console.error('Submission error:', error.toJSON?.() || error);
-    Alert.alert('Error', error?.message || 'Submission failed');
+    console.error('Error:', error.response?.data || error.message);
+    Alert.alert('Error', error?.response?.data?.message || error.message);
   } finally {
     setLoading(false);
   }
 };
-
 
   if (loading) {
     return (
@@ -306,7 +297,7 @@ export default function AddScreen() {
   return (
     <View style={[tw`flex-1`, { backgroundColor }]}>
       {/* Tab Navigation */}
-      <View style={tw`flex-row border-b mt-5 ${borderColor}`}>
+      <View style={tw`flex-row border-b mt-8 ${borderColor}`}>
         <TouchableOpacity
           style={[
             tw`flex-1 items-center py-3`,
@@ -367,6 +358,25 @@ export default function AddScreen() {
               </TouchableOpacity>
             </View>
 
+             {/* Description */}
+            <View style={tw`mb-4`}>
+              <View style={tw`flex-row items-center mb-1`}>
+                <MaterialIcons name="description" size={18} color={textColor} />
+                <Text style={[tw`ml-2`, { color: textColor }]}>Description{<Text style={tw`text-red-500`}> *</Text>}</Text>
+              </View>
+              <TextInput
+                placeholder="Enter book description"
+                value={formData.bookDescription}
+                onChangeText={(text) => handleChange('bookDescription', text)}
+                multiline
+                numberOfLines={4}
+                style={[
+                  tw`border rounded-lg p-3 h-24`,
+                  { borderColor, color: textColor }
+                ]}
+              />
+            </View>
+
             {/* Book Details Form */}
             {[
               { key: 'bookName', label: 'Book Name', icon: 'book', required: true },
@@ -389,25 +399,6 @@ export default function AddScreen() {
                 />
               </View>
             ))}
-
-            {/* Description */}
-            <View style={tw`mb-4`}>
-              <View style={tw`flex-row items-center mb-1`}>
-                <MaterialIcons name="description" size={18} color={textColor} />
-                <Text style={[tw`ml-2`, { color: textColor }]}>Description{<Text style={tw`text-red-500`}> *</Text>}</Text>
-              </View>
-              <TextInput
-                placeholder="Enter book description"
-                value={formData.bookDescription}
-                onChangeText={(text) => handleChange('bookDescription', text)}
-                multiline
-                numberOfLines={4}
-                style={[
-                  tw`border rounded-lg p-3 h-24`,
-                  { borderColor, color: textColor }
-                ]}
-              />
-            </View>
 
 
             {/* Category Dropdown */}
@@ -433,7 +424,7 @@ export default function AddScreen() {
 
           
             {/* Language Dropdown */}
-            <View style={tw`mb-20`}>
+            <View style={tw`mb-40`}>
               <View style={tw`flex-row items-center mb-1`}>
                 <MaterialIcons name="language" size={18} color={textColor} />
                 <Text style={[tw`ml-2`, { color: textColor }]}>Language{!formData.language && <Text style={tw`text-red-500`}> *</Text>}</Text>
@@ -521,7 +512,7 @@ export default function AddScreen() {
                 <ThemedText style={tw`text-lg mb-3 font-medium`}>Chapter List</ThemedText>
                 {formData.chapters.map((chap, index) => (
                   <View 
-                    key={chap.id} 
+                    key={index} 
                     style={[
                       tw`p-3 mb-2 rounded-lg flex-row justify-between items-center`,
                       { backgroundColor: borderColor + '20' }
@@ -538,7 +529,7 @@ export default function AddScreen() {
                         Progress: {chap.progress}%
                       </Text>
                     </View>
-                    <TouchableOpacity onPress={() => handleRemoveChapter(chap.id)}>
+                    <TouchableOpacity onPress={() => handleRemoveChapter(index)}>
                       <MaterialIcons name="delete" size={24} color="#ff4444" />
                     </TouchableOpacity>
                   </View>
@@ -614,7 +605,7 @@ export default function AddScreen() {
 
       {/* Submit Button */}
       {activeTab === 'chapters' && (
-        <View style={tw`p-4`}>
+        <View style={tw`p-4 mb-25`}>
           <TouchableOpacity
             onPress={handleSubmit}
             disabled={loading}
@@ -634,6 +625,7 @@ export default function AddScreen() {
           </TouchableOpacity>
         </View>
       )}
+
     </View>
   );
 }

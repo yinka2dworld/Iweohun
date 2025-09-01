@@ -1,5 +1,12 @@
-import React, { useEffect, useState } from 'react'; 
-import { SafeAreaView, TouchableOpacity, Image, ActivityIndicator, FlatList, View } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  SafeAreaView,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  FlatList,
+  View
+} from 'react-native';
 import tw from 'twrnc';
 import axios from 'axios';
 import Constants from 'expo-constants';
@@ -7,45 +14,43 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import Chapters from '@/components/Chapters';
 import Related from '@/components/Related';
 import Reviews from '@/components/Reviews';
-import AudioPlayer from '@/components/AudioPlayer';
 import BookRatings from '@/components/BookRatings';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import * as SecureStore from 'expo-secure-store';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useFocusEffect } from '@react-navigation/native';
+import { useAudio } from '@/context/AudioContext';
 
-export default function BookDetails () {
+export default function BookDetails() {
   const { bookId } = useLocalSearchParams();
+  const router = useRouter();
+  const { playChapter } = useAudio();
+
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedTab, setSelectedTab] = useState('Chapters');
-  const [audioDetails, setAudioDetails] = useState(null);
-  const [isSaved, setIsSaved] = useState(false);
   const [hasListened, setHasListened] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
-  const router = useRouter();
   const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
-
   const backgroundColor = useThemeColor({}, 'background');
   const primaryColor = useThemeColor({}, 'primary');
 
   useEffect(() => {
     const fetchBook = async () => {
       if (!bookId) return;
-
       try {
         setLoading(true);
-        setError(null);
         const token = await SecureStore.getItemAsync('authToken');
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
+        if (!token) throw new Error('No authentication token found');
+
         const response = await axios.get(`${apiUrl}/book/${bookId}`, {
           headers: {
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
           },
         });
 
@@ -60,51 +65,73 @@ export default function BookDetails () {
     fetchBook();
   }, [bookId]);
 
-  // Reset tab to "Chapters" when book changes
-  useEffect(() => {
-    if (book) {
-      setSelectedTab('Chapters');
-    }
-  }, [book]);
+  useFocusEffect(
+    useCallback(() => {
+      const checkIfSaved = async () => {
+        const userId = await SecureStore.getItemAsync('userId');
+        if (!userId || !book?._id) return;
 
-  const handleChapterSelect = async (chapter) => {
-    setAudioDetails({
-      audioUrl: chapter.audioUrl,
-      chapterTitle: chapter.title,
-    });
+        const savedKey = `savedBooks_${userId}`;
+        const saved = await SecureStore.getItemAsync(savedKey);
+        const savedBooks = saved ? JSON.parse(saved) : [];
 
-    if (book?._id && !hasListened) { 
-      await handleListen(book._id);
-      setHasListened(true); 
+        const exists = savedBooks.some((b) => b._id === book._id);
+        setIsSaved(exists);
+      };
+      if (book) checkIfSaved();
+    }, [book])
+  );
+
+  const handleSave = async () => {
+    try {
+      const userId = await SecureStore.getItemAsync('userId');
+      if (!userId) return;
+
+      const savedKey = `savedBooks_${userId}`;
+      const saved = await SecureStore.getItemAsync(savedKey);
+      let savedBooks = saved ? JSON.parse(saved) : [];
+
+      const exists = savedBooks.some((b) => b._id === book._id);
+      savedBooks = exists ? savedBooks.filter((b) => b._id !== book._id) : [...savedBooks, book];
+
+      await SecureStore.setItemAsync(savedKey, JSON.stringify(savedBooks));
+      setIsSaved(!exists);
+    } catch (e) {
+      console.error('Error saving book:', e);
     }
   };
 
-  const handleListen = async (bookId) => {
+  const handleListen = async (id) => {
     try {
       const userId = await SecureStore.getItemAsync('userId');
       const token = await SecureStore.getItemAsync('authToken');
-      
-      if (!userId || !token) {
-        console.warn('User ID or Token not found.');
-        return;
-      }
+      if (!userId || !token) return;
 
-      await axios.post(`${apiUrl}/addListener/${bookId}`, { userId }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        }
+      await axios.post(`${apiUrl}/addListener/${id}`, { userId }, {
+        headers: { Authorization: `Bearer ${token}` },
       });
+    } catch (e) {
+      console.error('Error counting listener:', e);
+    }
+  };
 
-      console.log('Listener counted successfully.');
-    } catch (error) {
-      console.error('Error counting listener:', error);
+  const handleChapterSelect = async (chapter) => {
+    if (!book) return;
+    playChapter({
+      audioUrl: chapter.audioUrl,
+      chapterTitle: chapter.title,
+      book
+    });
+    if (book?._id && !hasListened) {
+      await handleListen(book._id);
+      setHasListened(true);
     }
   };
 
   const renderTabContent = () => {
     switch (selectedTab) {
       case 'Chapters':
-        return <Chapters book={book} onChapterSelect={handleChapterSelect} />;
+        return <Chapters book={book} apiUrl={apiUrl} onChapterSelect={handleChapterSelect} />;
       case 'Related':
         return <Related bookId={book._id} />;
       case 'Reviews':
@@ -114,39 +141,9 @@ export default function BookDetails () {
     }
   };
 
-  useEffect(() => {
-    const checkIfSaved = async () => {
-      const saved = await SecureStore.getItemAsync('savedBooks');
-      const savedBooks = saved ? JSON.parse(saved) : [];
-      const exists = savedBooks.some((b) => b._id === book?._id);
-      setIsSaved(exists);
-    };
-    if (book) checkIfSaved();
-  }, [book]);
-
-  const handleSave = async () => {
-    try {
-      const saved = await SecureStore.getItemAsync('savedBooks');
-      let savedBooks = saved ? JSON.parse(saved) : [];
-
-      const exists = savedBooks.some((b) => b._id === book._id);
-
-      if (exists) {
-        savedBooks = savedBooks.filter((b) => b._id !== book._id);
-      } else {
-        savedBooks.push(book);
-      }
-
-      await SecureStore.setItemAsync('savedBooks', JSON.stringify(savedBooks));
-      setIsSaved(!exists);
-    } catch (error) {
-      console.error('Error saving book:', error);
-    }
-  };
-
   if (loading) {
     return (
-      <SafeAreaView style={[tw`flex-1 justify-center items-center`, { backgroundColor }]}>
+      <SafeAreaView style={[tw`flex-1 justify-center items-center` , { backgroundColor }]}>
         <ActivityIndicator size="large" color={primaryColor} />
         <ThemedText style={tw`mt-3`}>Loading audiobook</ThemedText>
       </SafeAreaView>
@@ -166,8 +163,8 @@ export default function BookDetails () {
       <FlatList
         ListHeaderComponent={
           <View style={[tw`w-full`, { backgroundColor }]}>
-            {/* Header */}
-            <ThemedView style={tw`flex-row items-center pt-8 pb-2 px-2`}>
+            {/* Top bar */}
+            <ThemedView style={tw`flex-row items-center pb-2 px-2`}>
               <TouchableOpacity onPress={() => router.back()} style={tw`p-2`}>
                 <MaterialCommunityIcons name="arrow-left" size={28} color={primaryColor} />
               </TouchableOpacity>
@@ -191,7 +188,6 @@ export default function BookDetails () {
               ) : (
                 <ThemedText style={tw`text-lg font-bold`}>No Cover Available</ThemedText>
               )}
-
               <ThemedText style={tw`text-xl font-bold mt-3`}>{book.bookName}</ThemedText>
               <BookRatings bookId={bookId} />
             </ThemedView>
@@ -224,18 +220,6 @@ export default function BookDetails () {
         keyExtractor={(item, index) => index.toString()}
         stickyHeaderIndices={[0]}
       />
-
-      {audioDetails && (
-        <AudioPlayer
-          audioUrl={audioDetails.audioUrl}
-          chapterTitle={audioDetails.chapterTitle}
-          onClose={() => setAudioDetails(null)}
-          book={book}
-        />
-      )}
     </SafeAreaView>
   );
-};
-
- 
-
+}

@@ -61,7 +61,7 @@ export default function LanguageBooks() {
     return (
       <ThemedView style={[tw`flex-1 items-center justify-center`, { backgroundColor }]}>
         <ActivityIndicator size="large" color="#ff1493" />
-        <ThemedText style={{ color: textColor, marginTop: 10 }}>Loading topchart...</ThemedText>
+        <ThemedText style={{ color: textColor, marginTop: 10 }}>Loading books...</ThemedText>
       </ThemedView>
     );
   }
@@ -78,7 +78,7 @@ export default function LanguageBooks() {
     <ThemedView style={[tw`flex-1`, { backgroundColor }]}>
 
       {/* Static Header */}
-      <ThemedView style={tw`flex-row gap-3 pt-8 px-4 pb-3`}>
+      <ThemedView style={tw`flex-row gap-4 pt-13 px-4 pb-3`}>
         <TouchableOpacity onPress={() => router.back()} >
                         <MaterialCommunityIcons name="arrow-left" size={28} color={primaryColor} />
                       </TouchableOpacity>

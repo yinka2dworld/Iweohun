@@ -1,18 +1,28 @@
 import React from 'react';
 import tw from 'twrnc';
-import { ScrollView, SafeAreaView } from 'react-native';
+import { ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { useRouter } from 'expo-router';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+
 
 export default function TermsAndPolicy() {
-  
+  const router = useRouter();
  const primaryColor = useThemeColor({}, 'primary');
 
   return (
     <SafeAreaView style={tw`flex-1`}>
-      <ThemedView style={tw`flex-1 px-4 pt-4`}>
-      <ThemedText style={[tw`text-xl font-bold py-5`, { color: primaryColor }]} type="title">Terms of Use – Iweohun</ThemedText>
+      <ThemedView style={tw`flex-1 px-3 pt-3`}>
+        
+        <ThemedView style={tw`flex-row items-center gap-5`}>
+        <TouchableOpacity onPress={() => router.back()} style={tw`p-2`}>
+     <MaterialCommunityIcons name="arrow-left" size={28} color={primaryColor} />
+                      </TouchableOpacity>
+        <ThemedText style={[tw`text-xl font-bold py-5`, { color: primaryColor }]} type="title">Terms of Use – Iweohun</ThemedText>
+    </ThemedView>
+        
         <ScrollView showsVerticalScrollIndicator={false}>
 
           <ThemedText style={[tw`font-bold mb-1`, { color: primaryColor }]} type="defaultSemiBold">1. Eligibility</ThemedText>
@@ -22,7 +32,7 @@ export default function TermsAndPolicy() {
 
           <ThemedText style={[tw`font-bold mb-1`, { color: primaryColor }]} type="defaultSemiBold">2. User Content and Responsibility</ThemedText>
           <ThemedText style={tw`mb-3`} type="default">
-            You may upload content only if you own it, it's in the public domain, or you have legal permission. You're responsible for all uploaded content and must not infringe on others' rights.
+            You may upload content only if you own it, it's in the public domain, or you have legal permission. You are responsible for all uploaded content and must not infringe on others' rights.
           </ThemedText>
 
           <ThemedText style={[tw`font-bold mb-1`, { color: primaryColor }]} type="defaultSemiBold">3. License Grant</ThemedText>
@@ -102,7 +112,7 @@ export default function TermsAndPolicy() {
             Any changes to our Privacy Policy will be posted in-app or via email notifications.
           </ThemedText>
 
-          <ThemedText style={[tw`text-center text-sm mb-8`, { color: primaryColor }]} type="link">
+          <ThemedText style={[tw`text-center text-sm mb-15`, { color: primaryColor }]} type="link">
             📧 Contact: support@Iweohun.com | copyright@Iweohun.com
           </ThemedText>
         </ScrollView>

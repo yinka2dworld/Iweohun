@@ -18,7 +18,7 @@ export default function Searchbar() {
   const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
 
   const backgroundColor = useThemeColor({}, 'background');
-  const textColor = '#070c70';
+ const textColor = useThemeColor({}, 'text');
 
   const handleSearch = async (query) => {
     if (!query.trim()) {

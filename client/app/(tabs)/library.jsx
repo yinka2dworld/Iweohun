@@ -8,6 +8,7 @@ import {
   Pressable,
   Dimensions,
   ActivityIndicator,
+  Share,
 } from 'react-native';
 import tw from 'twrnc';
 import * as SecureStore from 'expo-secure-store';
@@ -26,6 +27,7 @@ export default function Library() {
   const [selectedBook, setSelectedBook] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [buttonPosition, setButtonPosition] = useState({ top: 0, right: 0 });
+  const [userId, setUserId] = useState(null);
 
   const backgroundColor = useThemeColor({}, 'background');
   const modalBackgroundColor = useThemeColor({}, 'modalBackground');
@@ -35,7 +37,15 @@ export default function Library() {
     useCallback(() => {
       const fetchSavedBooks = async () => {
         try {
-          const saved = await SecureStore.getItemAsync('savedBooks');
+          const id = await SecureStore.getItemAsync('userId');
+          setUserId(id);
+          if (!id) {
+            setSavedBooks([]);
+            setLoading(false);
+            return;
+          }
+
+          const saved = await SecureStore.getItemAsync(`savedBooks_${id}`);
           setSavedBooks(saved ? JSON.parse(saved) : []);
         } catch (error) {
           console.error('Error loading saved books:', error);
@@ -62,12 +72,33 @@ export default function Library() {
 
   const handleRemove = async (bookId) => {
     try {
+      if (!userId) return;
       const updatedBooks = savedBooks.filter((book) => book._id !== bookId);
       setSavedBooks(updatedBooks);
-      await SecureStore.setItemAsync('savedBooks', JSON.stringify(updatedBooks));
+      await SecureStore.setItemAsync(`savedBooks_${userId}`, JSON.stringify(updatedBooks));
       setModalVisible(false);
     } catch (error) {
       console.error('Error removing book:', error);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!selectedBook) return;
+
+    try {
+      const result = await Share.share({
+        message: `Check out this audiobook: ${selectedBook.bookName} by ${selectedBook.bookAuthor}`,
+        url: selectedBook.bookCover,
+        title: selectedBook.bookName,
+      });
+
+      if (result.action === Share.sharedAction) {
+        console.log('Shared successfully');
+      } else if (result.action === Share.dismissedAction) {
+        console.log('Share dismissed');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error.message);
     }
   };
 
@@ -83,7 +114,7 @@ export default function Library() {
   return (
     <SafeAreaView style={[tw`flex-1`, { backgroundColor }]}>
       {/* Header */}
-      <ThemedView style={tw`px-6 pt-6 pb-4`}>
+      <ThemedView style={tw`px-6  pb-4`}>
         <ThemedText type="title" style={[tw`text-2xl font-bold`, { color: textColor }]}>
           My Library
         </ThemedText>
@@ -128,10 +159,7 @@ export default function Library() {
       {/* Modal Overlay */}
       {modalVisible && selectedBook && (
         <Pressable
-          style={[
-            tw`absolute inset-0`,
-            { backgroundColor: 'rgba(0, 0, 0, 0.3)' },
-          ]}
+          style={[tw`absolute inset-0`, { backgroundColor: 'rgba(0, 0, 0, 0.3)' }]}
           onPress={() => setModalVisible(false)}
         >
           <Pressable
@@ -148,7 +176,7 @@ export default function Library() {
             <TouchableOpacity onPress={() => handleRemove(selectedBook._id)} style={tw`p-3`}>
               <ThemedText style={tw`text-lg text-white`}>Remove from Library</ThemedText>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => {}} style={tw`p-3`}>
+            <TouchableOpacity onPress={handleShare} style={tw`p-3`}>
               <ThemedText style={tw`text-lg text-white`}>Share book</ThemedText>
             </TouchableOpacity>
           </Pressable>
@@ -157,4 +185,3 @@ export default function Library() {
     </SafeAreaView>
   );
 }
-
