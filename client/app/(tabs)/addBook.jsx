@@ -30,7 +30,7 @@ import { ThemedView } from '@/components/ThemedView';
 const CATEGORIES = [
   'History & Biographies',
   'Fiction',
-  'Romance',
+  'Non-fiction',
   'Kids',
   'Personal Development',
   'Adventure & Thrillers'

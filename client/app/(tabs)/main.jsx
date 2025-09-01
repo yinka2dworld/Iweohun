@@ -112,7 +112,7 @@ export default function Main() {
 
         {/* Category Sections */}
         <ThemedView style={tw`mb-10 w-full px-5`}>
-          {['History & Biographies', 'Fiction', 'Romance', 'Kids', 'Personal Development', 'Adventure & Thrillers'].map((category) => (
+          {['History & Biographies', 'Fiction', 'Non-fiction', 'Kids', 'Personal Development', 'Adventure & Thrillers'].map((category) => (
             <CategorySection
               key={category}
               title={category}

@@ -75,7 +75,7 @@ const bookSchema = new Schema({
   category: {
     type: String,
     required: true,
-    enum: ['History & Biographies', 'Fiction', 'Romance', 'Kids', 'Personal Development', 'Adventure & Thrillers']
+    enum: ['History & Biographies', 'Fiction', 'Non-fiction', 'Kids', 'Personal Development', 'Adventure & Thrillers']
   },
 
   language: {

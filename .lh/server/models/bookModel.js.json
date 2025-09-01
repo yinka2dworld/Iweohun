@@ -3,7 +3,7 @@
     "activeCommit": 0,
     "commits": [
         {
-            "activePatchIndex": 12,
+            "activePatchIndex": 13,
             "patches": [
                 {
                     "date": 1756267304799,
@@ -56,6 +56,10 @@
                 {
                     "date": 1756396286887,
                     "content": "Index: \n===================================================================\n--- \n+++ \n@@ -86,9 +86,8 @@\n   \r\n   postedBy:{\r\n       type: mongoose.Schema.Types.ObjectId,\r\n       ref: 'User', \r\n-      // required: true,\r\n        },\r\n },\r\n   { timestamps: true }\r\n );\r\n"
+                },
+                {
+                    "date": 1756744884042,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -74,9 +74,9 @@\n \r\n   category: {\r\n     type: String,\r\n     required: true,\r\n-    enum: ['History & Biographies', 'Fiction', 'Romance', 'Kids', 'Personal Development', 'Adventure & Thrillers']\r\n+    enum: ['History & Biographies', 'Fiction', 'Non', 'Kids', 'Personal Development', 'Adventure & Thrillers']\r\n   },\r\n \r\n   language: {\r\n     type: String,\r\n"
                 }
             ],
             "date": 1756267304799,
