@@ -1,47 +1,34 @@
 {
   "expo": {
-    "name": "iweohun",
-    "slug": "iweohun",
+    "name": "Iweohun",
+    "slug": "Iweohun",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.png",
     "scheme": "iweohun",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourname.iweohun",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.yourname.iweohun",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
-    },
-    "plugins": [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
-        }
-      ],
-      "expo-secure-store",
-      "expo-audio"
-    ],
-    "experiments": {
-      "typedRoutes": true
+      "permissions": []
     },
     "extra": {
-      "API_BASE_URL": "https://iweohun-server.onrender.com"
+      "API_BASE_URL": "https://iweohun-server.onrender.com",
+      "eas": {
+        "projectId": "98768076-0022-444e-bbc9-3493f478cb0f"
+      }
     }
   }
 }

@@ -1,0 +1,22 @@
+{
+    "sourceFile": "client/eas.json",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1756745948830,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1757762453375,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,25 +0,0 @@\n-{\r\n-  \"cli\": {\r\n-    \"version\": \">= 3.0.0\"\r\n-  },\r\n-  \"build\": {\r\n-    \"development\": {\r\n-      \"developmentClient\": true,\r\n-      \"distribution\": \"internal\"\r\n-    },\r\n-    \"preview\": {\r\n-      \"distribution\": \"internal\"\r\n-    },\r\n-    \"production\": {\r\n-      \"android\": {\r\n-        \"buildType\": \"app-bundle\"\r\n-      },\r\n-      \"ios\": {\r\n-        \"buildType\": \"release\"\r\n-      }\r\n-    }\r\n-  },\r\n-  \"submit\": {\r\n-    \"production\": {}\r\n-  }\r\n-}\r\n\\ No newline at end of file\n"
+                }
+            ],
+            "date": 1756745948830,
+            "name": "Commit-0",
+            "content": "{\r\n  \"cli\": {\r\n    \"version\": \">= 3.0.0\"\r\n  },\r\n  \"build\": {\r\n    \"development\": {\r\n      \"developmentClient\": true,\r\n      \"distribution\": \"internal\"\r\n    },\r\n    \"preview\": {\r\n      \"distribution\": \"internal\"\r\n    },\r\n    \"production\": {\r\n      \"android\": {\r\n        \"buildType\": \"app-bundle\"\r\n      },\r\n      \"ios\": {\r\n        \"buildType\": \"release\"\r\n      }\r\n    }\r\n  },\r\n  \"submit\": {\r\n    \"production\": {}\r\n  }\r\n}\r\n"
+        }
+    ]
+}
