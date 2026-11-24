@@ -1,15 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import tw from 'twrnc';
-import axios from 'axios';
+import apiClient, { getApiErrorMessage } from '@/lib/api';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import Constants from 'expo-constants';
-import * as SecureStore from 'expo-secure-store';
 import { LinearGradient } from 'expo-linear-gradient';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 
 export default function LanguageBooks() {
@@ -21,41 +19,27 @@ export default function LanguageBooks() {
   const router = useRouter();
 
   const backgroundColor = useThemeColor({}, 'background');
-  const secondaryColor = useThemeColor({}, 'secondary');
     const primaryColor = useThemeColor({}, 'primary');
   const textColor = '#070c70';
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
+
+  const fetchBooks = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await apiClient.get(`/books/${encodeURIComponent(String(language || ''))}`);
+      const booksData = Array.isArray(response.data?.books) ? response.data.books : [];
+      setBooks(booksData);
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to fetch books'));
+    } finally {
+      setLoading(false);
+    }
+  }, [language]);
 
   useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const token = await SecureStore.getItemAsync('authToken');
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
-        const response = await axios.get(`${apiUrl}/books/${language}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        const booksData = Array.isArray(response.data?.books)
-          ? response.data.books
-          : [];
-        setBooks(booksData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch books');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchBooks();
-  }, [apiUrl]);
+  }, [fetchBooks]);
 
   if (loading) {
     return (
@@ -68,8 +52,14 @@ export default function LanguageBooks() {
 
   if (error) {
     return (
-      <ThemedView style={[tw`flex-1 items-center justify-center`, { backgroundColor }]}>
-        <ThemedText style={{ color: textColor }}>Error: {error}</ThemedText>
+      <ThemedView style={[tw`flex-1 items-center justify-center px-8`, { backgroundColor }]}>
+        <ThemedText style={{ color: textColor, textAlign: 'center' }}>{error}</ThemedText>
+        <ThemedText
+          onPress={fetchBooks}
+          style={[tw`mt-6 font-semibold`, { color: '#ff1493' }]}
+        >
+          Try again
+        </ThemedText>
       </ThemedView>
     );
   }
@@ -94,6 +84,11 @@ export default function LanguageBooks() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={tw`py-6 px-4`}
+        ListEmptyComponent={
+          <ThemedText style={tw`text-center text-gray-500 py-8`}>
+            No books in {String(language || '')} yet.
+          </ThemedText>
+        }
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => router.push(`/book-details/${item._id}`)}>
             <LinearGradient colors={['#070c70', '#ff1493']} style={tw`mb-4 p-4 rounded-lg`}>

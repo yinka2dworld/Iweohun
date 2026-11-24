@@ -2,12 +2,10 @@ import { useState, useEffect } from 'react';
 import { TouchableOpacity, FlatList, View, TextInput, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import tw from 'twrnc';
-import axios from 'axios';
-import Constants from 'expo-constants';
+import apiClient, { getApiErrorMessage } from '@/lib/api';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import * as SecureStore from 'expo-secure-store';
 
 export default function Searchbar() {
   const router = useRouter();
@@ -15,7 +13,6 @@ export default function Searchbar() {
   const [isPending, setIsPending] = useState(false);
   const [results, setResults] = useState([]);
   const [error, setError] = useState(null);
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
 
   const backgroundColor = useThemeColor({}, 'background');
  const textColor = useThemeColor({}, 'text');
@@ -27,22 +24,12 @@ export default function Searchbar() {
     }
     setIsPending(true);
     try {
-      const token = await SecureStore.getItemAsync('authToken');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await axios.get(`${apiUrl}/searchBar?searchTerm=${query}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      setResults(response.data.books || []);
+      const response = await apiClient.get('/searchBar', { params: { searchTerm: query.trim() } });
+      setResults(Array.isArray(response.data?.books) ? response.data.books : []);
       setError(null);
     } catch (err) {
-      console.error('Search failed:', err);
-      setError('Failed to fetch results. Please try again.');
+      console.error('Search failed:', err.message);
+      setError(getApiErrorMessage(err, 'Failed to fetch results. Please try again.'));
     } finally {
       setIsPending(false);
     }

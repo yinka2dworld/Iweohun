@@ -1,16 +1,16 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  SafeAreaView,
   TouchableOpacity,
   Image,
   ActivityIndicator,
   FlatList,
-  View
+  View,
+  Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc';
-import axios from 'axios';
-import Constants from 'expo-constants';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import apiClient, { getApiErrorMessage } from '@/lib/api';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import Chapters from '@/components/Chapters';
 import Related from '@/components/Related';
 import Reviews from '@/components/Reviews';
@@ -18,9 +18,8 @@ import BookRatings from '@/components/BookRatings';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import * as SecureStore from 'expo-secure-store';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useFocusEffect } from '@react-navigation/native';
+import SecureStore from '@/lib/SecureStore';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useAudio } from '@/context/AudioContext';
 
 export default function BookDetails() {
@@ -35,35 +34,28 @@ export default function BookDetails() {
   const [hasListened, setHasListened] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
   const backgroundColor = useThemeColor({}, 'background');
   const primaryColor = useThemeColor({}, 'primary');
 
-  useEffect(() => {
-    const fetchBook = async () => {
-      if (!bookId) return;
-      try {
-        setLoading(true);
-        const token = await SecureStore.getItemAsync('authToken');
-        if (!token) throw new Error('No authentication token found');
+  const fetchBook = useCallback(async () => {
+    if (!bookId) return;
+    try {
+      setLoading(true);
+      setError(null);
 
-        const response = await axios.get(`${apiUrl}/book/${bookId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        setBook(response.data);
-        setHasListened(false);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchBook();
+      const response = await apiClient.get(`/book/${bookId}`);
+      setBook(response.data);
+      setHasListened(false);
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Unable to load this book'));
+    } finally {
+      setLoading(false);
+    }
   }, [bookId]);
+
+  useEffect(() => {
+    fetchBook();
+  }, [fetchBook]);
 
   useFocusEffect(
     useCallback(() => {
@@ -103,22 +95,23 @@ export default function BookDetails() {
 
   const handleListen = async (id) => {
     try {
-      const userId = await SecureStore.getItemAsync('userId');
-      const token = await SecureStore.getItemAsync('authToken');
-      if (!userId || !token) return;
-
-      await axios.post(`${apiUrl}/addListener/${id}`, { userId }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await apiClient.post(`/addListener/${id}`);
     } catch (e) {
-      console.error('Error counting listener:', e);
+      console.warn('Error counting listener:', e.message);
     }
   };
 
   const handleChapterSelect = async (chapter) => {
     if (!book) return;
+
+    const audioUrl = chapter.bookAudio || chapter.audioUrl;
+    if (!audioUrl) {
+      Alert.alert('Audio unavailable', 'This chapter audio is not available yet.');
+      return;
+    }
+
     playChapter({
-      audioUrl: chapter.audioUrl,
+      audioUrl,
       chapterTitle: chapter.title,
       book
     });
@@ -131,7 +124,7 @@ export default function BookDetails() {
   const renderTabContent = () => {
     switch (selectedTab) {
       case 'Chapters':
-        return <Chapters book={book} apiUrl={apiUrl} onChapterSelect={handleChapterSelect} />;
+        return <Chapters book={book} onChapterSelect={handleChapterSelect} />;
       case 'Related':
         return <Related bookId={book._id} />;
       case 'Reviews':
@@ -153,13 +146,16 @@ export default function BookDetails() {
   if (error || !book) {
     return (
       <SafeAreaView style={[tw`flex-1 justify-center items-center p-4`, { backgroundColor }]}>
-        <ThemedText>{error ? `Error: ${error}` : 'Book not found'}</ThemedText>
+        <ThemedText style={tw`text-center`}>{error || 'Book not found'}</ThemedText>
+        <TouchableOpacity onPress={fetchBook} style={tw`mt-6`}>
+          <ThemedText style={{ color: primaryColor }}>Try again</ThemedText>
+        </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[tw`flex-1`, { backgroundColor }]}>
+    <View style={[tw`flex-1`, { backgroundColor }]}>
       <FlatList
         ListHeaderComponent={
           <View style={[tw`w-full`, { backgroundColor }]}>
@@ -215,11 +211,9 @@ export default function BookDetails() {
           </View>
         }
         data={[]}
-        renderItem={null}
         ListFooterComponent={renderTabContent()}
         keyExtractor={(item, index) => index.toString()}
-        stickyHeaderIndices={[0]}
       />
-    </SafeAreaView>
+    </View>
   );
 }

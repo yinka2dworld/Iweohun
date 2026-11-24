@@ -1,16 +1,29 @@
 import mongoose from 'mongoose';
 
+mongoose.set('strictQuery', true);
 
-mongoose.set("strictQuery", true)
-mongoose.Promise=global.Promise
+/**
+ * Connect to MongoDB. Throws on failure so the caller can decide whether to
+ * exit or retry. A short selection timeout keeps startup failures obvious.
+ */
+const dbConnecter = async () => {
+  if (!process.env.DBURL) {
+    throw new Error('DBURL is not set in the environment.');
+  }
 
-  const dbConnecter = async () => {
-  await mongoose.connect(process.env.DBURL)
-  try {
-    console.log('Connected to MongoDB');
-  } catch (error) {
-    console.error('Error connecting to MongoDB:', error.message);
-    process.exit(1);
-  } 
-}
+  mongoose.connection.on('disconnected', () => {
+    console.warn('[db] MongoDB disconnected');
+  });
+  mongoose.connection.on('reconnected', () => {
+    console.log('[db] MongoDB reconnected');
+  });
+
+  await mongoose.connect(process.env.DBURL, {
+    serverSelectionTimeoutMS: 10000,
+  });
+
+  console.log('[db] Connected to MongoDB');
+  return mongoose.connection;
+};
+
 export default dbConnecter;

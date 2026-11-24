@@ -1,12 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import tw from 'twrnc';
-import axios from 'axios';
 import StarRating from 'react-native-star-rating-widget';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import * as SecureStore from 'expo-secure-store';
-import Constants from 'expo-constants';
+import apiClient, { getApiErrorMessage } from '@/lib/api';
 
 const BookRatings = ({ bookId }) => {
   const [avgRating, setAvgRating] = useState(0);
@@ -15,70 +13,45 @@ const BookRatings = ({ bookId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const apiUrl = Constants?.expoConfig?.extra?.API_BASE_URL;
   const primaryColor = useThemeColor({}, 'primary');
 
-  useEffect(() => {
-    if (apiUrl && bookId) fetchRatings();
-  }, [apiUrl, bookId]);
-
-  const fetchRatings = async () => {
+  const fetchRatings = useCallback(async () => {
+    if (!bookId) return;
     setLoading(true);
     setError(null);
     try {
-      const token = await SecureStore.getItemAsync('authToken');
-      const res = await axios.get(`${apiUrl}/getRatings/${bookId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await apiClient.get(`/getRatings/${bookId}`);
 
       const { avgRating, total, userRating } = res.data;
       setAvgRating(avgRating || 0);
       setTotalRating(total || 0);
       setUserRating(userRating || 0);
     } catch (error) {
-      setError('Error fetching rating stats');
-      console.error('Error fetching rating stats:', error.message);
+      setError(getApiErrorMessage(error, 'Error fetching rating stats'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookId]);
+
+  useEffect(() => {
+    fetchRatings();
+  }, [fetchRatings]);
 
   const submitRating = async (newRating) => {
     if (userRating > 0) return; // Only allow one rating
 
     try {
-      const userId = await SecureStore.getItemAsync('userId');
-      const token = await SecureStore.getItemAsync('authToken');
-
-      if (!userId || !bookId) {
-        setError('Missing user or book information');
-        return;
-      }
-
-      const res = await axios.post(
-        `${apiUrl}/addRatings`,
-        {
-          userId,
-          bookId,
-          rating: Math.round(newRating),
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      setError(null);
+      const res = await apiClient.post('/addRatings', {
+        bookId,
+        rating: Math.round(newRating),
+      });
 
       setUserRating(Math.round(newRating));
       setAvgRating(res.data.avgRating || newRating);
       setTotalRating(res.data.total || 1);
     } catch (error) {
-      setError('Failed to submit rating');
-      console.error('Failed to submit rating:', error.message);
+      setError(getApiErrorMessage(error, 'Failed to submit rating'));
     }
   };
 

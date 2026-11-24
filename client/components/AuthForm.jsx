@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
-import { Image, TextInput, TouchableOpacity, View, Pressable } from 'react-native';
+import { Image, TextInput, TouchableOpacity, View, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import tw from 'twrnc';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
-import Constants from 'expo-constants';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import SecureStore from '@/lib/SecureStore';
+import apiClient, { getApiErrorMessage } from '@/lib/api';
 
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 
-const logo = require('../../client/assets/images/logo.png');
+const logo = require('../assets/images/logo.png');
 
 export default function AuthForm({ type }) {
   const router = useRouter();
@@ -28,11 +27,6 @@ export default function AuthForm({ type }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
-  if (!apiUrl) {
-    console.error("API_BASE_URL is not defined in app config");
-  }
-
   // Theme colors
   const textColor = useThemeColor({}, 'text');
   const backgroundColor = useThemeColor({}, 'background');
@@ -41,6 +35,7 @@ export default function AuthForm({ type }) {
   const primaryColor = useThemeColor({}, 'primary');
 
   const handleChange = (name, value) => {
+    if (error) setError(null);
     setFormData(prev => ({
       ...prev,
       [name]: name === 'username' ? value.replace(/\s/g, '') : value,
@@ -81,7 +76,12 @@ export default function AuthForm({ type }) {
         return false;
       }
 
-      if (phoneNumber && !/^\+?\d{7,15}$/.test(phoneNumber)) {
+      if (!phoneNumber.trim()) {
+        setError('Phone number is required');
+        return false;
+      }
+
+      if (!/^\+?\d{7,15}$/.test(phoneNumber.trim())) {
         setError('Invalid phone number format');
         return false;
       }
@@ -91,7 +91,7 @@ export default function AuthForm({ type }) {
   };
 
   const handleAuth = async () => {
-    if (!validateForm() || !apiUrl) return;
+    if (!validateForm()) return;
 
     setLoading(true);
     setError(null);
@@ -104,51 +104,32 @@ export default function AuthForm({ type }) {
         password: formData.password,
         ...(isSignup && {
           email: formData.email.trim(),
-          ...(formData.phoneNumber && { phoneNumber: formData.phoneNumber.trim() }),
+          phoneNumber: formData.phoneNumber.trim(),
         }),
       };
 
-      const response = await axios.post(`${apiUrl}${endpoint}`, payload, {
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 10000,
-      });
+      const response = await apiClient.post(endpoint, payload);
+      const resData = response.data || {};
 
-      const resData = response.data;
-
-      if (resData.message?.includes('successful')) {
-        if (isSignup) {
-          router.replace('/auth/login');
-        } else {
-          const { userId, role, token, username } = resData;
-
-          await SecureStore.setItemAsync('userId', userId.toString());
-          await SecureStore.setItemAsync('userRole', role);
-          await SecureStore.setItemAsync('authToken', token);
-          await SecureStore.setItemAsync('username', username);
-
-          router.replace('/(tabs)/main');
-        }
-      } else {
-        throw new Error(resData.message || 'Unexpected response from server');
+      if (isSignup) {
+        Alert.alert('Account created', 'You can now log in with your new account.');
+        router.replace('/auth/login');
+        return;
       }
+
+      const { userId, role, token, username } = resData;
+      if (!token || !userId) {
+        throw new Error(resData.message || 'The server did not return a valid session.');
+      }
+
+      await SecureStore.setItemAsync('userId', String(userId));
+      await SecureStore.setItemAsync('userRole', String(role || 'user'));
+      await SecureStore.setItemAsync('authToken', String(token));
+      await SecureStore.setItemAsync('username', String(username || formData.username.trim()));
+
+      router.replace('/(tabs)/main');
     } catch (err) {
-      let message = 'Authentication failed. Please try again.';
-
-      if (err.response?.data) {
-        const data = err.response.data;
-
-        if (data.error?.code === 11000) {
-          message = data.error.keyPattern?.phoneNumber
-            ? 'Phone number already exists'
-            : 'Email already exists';
-        } else if (data.message) {
-          message = data.message;
-        }
-      } else if (err.message) {
-        message = err.message;
-      }
-
-      setError(message);
+      setError(getApiErrorMessage(err, 'Authentication failed. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -163,7 +144,7 @@ export default function AuthForm({ type }) {
           <>
             <TextInput
               style={[tw`h-12 px-5 border rounded-md text-lg`, { borderColor: boxColor, color: textColor }]}
-              placeholder="Email"
+              placeholder="Email *"
               value={formData.email}
               onChangeText={text => handleChange('email', text)}
               keyboardType="email-address"
@@ -173,7 +154,7 @@ export default function AuthForm({ type }) {
 
             <TextInput
               style={[tw`h-12 px-5 border rounded-md text-lg`, { borderColor: boxColor, color: textColor }]}
-              placeholder="Phone Number"
+              placeholder="Phone Number *"
               value={formData.phoneNumber}
               onChangeText={text => handleChange('phoneNumber', text)}
               keyboardType="phone-pad"
@@ -184,7 +165,7 @@ export default function AuthForm({ type }) {
 
         <TextInput
           style={[tw`h-12 px-5 border rounded-md text-lg`, { borderColor: boxColor, color: textColor }]}
-          placeholder="Username"
+          placeholder="Username *"
           value={formData.username}
           onChangeText={text => handleChange('username', text)}
           autoCapitalize="none"
@@ -194,7 +175,7 @@ export default function AuthForm({ type }) {
         <View style={tw`relative`}>
           <TextInput
             style={[tw`h-12 px-5 pr-10 border rounded-md text-lg`, { borderColor: boxColor, color: textColor }]}
-            placeholder="Password"
+            placeholder="Password *"
             secureTextEntry={!isPasswordVisible}
             value={formData.password}
             onChangeText={text => handleChange('password', text)}

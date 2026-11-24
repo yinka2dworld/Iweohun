@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react';
 import {
-  SafeAreaView,
   FlatList,
   View,
   TouchableOpacity,
@@ -10,15 +9,15 @@ import {
   ActivityIndicator,
   Share,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc';
-import * as SecureStore from 'expo-secure-store';
-import { useRouter } from 'expo-router';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import SecureStore from '@/lib/SecureStore';
+import { useRouter, useFocusEffect } from 'expo-router';
+import Icon from '@expo/vector-icons/MaterialIcons';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect } from '@react-navigation/native';
 
 export default function Library() {
   const router = useRouter();

@@ -4,7 +4,7 @@
     "slug": "Iweohun",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/favicon.png",
     "scheme": "iweohun",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -19,16 +19,35 @@
       "package": "com.yourname.iweohun",
       "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/favicon.png",
+        "backgroundColor": "#f8f8f8"
       },
       "permissions": []
     },
     "extra": {
-      "API_BASE_URL": "https://iweohun-server.onrender.com",
+      "apiBaseUrl": "",
       "eas": {
         "projectId": "98768076-0022-444e-bbc9-3493f478cb0f"
       }
-    }
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-background-task",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Iweohun to access your photos so you can upload book covers."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/logo.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#f8f8f8"
+        }
+      ]
+    ]
   }
 }

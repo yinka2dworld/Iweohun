@@ -1,47 +1,40 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import axios from 'axios';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, useColorScheme } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import apiClient, { getApiErrorMessage } from '@/lib/api';
 import tw from 'twrnc';
-import { useColorScheme } from 'react-native'; // for detecting dark mode
-import * as SecureStore from 'expo-secure-store';
-import Constants from 'expo-constants';
 
-import { Colors } from '@/constants/Colors'; // Assuming you have Colors defined in your constants
+import { Colors } from '@/constants/Colors';
 
 const Reviews = ({ bookId }) => {
   const [reviews, setReviews] = useState([]);
   const [reviewText, setReviewText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
   const inputRef = useRef(null);
   const colorScheme = useColorScheme(); // Get the current theme (light or dark)
-  
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
-  
+
   // Use the Colors object to get the correct colors based on the current theme
   const currentColors = Colors[colorScheme || 'light']; // Default to light theme
 
-  useEffect(() => {
-    fetchReviews();
-  }, []);
-
-  const fetchReviews = async () => {
-    const token = await SecureStore.getItemAsync('authToken');
+  const fetchReviews = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const { data } = await axios.get(`${apiUrl}/bookReviews/${bookId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setReviews(data);
+      const { data } = await apiClient.get(`/bookReviews/${bookId}`);
+      setReviews(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error fetching reviews:', error);
+      console.error('Error fetching reviews:', error.message);
+      setError(getApiErrorMessage(error, "Couldn't load reviews. Try again."));
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookId]);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
 
   const handleAddReview = async () => {
     if (!reviewText.trim()) return;
@@ -52,41 +45,27 @@ const Reviews = ({ bookId }) => {
     setReplyTo(null);
 
     try {
-      const token = await SecureStore.getItemAsync('authToken');
-      const userId = await SecureStore.getItemAsync('userId');
-      const reviewedBy = await SecureStore.getItemAsync('username');
-
-      if (!token || !userId) {
-        console.error('User not logged in');
-        return;
-      }
-
-      const payload = {
+      setError(null);
+      await apiClient.post('/addReview', {
         bookId,
-        reviewedBy,
-        userId,
-        review: sendingText,
+        review: sendingText.trim(),
         parentReview: replyingTo,
-      };
-
-      await axios.post(`${apiUrl}/addReview`, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
 
       fetchReviews(); // Refresh reviews after adding
     } catch (error) {
-      console.error('Error adding review:', error);
+      console.error('Error adding review:', error.message);
+      setError(getApiErrorMessage(error, 'Could not post your review.'));
+      setReviewText(sendingText); // restore the text so nothing is lost
     }
   };
 
   const renderReview = ({ item }) => (
-    <View style={tw`mb-2 p-2 mx-6 rounded-lg shadow-md border border-gray-300 bg-[${currentColors.background}]`}>
-      <Text style={tw`font-bold text-base text-[${currentColors.primary}] mb-2 dark:text-[${currentColors.text}]`}>
+    <View style={[tw`mb-2 p-2 mx-6 rounded-lg shadow-md border border-gray-300`, { backgroundColor: currentColors.background }]}>
+      <Text style={[tw`font-bold text-base mb-2`, { color: currentColors.primary }]}>
         {item.reviewedBy}
       </Text>
-      <Text style={tw`text-md p-2 text-gray-700 mb-2 dark:text-[${currentColors.text}]`}>
+      <Text style={[tw`text-base p-2 mb-2`, { color: currentColors.text }]}>
         {item.review}
       </Text>
 
@@ -150,10 +129,10 @@ const Reviews = ({ bookId }) => {
         data={reviews}
         keyExtractor={(item) => item._id}
         renderItem={renderReview}
-        contentContainerStyle={tw`pt-16`}  // Adds top padding to avoid overlap with the fixed input field
+        contentContainerStyle={tw`py-2`}
         ListEmptyComponent={
-          <Text style={tw`text-center text-gray-400 dark:text-gray-500`}>
-            No reviews yet. Be the first!
+          <Text style={tw`text-center text-gray-400 dark:text-gray-500 py-4`}>
+            {error || 'No reviews yet. Be the first!'}
           </Text>
         }
         ListFooterComponent={

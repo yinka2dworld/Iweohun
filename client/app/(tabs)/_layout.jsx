@@ -61,22 +61,6 @@ export default function TabLayout() {
         }}
       />
 
-       <Tabs.Screen
-        name="book-details/[bookId]"
-        options={{
-          href: null,
-        }}
-      />
-
-       <Tabs.Screen
-        name="addBook" 
-        options={{  href: null }} />
-              
-        <Tabs.Screen 
-        name="edit-book/[bookId]" 
-        options={{  href: null, }} />
-
-      
 </Tabs>
   );
 }

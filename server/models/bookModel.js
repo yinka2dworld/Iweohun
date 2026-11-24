@@ -39,7 +39,6 @@ const bookSchema = new Schema({
   bookDescription: {
     type: String,
     required: true,
-    unique:true
   },
 
   bookAuthor: {
@@ -61,10 +60,9 @@ const bookSchema = new Schema({
 
   chapters: [chapterSchema], 
 
-  listenersList: [{ 
-    type: [mongoose.Schema.Types.ObjectId],
-    default: [],
-    ref: 'User' 
+  listenersList: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
   }],
 
   listenersCount: {
@@ -81,7 +79,7 @@ const bookSchema = new Schema({
   language: {
     type: String,
     required: true,
-    enum: ['Swahili', 'Yoruba', 'Zulu', 'Amharic', 'Hausa', 'Igbo', 'Amazigh', 'Shona', 'Fulani', 'Malagasy', 'Oromo']
+    enum: ['Swahili', 'Yoruba', 'Zulu', 'Amharic', 'Hausa', 'Igbo', 'Amazigh', 'Somali', 'Shona', 'Fulani', 'Malagasy', 'Oromo']
   }, 
   
   postedBy:{
@@ -91,6 +89,10 @@ const bookSchema = new Schema({
 },
   { timestamps: true }
 );
+
+bookSchema.index({ status: 1, language: 1 });
+bookSchema.index({ status: 1, category: 1 });
+bookSchema.index({ status: 1, listenersCount: -1 });
 
 const Book = mongoose.models.Book || mongoose.model('Book', bookSchema);
 export default Book;

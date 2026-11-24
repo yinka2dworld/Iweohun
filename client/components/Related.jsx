@@ -7,38 +7,34 @@ import {
   FlatList,
   View,
 } from 'react-native';
-import axios from 'axios';
-import Constants from 'expo-constants';
+import apiClient, { getApiErrorMessage } from '@/lib/api';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
 
 const Related = ({ bookId }) => {
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
   const router = useRouter();
 
   const backgroundColor = useThemeColor({}, 'background');
   const primaryColor = useThemeColor({}, 'primary');
   const secondaryColor = useThemeColor({}, 'secondary');
-  const textColor = '#070c70';
 
   const [relatedBooks, setRelatedBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchRelatedBooks = async () => {
       try {
-        const token = await SecureStore.getItemAsync('authToken');
-        const response = await axios.get(`${apiUrl}/relatedBooks/${bookId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setRelatedBooks(response.data.relatedBooks);
-      } catch (error) {
-        console.error('Error fetching related books:', error);
+        setLoading(true);
+        setError(null);
+        const response = await apiClient.get(`/relatedBooks/${bookId}`);
+        setRelatedBooks(
+          Array.isArray(response.data?.relatedBooks) ? response.data.relatedBooks : []
+        );
+      } catch (err) {
+        setError(getApiErrorMessage(err, 'Unable to load related books.'));
       } finally {
         setLoading(false);
       }
@@ -55,12 +51,25 @@ const Related = ({ bookId }) => {
     );
   }
 
+  if (error) {
+    return (
+      <ThemedView style={[tw`flex-1 justify-center items-center px-6`, { backgroundColor }]}>
+        <ThemedText style={tw`text-center text-gray-500`}>{error}</ThemedText>
+      </ThemedView>
+    );
+  }
+
   return (
     <ThemedView style={[tw`p-4`, { backgroundColor }]}>
       <FlatList
         data={relatedBooks}
         keyExtractor={(item) => item._id}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <ThemedText style={tw`text-center text-gray-400 py-6`}>
+            No related books yet.
+          </ThemedText>
+        }
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[

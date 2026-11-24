@@ -4,13 +4,13 @@ import tw from 'twrnc';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import * as SecureStore from 'expo-secure-store';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import SecureStore from '@/lib/SecureStore';
 import { useRouter } from 'expo-router';
-import axios from 'axios';
+import apiClient, { getApiErrorMessage } from '@/lib/api';
 
 
-const Chapters = ({ book, apiUrl, onChapterSelect }) => {
+const Chapters = ({ book, onChapterSelect }) => {
   const [showMoreInfo, setShowMoreInfo] = useState(false); 
   const primaryColor = useThemeColor({}, 'primary');
   const [role, setRole] = useState(null);  
@@ -41,13 +41,8 @@ useEffect(() => {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
-          const token = await SecureStore.getItemAsync('authToken');
           try {
-            const response = await axios.delete(`${apiUrl}/deleteBook/${book._id}`, {
-              headers: {
-                Authorization: `Bearer ${token}`
-              }
-            });
+            const response = await apiClient.delete(`/deleteBook/${book._id}`);
 
             if (response.status !== 200) {
               throw new Error("Failed to delete book");
@@ -55,7 +50,7 @@ useEffect(() => {
             router.back();
           } catch (error) {
             console.error("Delete error:", error);
-            Alert.alert('Error', 'Failed to delete the book.', [{ text: 'OK' }]);
+            Alert.alert('Error', getApiErrorMessage(error, 'Failed to delete the book.'), [{ text: 'OK' }]);
           }
         }
       }
@@ -81,7 +76,7 @@ useEffect(() => {
       >
         <ThemedText
           style={[
-            tw`text-md text-blue-500 m-5`,
+            tw`text-base text-blue-500 m-5`,
             { color: primaryColor },
           ]}
         >
@@ -105,7 +100,7 @@ useEffect(() => {
     {( role === 'superAdmin' || userId === book.postedBy?._id) && (
       <TouchableOpacity
         style={[tw`rounded-3xl px-6 py-2`, { backgroundColor: primaryColor }]}
-        onPress={() => router.push(`edit-book/${book._id}`)}
+        onPress={() => router.push(`/edit-book/${book._id}`)}
       >
         <ThemedText style={tw`text-white text-lg font-semibold text-center`}>✎ Edit</ThemedText>
       </TouchableOpacity>
@@ -129,7 +124,7 @@ useEffect(() => {
               size={16}
               style={[{ color: primaryColor }]}
             />
-            <ThemedText style={tw`text-md text-gray-600`}>
+            <ThemedText style={tw`text-base text-gray-600`}>
               {book.bookAuthor}
             </ThemedText>
 
@@ -139,7 +134,7 @@ useEffect(() => {
               size={16}
               style={[{ color: primaryColor }]}
             />
-            <ThemedText style={tw`text-md text-gray-600`}>
+            <ThemedText style={tw`text-base text-gray-600`}>
               {book.reciter || 'N/A'}
             </ThemedText>
           </ThemedView>

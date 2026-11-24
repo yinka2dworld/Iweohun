@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ScrollView,
   TextInput,
@@ -12,15 +12,13 @@ import {
   Pressable,
   FlatList
 } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
-import axios from 'axios';
-import Constants from 'expo-constants';
-import {  useRouter } from 'expo-router';
+import apiClient, { getApiErrorMessage } from '@/lib/api';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import tw from 'twrnc';
 import { MaterialIcons, FontAwesome, Ionicons, Entypo } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
+import { createAudioPlayer } from 'expo-audio';
 
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedText } from '@/components/ThemedText';
@@ -44,13 +42,14 @@ const LANGUAGES = [
   'Hausa',
   'Igbo',
   'Amazigh',
+  'Somali',
   'Shona',
   'Fulani',
   'Malagasy',
   'Oromo'
 ];
 
-export default function AddScreen() {
+export default function BookForm({ type = 'add' }) {
   const [formData, setFormData] = useState({
     bookName: '',
     bookDescription: '',
@@ -63,7 +62,7 @@ export default function AddScreen() {
 
   const [bookCoverUri, setBookCoverUri] = useState(null);
   const [bookCoverFile, setBookCoverFile] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [chapterTitle, setChapterTitle] = useState('');
   const [chapterAudioUri, setChapterAudioUri] = useState(null);
   const [chapterAudioFile, setChapterAudioFile] = useState(null);
@@ -72,93 +71,140 @@ export default function AddScreen() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
 
-  
+  const { bookId } = useLocalSearchParams();
   const router = useRouter();
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
 
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
   const primaryColor = useThemeColor({}, 'primary');
   const borderColor = useThemeColor({}, 'border');
 
-  
+  useEffect(() => {
+    if (bookId) {
+      const fetchBook = async () => {
+        try {
+          const res = await apiClient.get(`/book/${bookId}`);
+          const book = res.data;
+          setFormData({
+            bookName: book.bookName || '',
+            bookDescription: book.bookDescription || '',
+            bookAuthor: book.bookAuthor || '',
+            reciter: book.reciter || '',
+            category: book.category || '',
+            language: book.language || '',
+            chapters: book.chapters || [],
+          });
+          setBookCoverUri(book.bookCover);
+        } catch (error) {
+          console.warn('Failed to load book details:', error.message);
+          Alert.alert('Error', 'Failed to load book details');
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchBook();
+    }
+  }, [bookId]);
+
   const handleChange = (key, value) => {
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
 
   const pickImage = async () => {
-  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (status !== 'granted') {
-    Alert.alert('Permission required', 'We need camera roll permissions to select an image');
-    return;
-  }
-
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes:  ImagePicker.MediaTypeOptions.Images,
-    quality: 1,
-    aspect: [4, 3],
-  });
-
-  if (!result.canceled && result.assets.length > 0) {
-    const imageAsset = result.assets[0];
-    setBookCoverUri(imageAsset.uri);
-
-    const file = {
-      uri: imageAsset.uri,
-      type: imageAsset.type || 'image/jpeg',
-      name: imageAsset.fileName || 'bookCover.jpg',
-    };
-    setBookCoverFile(file);
-  }
-};
-
-
-  const pickAudio = async () => {
-  try {
-    const result = await DocumentPicker.getDocumentAsync({ type: 'audio/*' });
-    if (result.assets && result.assets.length > 0) {
-      const audioAsset = result.assets[0];
-      const uri = audioAsset.uri;
-      setChapterAudioUri(uri);
-      const file = {
-        uri,
-        type: audioAsset.mimeType || 'audio/mpeg',
-        name: audioAsset.name || 'chapterAudio.mp3',
-      };
-      setChapterAudioFile(file);
-      await calculateAudioDuration(uri);
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'We need camera roll permissions to select an image');
+      return;
     }
-  } catch (error) {
-    Alert.alert('Error', 'Failed to pick audio file', error.message);
-  }
-};
-
-
-  const calculateAudioDuration = async (uri) => {
-    try {
-      setCalculatingDuration(true);
-      const { sound } = await Audio.Sound.createAsync(
-        { uri },
-        { shouldPlay: false }
-      );
-      const status = await sound.getStatusAsync();
-      const durationInSeconds = status.durationMillis / 1000;
-      const minutes = Math.floor(durationInSeconds / 60);
-      const seconds = Math.floor(durationInSeconds % 60);
-      const formattedDuration = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-      await sound.unloadAsync();
-      return formattedDuration;
-    } catch (error) {
-      console.error('Error calculating duration:', error);
-      return '00:00';
-    } finally {
-      setCalculatingDuration(false);
+  
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 1,
+      aspect: [4, 3],
+    });
+  
+    if (!result.canceled && result.assets.length > 0) {
+      const imageAsset = result.assets[0];
+      setBookCoverUri(imageAsset.uri);
+  
+      const file = {
+        uri: imageAsset.uri,
+        type: imageAsset.type || 'image/jpeg',
+        name: imageAsset.fileName || 'bookCover.jpg',
+      };
+      setBookCoverFile(file);
     }
   };
+  
+  
+    const pickAudio = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ type: 'audio/*' });
+      if (result.assets && result.assets.length > 0) {
+        const audioAsset = result.assets[0];
+        const uri = audioAsset.uri;
+        setChapterAudioUri(uri);
+        const file = {
+          uri,
+          type: audioAsset.mimeType || 'audio/mpeg',
+          name: audioAsset.name || 'chapterAudio.mp3',
+        };
+        setChapterAudioFile(file);
+        await calculateAudioDuration(uri);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to pick audio file', error.message);
+    }
+  };
+  
+  
+    const calculateAudioDuration = async (uri) => {
+      let player;
+      try {
+        setCalculatingDuration(true);
+        player = createAudioPlayer({ uri });
 
-  const handleAddChapter = async () => {
+        // Wait until the player has loaded so duration is known.
+        const status = await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            try { subscription?.remove(); } catch {}
+            reject(new Error('Timed out loading audio'));
+          }, 15000);
+
+          const subscription = player.addListener('playbackStatusUpdate', (s) => {
+            if (s?.isLoaded) {
+              clearTimeout(timeout);
+              try { subscription.remove(); } catch {}
+              resolve(s);
+            }
+          });
+
+          // Already loaded before the listener attached.
+          if (player.currentStatus?.isLoaded) {
+            clearTimeout(timeout);
+            try { subscription.remove(); } catch {}
+            resolve(player.currentStatus);
+          }
+        });
+
+        const durationInSeconds = status.duration || 0;
+        const minutes = Math.floor(durationInSeconds / 60);
+        const seconds = Math.floor(durationInSeconds % 60);
+        const formattedDuration = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+        return formattedDuration;
+      } catch (error) {
+        console.error('Error calculating duration:', error);
+        return '00:00';
+      } finally {
+        try { player?.remove(); } catch {}
+        setCalculatingDuration(false);
+      }
+    };
+    
+  
+const handleAddChapter = async () => {
     if (!chapterTitle || !chapterAudioUri) {
       Alert.alert('Error', 'Chapter title and audio are required');
       return;
@@ -188,79 +234,76 @@ export default function AddScreen() {
     }
   };
 
-  const handleRemoveChapter = (indexToRemove) => {
+  
+ const handleRemoveChapter = (indexToRemove) => {
   setFormData(prev => ({
     ...prev,
     chapters: prev.chapters.filter((_, index) => index !== indexToRemove),
   }));
 };
 
-  const handleSubmit = async () => {
-  if (!formData.bookName || !formData.bookAuthor || !formData.category || !formData.language) {
-    Alert.alert('Error', 'Book name, author, category, and language are required');
-    return;
-  }
-  try {
-    setLoading(true);
-    const token = await SecureStore.getItemAsync('authToken');
-    const form = new FormData();
 
-    // Base fields
-    form.append('bookName', formData.bookName);
-    form.append('bookDescription', formData.bookDescription);
-    form.append('bookAuthor', formData.bookAuthor);
-    form.append('reciter', formData.reciter);
-    form.append('category', formData.category);
-    form.append('language', formData.language);
-
-    // Book cover
-    if (bookCoverFile) {
-      form.append('bookCover', {
-        uri: bookCoverFile.uri,
-        name: bookCoverFile.name || 'cover.jpg',
-        type: bookCoverFile.type || 'image/jpeg',
-      });
+   const handleSubmit = async () => {
+    if (!formData.bookName || !formData.bookAuthor || !formData.category || !formData.language) {
+      Alert.alert('Error', 'Book name, author, category, and language are required');
+      return;
     }
+    try {
+      setLoading(true);
+      const form = new FormData();
 
-    // 📌 Send chapters metadata as JSON
-    const chaptersMeta = formData.chapters.map((chapter, index) => ({
-      index,
-      title: chapter.title,
-      duration: chapter.duration,
-      progress: chapter.progress,
-    }));
-    form.append('chaptersMeta', JSON.stringify(chaptersMeta));
+      form.append('bookName', formData.bookName);
+      form.append('bookDescription', formData.bookDescription);
+      form.append('bookAuthor', formData.bookAuthor);
+      form.append('reciter', formData.reciter);
+      form.append('category', formData.category);
+      form.append('language', formData.language);
 
-    // 📌 Send chapter audio files separately
-    formData.chapters.forEach((chapter, index) => {
-      if (chapter.audioFile) {
-        form.append(`chapterAudio_${index}`, {
-          uri: chapter.audioFile.uri,
-          name: chapter.audioFile.name || `chapter-${index}.mp3`,
-          type: chapter.audioFile.type || 'audio/mpeg',
+      if (bookCoverFile) {
+        form.append('bookCover', {
+          uri: bookCoverFile.uri,
+          name: bookCoverFile.name || 'cover.jpg',
+          type: bookCoverFile.type || 'image/jpeg',
         });
       }
-    });
-    
-    const response = await axios.post(`${apiUrl}/addBook`, form, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data',
-      },
-      timeout: 60000, 
-    });
 
-    if (response.data) {
-      Alert.alert('Success', 'Book added successfully!');
-      router.push('/(tabs)/main');
+      // 📌 Chapters meta with existing audio URL if no new file
+      const chaptersMeta = formData.chapters.map((chapter, index) => ({
+        index,
+        title: chapter.title,
+        duration: chapter.duration,
+        progress: chapter.progress,
+        existingAudioUrl: chapter.bookAudio || chapter.audioUrl || '', // keep old audio if no replacement
+      }));
+      form.append('chaptersMeta', JSON.stringify(chaptersMeta));
+
+      // 📌 Attach new chapter audio files
+      formData.chapters.forEach((chapter, index) => {
+        if (chapter.audioFile) {
+          form.append(`chapterAudio_${index}`, {
+            uri: chapter.audioFile.uri,
+            name: chapter.audioFile.name || `chapter-${index}.mp3`,
+            type: chapter.audioFile.type || 'audio/mpeg',
+          });
+        }
+      });
+
+      const response = await apiClient.put(`/updateBook/${bookId}`, form, {
+        timeout: 120000,
+      });
+
+      if (response.data) {
+        Alert.alert('Success', 'Book updated successfully!');
+        router.push('/(tabs)/main');
+      }
+    } catch (error) {
+      console.error('Error:', error.response?.data || error.message);
+      Alert.alert('Error', getApiErrorMessage(error, 'Could not update this book.'));
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Error:', error.response?.data || error.message);
-    Alert.alert('Error', error?.response?.data?.message || error.message);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
+
 
   if (loading) {
     return (
@@ -272,7 +315,7 @@ export default function AddScreen() {
 
   const renderCategoryItem = ({ item }) => (
     <Pressable
-      style={tw`p-3 border-b ${borderColor}`}
+      style={[tw`p-3 border-b`, { borderBottomColor: borderColor }]}
       onPress={() => {
         handleChange('category', item);
         setShowCategoryModal(false);
@@ -284,7 +327,7 @@ export default function AddScreen() {
 
   const renderLanguageItem = ({ item }) => (
     <Pressable
-      style={tw`p-3 border-b ${borderColor}`}
+      style={[tw`p-3 border-b`, { borderBottomColor: borderColor }]}
       onPress={() => {
         handleChange('language', item);
         setShowLanguageModal(false);
@@ -295,13 +338,13 @@ export default function AddScreen() {
   );
 
   return (
-    <View style={[tw`flex-1`, { backgroundColor }]}>
+   <View style={[tw`flex-1`, { backgroundColor }]}>
       {/* Tab Navigation */}
-      <View style={tw`flex-row border-b mt-8 ${borderColor}`}>
+      <View style={[tw`flex-row border-b mt-8`, { borderBottomColor: borderColor }]}>
         <TouchableOpacity
           style={[
             tw`flex-1 items-center py-3`,
-            activeTab === 'details' && tw`border-b-2 ${primaryColor}`,
+            activeTab === 'details' && [tw`border-b-2`, { borderColor: primaryColor }],
           ]}
           onPress={() => setActiveTab('details')}
         >
@@ -315,7 +358,7 @@ export default function AddScreen() {
         <TouchableOpacity
           style={[
             tw`flex-1 items-center py-3`,
-            activeTab === 'chapters' && tw`border-b-2 ${primaryColor}`,
+            activeTab === 'chapters' && [tw`border-b-2`, { borderColor: primaryColor }],
           ]}
           onPress={() => setActiveTab('chapters')}
         >
@@ -332,7 +375,7 @@ export default function AddScreen() {
         {activeTab === 'details' ? (
           <>
             <ThemedText style={tw`text-xl mb-4 text-center font-bold`}>
-               Add New Book
+               Update Book
             </ThemedText>
 
             {/* Book Cover */}
@@ -358,7 +401,7 @@ export default function AddScreen() {
               </TouchableOpacity>
             </View>
 
-             {/* Description */}
+            {/* Description */}
             <View style={tw`mb-4`}>
               <View style={tw`flex-row items-center mb-1`}>
                 <MaterialIcons name="description" size={18} color={textColor} />
@@ -421,7 +464,6 @@ export default function AddScreen() {
               </TouchableOpacity>
             </View>
 
-
           
             {/* Language Dropdown */}
             <View style={tw`mb-40`}>
@@ -448,7 +490,7 @@ export default function AddScreen() {
         ) : (
           <>
             <ThemedText style={tw`text-xl mb-4 text-center font-bold`}>
-              Add Chapters
+              Update Chapters
             </ThemedText>
 
             {/* Add Chapter Form */}
@@ -497,7 +539,7 @@ export default function AddScreen() {
                 onPress={handleAddChapter}
                 disabled={!chapterTitle || !chapterAudioUri}
                 style={[
-                  tw`bg-[${primaryColor}] p-3 rounded-lg flex-row items-center justify-center`,
+                  [tw`p-3 rounded-lg flex-row items-center justify-center`, { backgroundColor: primaryColor }],
                   (!chapterTitle || !chapterAudioUri) && tw`opacity-50`
                 ]}
               >
@@ -556,7 +598,7 @@ export default function AddScreen() {
       >
         <View style={[tw`flex-1 justify-center`, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
           <View style={[tw`m-6 bg-white rounded-lg`, { backgroundColor }]}>
-            <View style={tw`p-4 border-b ${borderColor}`}>
+            <View style={[tw`p-4 border-b`, { borderBottomColor: borderColor }]}>
               <Text style={[tw`text-lg font-bold`, { color: textColor }]}>Select Category</Text>
             </View>
             <FlatList
@@ -566,7 +608,7 @@ export default function AddScreen() {
               style={tw`max-h-64`}
             />
             <TouchableOpacity
-              style={tw`p-3 border-t ${borderColor} items-center`}
+              style={[tw`p-3 border-t items-center`, { borderTopColor: borderColor }]}
               onPress={() => setShowCategoryModal(false)}
             >
               <Text style={{ color: primaryColor }}>Cancel</Text>
@@ -584,7 +626,7 @@ export default function AddScreen() {
       >
         <View style={[tw`flex-1 justify-center`, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
           <View style={[tw`m-6 bg-white rounded-lg`, { backgroundColor }]}>
-            <View style={tw`p-4 border-b ${borderColor}`}>
+            <View style={[tw`p-4 border-b`, { borderBottomColor: borderColor }]}>
               <Text style={[tw`text-lg font-bold`, { color: textColor }]}>Select Language</Text>
             </View>
             <FlatList
@@ -594,7 +636,7 @@ export default function AddScreen() {
               style={tw`max-h-64`}
             />
             <TouchableOpacity
-              style={tw`p-3 border-t ${borderColor} items-center`}
+              style={[tw`p-3 border-t items-center`, { borderTopColor: borderColor }]}
               onPress={() => setShowLanguageModal(false)}
             >
               <Text style={{ color: primaryColor }}>Cancel</Text>
@@ -610,7 +652,7 @@ export default function AddScreen() {
             onPress={handleSubmit}
             disabled={loading}
             style={[
-              tw`bg-[${primaryColor}] p-4 rounded-lg flex-row items-center justify-center`,
+              [tw`p-4 rounded-lg flex-row items-center justify-center`, { backgroundColor: primaryColor }],
               loading && tw`opacity-70`
             ]}
           >
@@ -625,7 +667,6 @@ export default function AddScreen() {
           </TouchableOpacity>
         </View>
       )}
-
-    </View>
+    </View>  
   );
 }
