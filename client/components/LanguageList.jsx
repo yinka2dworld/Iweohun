@@ -3,10 +3,15 @@ import { View, Text, Image, TouchableOpacity, FlatList } from 'react-native';
 import tw from 'twrnc';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useThemeColor } from '@/hooks/useThemeColor';
 
 export default function LanguageList() {
     const router = useRouter();
     const flatListRef = useRef(null);
+    const gradientStart = useThemeColor({}, 'gradientStart');
+    const gradientEnd = useThemeColor({}, 'gradientEnd');
+    const onGradient = useThemeColor({}, 'onGradient');
+    const overlayColor = useThemeColor({}, 'overlay');
 
     const languages = [
         { id: '1', name: 'Swahili', coverImage: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQkiggRraKdnNphiix6pCSAVTPY2MrrlmDKsA&s' },
@@ -44,11 +49,11 @@ export default function LanguageList() {
     return (
         <View style={tw`w-full mt-5 mb-15`}>
             <LinearGradient
-                colors={['#070c70', '#ff1493']}
+                colors={[gradientStart, gradientEnd]}
                 style={tw`w-full rounded-2xl p-4 `}
             >
                 <View style={tw`flex-row justify-between items-center mb-4`}>
-                    <Text style={tw`text-[#f8f8f8] text-3xl font-bold`}>Languages</Text>
+                    <Text style={[tw`text-3xl font-bold`, { color: onGradient }]}>Languages</Text>
                 </View>
 
                 <FlatList
@@ -67,8 +72,8 @@ export default function LanguageList() {
                                     style={tw`w-full h-full`}
                                     resizeMode="cover" 
                                 />
-                                <View style={tw`absolute inset-0 bg-[#070c70] bg-opacity-50 flex items-center justify-center rounded-lg`}>
-                                    <Text style={tw`text-[#f8f8f8] text-3xl font-bold text-center`}>{item.name}</Text>
+                                <View style={[tw`absolute inset-0 flex items-center justify-center rounded-lg`, { backgroundColor: overlayColor }]}>
+                                    <Text style={[tw`text-3xl font-bold text-center`, { color: onGradient }]}>{item.name}</Text>
                                 </View>
                             </View>
                         </TouchableOpacity>

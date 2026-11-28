@@ -2,6 +2,7 @@ import Book from "../models/bookModel.js"
 import Review from "../models/reviewModel.js";
 import Rating from "../models/ratingModel.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../config/cloudinary.js"
+import mongoose from 'mongoose';
 
 
 
@@ -68,57 +69,70 @@ export const topChart = async (req, res) => {
 
 export const getBookRatings = async (req, res) => {
   const { bookId } = req.params;
-  const userId = req.user?.id; // assuming auth middleware sets req.user
+  const userId = req.user?._id;
+
+  if (!mongoose.isValidObjectId(bookId)) {
+    return res.status(400).json({ message: 'Invalid book ID' });
+  }
 
   try {
-    const ratings = await Rating.find({ bookId });
+    const ratings = await Rating.find({ bookId }).select('rating userId').lean();
     const total = ratings.length;
     const avgRating = total === 0 ? 0 : ratings.reduce((sum, r) => sum + r.rating, 0) / total;
+    const userRating = ratings.find((rating) => String(rating.userId) === String(userId))?.rating || 0;
 
-    let userRating = null;
-    if (userId) {
-      const userRated = await Rating.findOne({ bookId, userId });
-      userRating = userRated?.rating || 0;
-    }
-
-    res.json({ avgRating, total, userRating });
+    return res.status(200).json({ avgRating, total, userRating });
   } catch (err) {
     console.error('Error fetching ratings:', err);
-    res.status(500).json({ error: 'Failed to fetch rating stats' });
+    return res.status(500).json({ message: 'Failed to fetch rating stats' });
   }
 };
 
 
 
 export const addBookRatings = async (req, res) => {
-  const { userId, bookId, rating } = req.body;
+  const userId = req.user?._id;
+  const { bookId, rating } = req.body;
 
-  if (!userId || !bookId || rating === undefined) {
-    return res.status(400).json({ message: 'Missing required fields' });
+  if (!userId) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+  if (!mongoose.isValidObjectId(bookId)) {
+    return res.status(400).json({ message: 'Invalid book ID' });
+  }
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return res.status(400).json({ message: 'Rating must be a whole number from 1 to 5' });
   }
 
   try {
     const existing = await Rating.findOne({ userId, bookId });
 
     if (existing) {
-      existing.rating = rating;
-      await existing.save({ validateModifiedOnly: true });
-    } else {
-      await Rating.create({ userId, bookId, rating });
+      return res.status(409).json({
+        message: 'You have already rated this book.',
+        userRating: existing.rating,
+      });
     }
 
-     const ratings = await Rating.find({ bookId });
-    const total = ratings.length;
-    const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / total;
+    await Rating.create({ userId, bookId, rating });
 
-    res.status(201).json({
+    const ratings = await Rating.find({ bookId }).select('rating').lean();
+    const total = ratings.length;
+    const avgRating = total === 0 ? 0 : ratings.reduce((sum, item) => sum + item.rating, 0) / total;
+
+    return res.status(201).json({
       message: 'Rating submitted successfully.',
       avgRating,
       total,
+      userRating: rating,
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: 'You have already rated this book.' });
+    }
+
     console.error('Failed to submit rating:', error);
-    res.status(500).json({ message: 'Failed to submit rating', error: error.message });
+    return res.status(500).json({ message: 'Failed to submit rating' });
   }
 };
 
@@ -273,15 +287,16 @@ export const addBook = async (req, res) => {
 
 export const updateBook = async (req, res) => {
   try {
-     if (!['creator', 'admin'].includes(req.user.role)) {
-      return res.status(403).json({ message: 'You are not authorized to access this.' });
-    }
-
     const { bookId } = req.params;
 
     const existingBook = await Book.findById(bookId);
     if (!existingBook) {
       return res.status(404).json({ message: 'Book not found' });
+    }
+    const isAdmin = ['admin', 'superAdmin'].includes(req.user.role);
+    const isOwner = String(existingBook.postedBy) === String(req.user._id);
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ message: 'You are not authorized to update this book.' });
     }
 
     let bookCoverUrl = existingBook.bookCover;
@@ -327,7 +342,9 @@ export const updateBook = async (req, res) => {
     existingBook.reciter = req.body.reciter || existingBook.reciter;
     existingBook.category = req.body.category || existingBook.category;
     existingBook.language = req.body.language || existingBook.language;
-    existingBook.chapters = processedChapters.length ? processedChapters : existingBook.chapters;
+    if (typeof req.body.chaptersMeta !== 'undefined') {
+      existingBook.chapters = processedChapters;
+    }
 
     const updatedBook = await existingBook.save();
     return res.status(200).json({
@@ -342,14 +359,16 @@ export const updateBook = async (req, res) => {
 
 
 export const deleteBook = async (req, res) => {
-      if (!['superAdmin', 'admin'].includes(req.user.role)) {
-      return res.status(403).json({ message: 'You are not authorized to access this.' });
-    }
-     const { _id } = req.params;
+    const { _id } = req.params;
     try {
       const book = await Book.findById(_id);
       if (!book) {
         return res.status(404).json({ message: 'Book not found' });
+      }
+      const isAdmin = ['superAdmin', 'admin'].includes(req.user.role);
+      const isOwner = String(book.postedBy) === String(req.user._id);
+      if (!isAdmin && !isOwner) {
+        return res.status(403).json({ message: 'You are not authorized to delete this book.' });
       }
     //  const { bookCover, bookAudio } = book;
     //      try {

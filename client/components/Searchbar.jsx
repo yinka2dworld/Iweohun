@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { TouchableOpacity, FlatList, View, TextInput, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, FlatList, View, TextInput, ActivityIndicator, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import tw from 'twrnc';
 import axios from 'axios';
-import Constants from 'expo-constants';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { API_BASE_URL } from '@/constants/api';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { navigateToBookDetails } from '@/utils/navigation';
 import * as SecureStore from 'expo-secure-store';
 
 export default function Searchbar() {
@@ -15,10 +17,16 @@ export default function Searchbar() {
   const [isPending, setIsPending] = useState(false);
   const [results, setResults] = useState([]);
   const [error, setError] = useState(null);
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
+  const apiUrl = API_BASE_URL;
 
-  const backgroundColor = useThemeColor({}, 'background');
- const textColor = useThemeColor({}, 'text');
+
+  const surfaceColor = useThemeColor({}, 'surface');
+  const surfaceAltColor = useThemeColor({}, 'surfaceAlt');
+  const textColor = useThemeColor({}, 'text');
+  const mutedColor = useThemeColor({}, 'muted');
+  const primaryColor = useThemeColor({}, 'primary');
+  const borderColor = useThemeColor({}, 'border');
+  const dangerColor = useThemeColor({}, 'danger');
 
   const handleSearch = async (query) => {
     if (!query.trim()) {
@@ -64,8 +72,8 @@ export default function Searchbar() {
     <ThemedView style={tw`p-4`}>
       {/* Custom Search Input */}
       <View style={[
-        tw`flex-row items-center rounded-lg px-3 mb-3`,
-        { backgroundColor }
+        tw`flex-row items-center rounded-lg px-3 mb-3 border`,
+        { backgroundColor: surfaceAltColor, borderColor }
       ]}>
         <TextInput
           style={[
@@ -73,19 +81,19 @@ export default function Searchbar() {
             { color: textColor }
           ]}
           placeholder="Search for audiobook..."
-          placeholderTextColor="#999"
+          placeholderTextColor={mutedColor}
           onChangeText={setSearchWord}
           value={searchWord}
         />
         {searchWord ? (
           <TouchableOpacity onPress={handleClear} style={tw`p-2`}>
-            <ThemedText style={tw`text-gray-500 text-lg`}>✕</ThemedText>
+            <ThemedText style={[tw`text-lg`, { color: mutedColor }]}>✕</ThemedText>
           </TouchableOpacity>
         ) : null}
       </View>
 
       {isPending && (
-        <ActivityIndicator size="large" color="#ff1493" style={tw`mt-4`} />
+        <ActivityIndicator size="large" color={primaryColor} style={tw`mt-4`} />
       )}
 
       <View style={tw`flex-1`}>
@@ -95,37 +103,76 @@ export default function Searchbar() {
             keyExtractor={(item) => item._id.toString()}
             contentContainerStyle={tw`mt-4`}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() =>
-                  router.push({
-                    pathname: `/book-details/${item._id}`,
-                    params: {
-                      bookName: item.bookName,
-                      bookAuthor: item.bookAuthor
-                    }
-                  })
-                }
-                style={tw`p-4 bg-white rounded-lg mb-3`}
-              >
-                <ThemedText style={[tw`font-bold text-lg`, { color: textColor }]}>
-                  {item.bookName}
-                </ThemedText>
-                <ThemedText style={tw`text-gray-500`}>{item.bookAuthor}</ThemedText>
-              </TouchableOpacity>
+              <SearchResult
+                item={item}
+                onPress={() => navigateToBookDetails(router, item._id)}
+                surfaceColor={surfaceColor}
+                surfaceAltColor={surfaceAltColor}
+                textColor={textColor}
+                mutedColor={mutedColor}
+                primaryColor={primaryColor}
+                borderColor={borderColor}
+              />
             )}
             nestedScrollEnabled={true}
             scrollEnabled={false}
           />
         ) : searchWord && !isPending && !error ? (
-          <ThemedText style={tw`text-center text-gray-500 mt-4`}>
+          <ThemedText style={[tw`text-center mt-4`, { color: mutedColor }]}>
             No results found
           </ThemedText>
         ) : null}
       </View>
 
       {error && (
-        <ThemedText style={tw`text-center text-red-500 mt-4`}>{error}</ThemedText>
+        <ThemedText style={[tw`text-center mt-4`, { color: dangerColor }]}>{error}</ThemedText>
       )}
     </ThemedView>
+  );
+}
+
+function SearchResult({
+  item,
+  onPress,
+  surfaceColor,
+  surfaceAltColor,
+  textColor,
+  mutedColor,
+  primaryColor,
+  borderColor,
+}) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const hasCover = typeof item.bookCover === 'string' && item.bookCover.trim() && !imageFailed;
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.bookName}, by ${item.bookAuthor}`}
+      style={[
+        tw`flex-row items-center p-3 rounded-lg mb-3 border`,
+        { backgroundColor: surfaceColor, borderColor },
+      ]}
+    >
+      {hasCover ? (
+        <Image
+          source={{ uri: item.bookCover }}
+          style={[tw`w-14 h-18 rounded-md`, { backgroundColor: surfaceAltColor }]}
+          resizeMode="cover"
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <View style={[tw`w-14 h-18 rounded-md items-center justify-center`, { backgroundColor: surfaceAltColor }]}>
+          <MaterialCommunityIcons name="book-open-page-variant" size={26} color={mutedColor} />
+        </View>
+      )}
+      <View style={tw`ml-3 flex-1`}>
+        <ThemedText style={[tw`font-bold text-lg`, { color: textColor }]}>
+          {item.bookName}
+        </ThemedText>
+        <ThemedText style={{ color: mutedColor }}>{item.bookAuthor}</ThemedText>
+      </View>
+      <MaterialCommunityIcons name="chevron-right" size={22} color={primaryColor} />
+    </TouchableOpacity>
   );
 }

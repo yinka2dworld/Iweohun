@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
 import { ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
 import tw from 'twrnc';
 import Searchbar from '@/components/Searchbar';
 import LanguageList from '@/components/LanguageList';
@@ -10,8 +9,8 @@ import CategorySection from '@/components/CategorySection';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useRouter } from 'expo-router';
-import Constants from 'expo-constants';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { API_BASE_URL } from '@/constants/api';
 
 export default function Main() {
   const router = useRouter();
@@ -23,7 +22,8 @@ export default function Main() {
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
   const primaryColor = useThemeColor({}, 'primary');
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
+  const onPrimaryColor = useThemeColor({}, 'onPrimary');
+  const apiUrl = API_BASE_URL;
 
   const fetchBooks = useCallback(async () => {
     if (!apiUrl) {
@@ -101,7 +101,7 @@ export default function Main() {
               ]}
               onPress={() => router.push('/addBook')}
             >
-              <ThemedText style={tw`text-white text-lg font-semibold text-center`}>
+              <ThemedText style={[tw`text-lg font-semibold text-center`, { color: onPrimaryColor }]}>
                 ✚ Create
               </ThemedText>
             </TouchableOpacity>

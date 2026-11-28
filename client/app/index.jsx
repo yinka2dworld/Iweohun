@@ -35,7 +35,7 @@ export default function Home() {
       />
 
       {/* Footer Branding */}
-      <ThemedText style={tw`pt-30 text-base text-gray-500`}>Powered by</ThemedText>
+      <ThemedText style={tw`pt-30 text-base`}>Powered by</ThemedText>
       <Image
         source={require('../assets/images/Okinlm.png')}
         style={tw`w-30 h-30 pt-2`}

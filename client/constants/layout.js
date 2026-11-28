@@ -1,0 +1,3 @@
+export const TAB_BAR_CONTENT_HEIGHT = 62;
+export const MINI_AUDIO_PLAYER_HEIGHT = 74;
+export const MINI_AUDIO_PLAYER_CLEARANCE = 90;

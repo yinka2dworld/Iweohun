@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import tw from 'twrnc';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { navigateToBookDetails } from '@/utils/navigation';
 
 export default function CategorySection({ title, books, textColor }) {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function CategorySection({ title, books, textColor }) {
           })}
           renderItem={({ item }) => (
             <TouchableOpacity
-              onPress={() => router.push(`/book-details/${item._id}`)}
+              onPress={() => navigateToBookDetails(router, item._id)}
               style={tw`mr-3`}
             >
               <Image

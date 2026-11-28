@@ -6,10 +6,11 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import Constants from 'expo-constants';
+import { API_BASE_URL } from '@/constants/api';
 import * as SecureStore from 'expo-secure-store';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { navigateToBookDetails } from '@/utils/navigation';
 
 
 export default function LanguageBooks() {
@@ -21,10 +22,12 @@ export default function LanguageBooks() {
   const router = useRouter();
 
   const backgroundColor = useThemeColor({}, 'background');
-  const secondaryColor = useThemeColor({}, 'secondary');
-    const primaryColor = useThemeColor({}, 'primary');
-  const textColor = '#070c70';
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
+  const primaryColor = useThemeColor({}, 'primary');
+  const gradientStart = useThemeColor({}, 'gradientStart');
+  const gradientEnd = useThemeColor({}, 'gradientEnd');
+  const onGradient = useThemeColor({}, 'onGradient');
+  const textColor = useThemeColor({}, 'text');
+  const apiUrl = API_BASE_URL;
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -49,7 +52,7 @@ export default function LanguageBooks() {
           : [];
         setBooks(booksData);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch books');
+        setError(err instanceof Error ? err.message : 'Coming soon');
       } finally {
         setLoading(false);
       }
@@ -60,7 +63,7 @@ export default function LanguageBooks() {
   if (loading) {
     return (
       <ThemedView style={[tw`flex-1 items-center justify-center`, { backgroundColor }]}>
-        <ActivityIndicator size="large" color="#ff1493" />
+        <ActivityIndicator size="large" color={primaryColor} />
         <ThemedText style={{ color: textColor, marginTop: 10 }}>Loading books...</ThemedText>
       </ThemedView>
     );
@@ -82,7 +85,7 @@ export default function LanguageBooks() {
         <TouchableOpacity onPress={() => router.back()} >
                         <MaterialCommunityIcons name="arrow-left" size={28} color={primaryColor} />
                       </TouchableOpacity>
-        <ThemedText type="title" style={{ color: '#ff1493' }}>
+        <ThemedText type="title" style={{ color: primaryColor }}>
           {language}
         </ThemedText>
       </ThemedView>
@@ -95,15 +98,15 @@ export default function LanguageBooks() {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={tw`py-6 px-4`}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => router.push(`/book-details/${item._id}`)}>
-            <LinearGradient colors={['#070c70', '#ff1493']} style={tw`mb-4 p-4 rounded-lg`}>
+          <TouchableOpacity onPress={() => navigateToBookDetails(router, item._id)}>
+            <LinearGradient colors={[gradientStart, gradientEnd]} style={tw`mb-4 p-4 rounded-lg`}>
               <View style={tw`flex-row`}>
                 <Image source={{ uri: item.bookCover }} style={tw`w-20 h-25 rounded-lg mr-4`} />
                 <View style={tw`flex-1 justify-center`}>
-                  <ThemedText style={tw`text-lg font-bold text-white`}>
+                  <ThemedText style={[tw`text-lg font-bold`, { color: onGradient }]}>
                     {item.bookName}
                   </ThemedText>
-                  <ThemedText style={tw`text-sm text-white`}>
+                  <ThemedText style={[tw`text-sm`, { color: onGradient }]}>
                     {item.bookAuthor}
                   </ThemedText>
                 </View>

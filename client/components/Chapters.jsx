@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FlatList,Alert, TouchableOpacity } from 'react-native';
+import { Alert, FlatList, TouchableOpacity } from 'react-native';
 import tw from 'twrnc';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -8,24 +8,57 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
+import { useAudio } from '@/context/AudioContext';
+import { MINI_AUDIO_PLAYER_CLEARANCE, TAB_BAR_CONTENT_HEIGHT } from '@/constants/layout';
 
 
 const Chapters = ({ book, apiUrl, onChapterSelect }) => {
   const [showMoreInfo, setShowMoreInfo] = useState(false); 
   const primaryColor = useThemeColor({}, 'primary');
+  const onPrimaryColor = useThemeColor({}, 'onPrimary');
+  const dangerColor = useThemeColor({}, 'danger');
+  const mutedColor = useThemeColor({}, 'muted');
+  const surfaceColor = useThemeColor({}, 'surface');
+  const borderColor = useThemeColor({}, 'border');
   const [role, setRole] = useState(null);  
   const [userId, setUserId] = useState(null);  
-     const router = useRouter();
-     
-useEffect(() => {
-  const loadInfo = async () => {
-    const role = await SecureStore.getItemAsync('userRole');
-    setRole(role);
-    const userId = await SecureStore.getItemAsync('userId');
-     setUserId(String(userId));       
-  };
-  loadInfo();
-}, []);
+  const router = useRouter();
+  const { audioDetails } = useAudio();
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadInfo = async () => {
+      try {
+        const [storedRole, storedUserId] = await Promise.all([
+          SecureStore.getItemAsync('userRole'),
+          SecureStore.getItemAsync('userId'),
+        ]);
+        if (isMounted) {
+          setRole(storedRole);
+          setUserId(storedUserId ? String(storedUserId) : null);
+        }
+      } catch (error) {
+        console.error('Unable to load book permissions:', error);
+      }
+    };
+
+    loadInfo();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const postedBy = book?.postedBy;
+  const postedById = postedBy && typeof postedBy === 'object'
+    ? postedBy._id || postedBy.id || postedBy.$oid
+    : postedBy;
+  const isBookOwner = Boolean(
+    userId && postedById && String(userId).trim().toLowerCase() === String(postedById).trim().toLowerCase()
+  );
+  const normalizedRole = typeof role === 'string' ? role.trim().toLowerCase() : '';
+  const canManageBook = isBookOwner || normalizedRole === 'admin' || normalizedRole === 'superadmin';
+  const canEditBook = canManageBook;
+  const canDeleteBook = canManageBook;
    
 
   const handleDelete = () => {
@@ -41,8 +74,10 @@ useEffect(() => {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
-          const token = await SecureStore.getItemAsync('authToken');
           try {
+            const token = await SecureStore.getItemAsync('authToken');
+            if (!token) throw new Error('You must be signed in to delete this book.');
+
             const response = await axios.delete(`${apiUrl}/deleteBook/${book._id}`, {
               headers: {
                 Authorization: `Bearer ${token}`
@@ -55,7 +90,7 @@ useEffect(() => {
             router.back();
           } catch (error) {
             console.error("Delete error:", error);
-            Alert.alert('Error', 'Failed to delete the book.', [{ text: 'OK' }]);
+            Alert.alert('Error', error.response?.data?.message || error.message || 'Failed to delete the book.', [{ text: 'OK' }]);
           }
         }
       }
@@ -64,87 +99,74 @@ useEffect(() => {
 };
 
   
-  if (!book?.chapters?.length) {
-    return (
-      <ThemedText style={tw`text-center p-4`}>
-        No chapters available.
-      </ThemedText>
-    );
-  }
-
   return (
-    <ThemedView style={tw`p-2 mb-15`}>
-      {/* Toggle More Info Section */}
+    <ThemedView style={tw`flex-1 px-2 pt-0`}>
       <TouchableOpacity
-        onPress={() => setShowMoreInfo(prevState => !prevState)} // Toggle the visibility of more info
-        style={tw`flex-row items-center justify-start`}
-      >
-        <ThemedText
-          style={[
-            tw`text-md text-blue-500 m-5`,
-            { color: primaryColor },
-          ]}
-        >
+        onPress={() => setShowMoreInfo((isExpanded) => !isExpanded)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: showMoreInfo }}
+        accessibilityLabel={showMoreInfo ? 'Hide book information' : 'Show book information'}
+        style={[
+          tw`flex-row items-center justify-between px-4 py-2 mb-2`]}>
+
+        <ThemedText style={[tw`text-base font-semibold`, { color: primaryColor }]}>
           {showMoreInfo ? 'Show less info' : 'Show more info'}
         </ThemedText>
-
-        <MaterialCommunityIcons
-          name={showMoreInfo ? 'chevron-up' : 'chevron-down'}
-          size={24}
-          color={primaryColor}
-        />
+        <ThemedView style={[tw`w-8 h-8 rounded-full items-center justify-center`,]}>
+          <MaterialCommunityIcons
+            name={showMoreInfo ? 'chevron-up' : 'chevron-down'}
+            size={22}
+            color={primaryColor}
+          />
+        </ThemedView>
       </TouchableOpacity>
 
-      {/* More Book Information Section */}
       {showMoreInfo && (
-        <ThemedView style={tw`items-center justify-center`}>
-       
+        <ThemedView style={[tw`p-4 mb-3 rounded-xl border`, { backgroundColor: surfaceColor, borderColor }]}>
+          {(canEditBook || canDeleteBook) && (
+            <ThemedView style={tw`flex-row flex-wrap justify-center gap-4 mb-4`}>
+              {canEditBook && (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Update book"
+                  style={[tw`flex-row items-center justify-center rounded-lg px-4 py-2`, { backgroundColor: primaryColor }]}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/edit-book/[bookId]',
+                      params: { bookId: book._id.toString() },
+                    })
+                  }
+                >
+                  <MaterialCommunityIcons name="pencil-outline" size={18} color={onPrimaryColor} />
+                  <ThemedText style={[tw`ml-2 font-semibold`, { color: onPrimaryColor }]}>Update</ThemedText>
+                </TouchableOpacity>
+              )}
+              {canDeleteBook && (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Delete book"
+                  style={[tw`flex-row items-center justify-center rounded-lg px-4 py-2`, { backgroundColor: dangerColor }]}
+                  onPress={handleDelete}
+                >
+                  <MaterialCommunityIcons name="delete-outline" size={18} color={onPrimaryColor} />
+                  <ThemedText style={[tw`ml-2 font-semibold`, { color: onPrimaryColor }]}>Delete</ThemedText>
+                </TouchableOpacity>
+              )}
+            </ThemedView>
+          )}
 
-
-  <ThemedView style={tw`flex-row gap-5 justify-end my-4 mb-8`}>
-    {( role === 'superAdmin' || userId === book.postedBy?._id) && (
-      <TouchableOpacity
-        style={[tw`rounded-3xl px-6 py-2`, { backgroundColor: primaryColor }]}
-        onPress={() => router.push(`edit-book/${book._id}`)}
-      >
-        <ThemedText style={tw`text-white text-lg font-semibold text-center`}>✎ Edit</ThemedText>
-      </TouchableOpacity>
-    )}
-
-    {(role === 'superAdmin' || role === 'admin')&& (
-      <TouchableOpacity
-        style={[tw`rounded-3xl px-4 py-2`, { backgroundColor: primaryColor }]}
-        onPress={handleDelete}>
-        <ThemedText style={tw`text-white text-lg font-semibold text-center`}>✖ Delete</ThemedText>
-      </TouchableOpacity>
-    )}
-  </ThemedView>
-
-
-
-     <ThemedView style={tw`flex-row items-center justify-start gap-2 flex-wrap`}>
-            {/* Author Icon and Text */}
-            <MaterialCommunityIcons
-              name="pencil"
-              size={16}
-              style={[{ color: primaryColor }]}
-            />
-            <ThemedText style={tw`text-md text-gray-600`}>
-              {book.bookAuthor}
-            </ThemedText>
-
-            {/* Reciter Icon and Text */}
-            <MaterialCommunityIcons
-              name="microphone"
-              size={16}
-              style={[{ color: primaryColor }]}
-            />
-            <ThemedText style={tw`text-md text-gray-600`}>
-              {book.reciter || 'N/A'}
-            </ThemedText>
+          <ThemedView style={tw`flex-row items-center flex-wrap gap-4 mb-3`}>
+            <ThemedView style={tw`flex-row items-center gap-2`}>
+              <MaterialCommunityIcons name="pencil" size={16} color={primaryColor} />
+              <ThemedText>{book.bookAuthor}</ThemedText>
+            </ThemedView>
+            <ThemedView style={tw`flex-row items-center gap-2`}>
+              <MaterialCommunityIcons name="microphone" size={16} color={primaryColor} />
+              <ThemedText>{book.reciter || 'N/A'}</ThemedText>
+            </ThemedView>
           </ThemedView>
 
-          <ThemedText style={tw`text-sm text-gray-600 text-left my-3 mx-4`}>
+          <ThemedText style={[tw`text-sm`, { color: mutedColor }]}>
             {book.bookDescription || 'N/A'}
           </ThemedText>
         </ThemedView>
@@ -152,15 +174,34 @@ useEffect(() => {
 
       {/* Chapters List */}
       <FlatList
-        data={book.chapters}
-        keyExtractor={(item) => item._id}
+        style={tw`flex-1`}
+        data={book.chapters || []}
+        keyExtractor={(item, index) => item._id?.toString() || String(index)}
+        contentContainerStyle={{
+          paddingBottom: audioDetails
+            ? MINI_AUDIO_PLAYER_CLEARANCE + TAB_BAR_CONTENT_HEIGHT
+            : 16,
+        }}
+        scrollIndicatorInsets={{
+          bottom: audioDetails
+            ? MINI_AUDIO_PLAYER_CLEARANCE + TAB_BAR_CONTENT_HEIGHT
+            : 0,
+        }}
+        ListEmptyComponent={
+          <ThemedText style={tw`text-center p-4`}>
+            No chapters available.
+          </ThemedText>
+        }
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={() => onChapterSelect(item)} // Handle chapter selection
-            style={tw`p-3 m-2 border border-gray-300 rounded-lg flex-row justify-between`}
+            style={[
+              tw`p-3 m-2 border rounded-lg flex-row justify-between`,
+              { borderColor, backgroundColor: surfaceColor },
+            ]}
           >
             <ThemedText style={tw`text-lg font-semibold`}>{item.title}</ThemedText>
-            <ThemedText style={tw`text-sm text-gray-500`}>{item.duration}</ThemedText>
+            <ThemedText style={[tw`text-sm`, { color: mutedColor }]}>{item.duration}</ThemedText>
           </TouchableOpacity>
         )}
       />

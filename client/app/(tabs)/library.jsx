@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react';
 import {
-  SafeAreaView,
   FlatList,
   View,
   TouchableOpacity,
@@ -10,15 +9,16 @@ import {
   ActivityIndicator,
   Share,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc';
 import * as SecureStore from 'expo-secure-store';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect } from '@react-navigation/native';
+import { navigateToBookDetails } from '@/utils/navigation';
 
 export default function Library() {
   const router = useRouter();
@@ -32,6 +32,11 @@ export default function Library() {
   const backgroundColor = useThemeColor({}, 'background');
   const modalBackgroundColor = useThemeColor({}, 'modalBackground');
   const textColor = useThemeColor({}, 'text');
+  const primaryColor = useThemeColor({}, 'primary');
+  const gradientStart = useThemeColor({}, 'gradientStart');
+  const gradientEnd = useThemeColor({}, 'gradientEnd');
+  const onGradient = useThemeColor({}, 'onGradient');
+  const overlayColor = useThemeColor({}, 'overlay');
 
   useFocusEffect(
     useCallback(() => {
@@ -105,7 +110,7 @@ export default function Library() {
   if (loading) {
     return (
       <ThemedView style={[tw`flex-1 items-center justify-center`, { backgroundColor }]}>
-        <ActivityIndicator size="large" color="#ff1493" />
+        <ActivityIndicator size="large" color={primaryColor} />
         <ThemedText style={{ color: textColor, marginTop: 10 }}>Loading library...</ThemedText>
       </ThemedView>
     );
@@ -131,15 +136,15 @@ export default function Library() {
           keyExtractor={(item) => item._id?.toString() || Math.random().toString()}
           contentContainerStyle={tw`py-6 px-6`}
           renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => router.push(`/book-details/${item._id}`)}>
-              <LinearGradient colors={['#070c70', '#ff1493']} style={tw`mb-4 p-4 rounded-lg`}>
+            <TouchableOpacity onPress={() => navigateToBookDetails(router, item._id)}>
+              <LinearGradient colors={[gradientStart, gradientEnd]} style={tw`mb-4 p-4 rounded-lg`}>
                 <View style={tw`flex-row`}>
                   <Image source={{ uri: item.bookCover }} style={tw`w-20 h-25 rounded-lg mr-4`} />
                   <View style={tw`flex-1 justify-center`}>
-                    <ThemedText style={tw`text-lg font-bold text-white`}>
+                    <ThemedText style={[tw`text-lg font-bold`, { color: onGradient }]}>
                       {item.bookName}
                     </ThemedText>
-                    <ThemedText style={tw`text-sm text-white`}>
+                    <ThemedText style={[tw`text-sm`, { color: onGradient }]}>
                       {item.bookAuthor}
                     </ThemedText>
                   </View>
@@ -147,7 +152,7 @@ export default function Library() {
                     onPress={(event) => handlePress(item, event)}
                     style={tw`justify-center pl-2`}
                   >
-                    <Icon name="more-vert" size={24} color="white" />
+                    <Icon name="more-vert" size={24} color={onGradient} />
                   </TouchableOpacity>
                 </View>
               </LinearGradient>
@@ -159,7 +164,7 @@ export default function Library() {
       {/* Modal Overlay */}
       {modalVisible && selectedBook && (
         <Pressable
-          style={[tw`absolute inset-0`, { backgroundColor: 'rgba(0, 0, 0, 0.3)' }]}
+          style={[tw`absolute inset-0`, { backgroundColor: overlayColor }]}
           onPress={() => setModalVisible(false)}
         >
           <Pressable
@@ -174,10 +179,10 @@ export default function Library() {
             ]}
           >
             <TouchableOpacity onPress={() => handleRemove(selectedBook._id)} style={tw`p-3`}>
-              <ThemedText style={tw`text-lg text-white`}>Remove from Library</ThemedText>
+              <ThemedText style={tw`text-lg`}>Remove from Library</ThemedText>
             </TouchableOpacity>
             <TouchableOpacity onPress={handleShare} style={tw`p-3`}>
-              <ThemedText style={tw`text-lg text-white`}>Share book</ThemedText>
+              <ThemedText style={tw`text-lg`}>Share book</ThemedText>
             </TouchableOpacity>
           </Pressable>
         </Pressable>

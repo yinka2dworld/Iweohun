@@ -4,9 +4,9 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import tw from 'twrnc';
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -14,7 +14,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
-import Constants from 'expo-constants';
+import { API_BASE_URL } from '@/constants/api';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export default function Profile() {
@@ -22,10 +22,12 @@ export default function Profile() {
   const [userData, setUserData] = useState({});
   const [loading, setLoading] = useState(true);
 
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
+  const apiUrl = API_BASE_URL;
 
   const backgroundColor = useThemeColor({}, 'background');
-  const buttonColor = '#070c70';
+  const buttonColor = useThemeColor({}, 'primary');
+  const onPrimaryColor = useThemeColor({}, 'onPrimary');
+  const surfaceColor = useThemeColor({}, 'surface');
   const textColor = useThemeColor({}, 'text');
 
   const sampleUser = {
@@ -76,7 +78,7 @@ export default function Profile() {
         <View style={tw`items-center mt-20 mb-8`}>
           <Image
             source={{ uri: userData.profilePhoto || sampleUser.profilePhoto }}
-            style={tw`w-25 h-25 rounded-full border-4 border-white`}
+            style={[tw`w-25 h-25 rounded-full border-4`, { borderColor: surfaceColor }]}
           />
           <ThemedText style={tw`text-2xl font-bold mt-3 text-center`} darkColor={textColor}>
             {userData.username || sampleUser.username}
@@ -92,22 +94,26 @@ export default function Profile() {
             iconName="cog-outline"
             onPress={() => router.push('/screens/settings')}
             buttonColor={buttonColor}
+            textColor={onPrimaryColor}
           />
         
 <ProfileButton label="Terms & Privacy"
- iconName="shield-lock-outline" 
- onPress={() => router.push('/screens/terms-policy')} 
- buttonColor={buttonColor}/>
+ iconName="shield-lock-outline"
+ onPress={() => router.push('/screens/terms-policy')}
+ buttonColor={buttonColor}
+ textColor={onPrimaryColor}/>
 
 <ProfileButton label="About Iweohun"
  iconName="book-open-page-variant" 
  onPress={() => router.push('/screens/about-iweohun')}
- buttonColor={buttonColor}/>
+ buttonColor={buttonColor}
+ textColor={onPrimaryColor}/>
 
 <ProfileButton label="About Okin Technologies"
  iconName="domain" 
- onPress={() => router.push('/screens/about-okin')} 
- buttonColor={buttonColor}/>
+ onPress={() => router.push('/screens/about-okin')}
+ buttonColor={buttonColor}
+ textColor={onPrimaryColor}/>
 
 
         </ThemedView>
@@ -116,7 +122,7 @@ export default function Profile() {
   );
 }
 
-function ProfileButton({ label, iconName, onPress, buttonColor }) {
+function ProfileButton({ label, iconName, onPress, buttonColor, textColor }) {
   return (
   <TouchableOpacity
   onPress={onPress}
@@ -125,8 +131,8 @@ function ProfileButton({ label, iconName, onPress, buttonColor }) {
     { backgroundColor: buttonColor },
   ]}
 >
-  <MaterialCommunityIcons name={iconName} size={22} color="white" />
-  <ThemedText style={tw`text-white text-lg font-semibold ml-3`}>
+  <MaterialCommunityIcons name={iconName} size={22} color={textColor} />
+  <ThemedText style={[tw`text-lg font-semibold ml-3`, { color: textColor }]}>
     {label}
   </ThemedText>
 </TouchableOpacity>

@@ -25,10 +25,21 @@
       "permissions": []
     },
     "extra": {
-      "API_BASE_URL": "https://iweohun-server.onrender.com",
       "eas": {
         "projectId": "98768076-0022-444e-bbc9-3493f478cb0f"
       }
-    }
+    },
+    "plugins": [
+      "expo-background-task",
+      "expo-asset",
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": true,
+          "recordAudioAndroid": false,
+          "microphonePermission": false
+        }
+      ]
+    ]
   }
 }

@@ -5,7 +5,7 @@ import tw from 'twrnc';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import Constants from 'expo-constants';
+import { API_BASE_URL } from '@/constants/api';
 
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedView } from '@/components/ThemedView';
@@ -28,10 +28,7 @@ export default function AuthForm({ type }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
-  if (!apiUrl) {
-    console.error("API_BASE_URL is not defined in app config");
-  }
+  const apiUrl = API_BASE_URL;
 
   // Theme colors
   const textColor = useThemeColor({}, 'text');
@@ -39,6 +36,11 @@ export default function AuthForm({ type }) {
   const placeholderColor = useThemeColor({}, 'placeholder');
   const boxColor = useThemeColor({}, 'box');
   const primaryColor = useThemeColor({}, 'primary');
+  const onPrimaryColor = useThemeColor({}, 'onPrimary');
+  const surfaceColor = useThemeColor({}, 'surface');
+  const surfaceAltColor = useThemeColor({}, 'surfaceAlt');
+  const mutedColor = useThemeColor({}, 'muted');
+  const dangerColor = useThemeColor({}, 'danger');
 
   const handleChange = (name, value) => {
     setFormData(prev => ({
@@ -155,14 +157,14 @@ export default function AuthForm({ type }) {
   };
 
   return (
-    <ThemedView style={tw`flex-1 items-center pt-20`} backgroundColor={backgroundColor}>
+    <ThemedView style={[tw`flex-1 items-center pt-20`, { backgroundColor }]}>
       <Image source={logo} style={tw`h-30 w-40 pb-10`} resizeMode="contain" />
 
       <ThemedView style={tw`w-full px-10 mb-1 gap-4`}>
         {isSignup && (
           <>
             <TextInput
-              style={[tw`h-12 px-5 border rounded-md text-lg`, { borderColor: boxColor, color: textColor }]}
+              style={[tw`h-12 px-5 border rounded-md text-lg`, { borderColor: boxColor, color: textColor, backgroundColor: surfaceColor }]}
               placeholder="Email"
               value={formData.email}
               onChangeText={text => handleChange('email', text)}
@@ -172,7 +174,7 @@ export default function AuthForm({ type }) {
             />
 
             <TextInput
-              style={[tw`h-12 px-5 border rounded-md text-lg`, { borderColor: boxColor, color: textColor }]}
+              style={[tw`h-12 px-5 border rounded-md text-lg`, { borderColor: boxColor, color: textColor, backgroundColor: surfaceColor }]}
               placeholder="Phone Number"
               value={formData.phoneNumber}
               onChangeText={text => handleChange('phoneNumber', text)}
@@ -183,7 +185,7 @@ export default function AuthForm({ type }) {
         )}
 
         <TextInput
-          style={[tw`h-12 px-5 border rounded-md text-lg`, { borderColor: boxColor, color: textColor }]}
+          style={[tw`h-12 px-5 border rounded-md text-lg`, { borderColor: boxColor, color: textColor, backgroundColor: surfaceColor }]}
           placeholder="Username"
           value={formData.username}
           onChangeText={text => handleChange('username', text)}
@@ -193,7 +195,7 @@ export default function AuthForm({ type }) {
 
         <View style={tw`relative`}>
           <TextInput
-            style={[tw`h-12 px-5 pr-10 border rounded-md text-lg`, { borderColor: boxColor, color: textColor }]}
+            style={[tw`h-12 px-5 pr-10 border rounded-md text-lg`, { borderColor: boxColor, color: textColor, backgroundColor: surfaceColor }]}
             placeholder="Password"
             secureTextEntry={!isPasswordVisible}
             value={formData.password}
@@ -214,19 +216,17 @@ export default function AuthForm({ type }) {
         <Pressable
           style={[
             tw`h-11 border rounded-md items-center justify-center`,
-            loading
-              ? tw`bg-gray-400 border-gray-300`
-              : { backgroundColor: primaryColor, borderColor: boxColor },
+            { backgroundColor: loading ? surfaceAltColor : primaryColor, borderColor: boxColor },
           ]}
           onPress={handleAuth}
           disabled={loading}
         >
-          <ThemedText style={tw`text-lg font-bold`} color={textColor}>
+          <ThemedText style={[tw`text-lg font-bold`, { color: loading ? mutedColor : onPrimaryColor }]}>
             {loading ? (isSignup ? 'Signing Up...' : 'Logging In...') : isSignup ? 'Sign Up' : 'Log In'}
           </ThemedText>
         </Pressable>
 
-        {error && <ThemedText style={tw`text-red-500 text-center mt-2`}>{error}</ThemedText>}
+        {error && <ThemedText style={[tw`text-center mt-2`, { color: dangerColor }]}>{error}</ThemedText>}
 
         <ThemedText style={tw`text-center py-2 text-xs`} type="link">
           OR {isSignup ? 'SIGN UP' : 'LOGIN'} WITH
@@ -237,7 +237,7 @@ export default function AuthForm({ type }) {
         {isSignup ? 'Already have an account?' : "Don't have an account?"}
         <ThemedText
           type="default"
-          style={tw`text-[#ff1493] text-xs`}
+          style={tw`text-xs`}
           onPress={() => router.push(isSignup ? '/auth/login' : '/auth/signup')}
         >
           {isSignup ? ' Log in' : ' Sign up'}

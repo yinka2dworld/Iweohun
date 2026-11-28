@@ -1,169 +1,313 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import axios from 'axios';
 import tw from 'twrnc';
-import { useColorScheme } from 'react-native'; // for detecting dark mode
 import * as SecureStore from 'expo-secure-store';
-import Constants from 'expo-constants';
+import { API_BASE_URL } from '@/constants/api';
+import { useThemeColor } from '@/hooks/useThemeColor';
+import { useAudio } from '@/context/AudioContext';
+import { MINI_AUDIO_PLAYER_CLEARANCE, TAB_BAR_CONTENT_HEIGHT } from '@/constants/layout';
 
-import { Colors } from '@/constants/Colors'; // Assuming you have Colors defined in your constants
+const getInitials = (name = '') => {
+  const initials = name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('');
+  return initials.toUpperCase() || '?';
+};
+
+const formatCommentTime = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const elapsedMinutes = Math.floor(Math.max(0, Date.now() - date.getTime()) / 60000);
+  if (elapsedMinutes < 1) return 'now';
+  if (elapsedMinutes < 60) return `${elapsedMinutes}m`;
+
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  if (elapsedHours < 24) return `${elapsedHours}h`;
+
+  const elapsedDays = Math.floor(elapsedHours / 24);
+  if (elapsedDays < 7) return `${elapsedDays}d`;
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+};
 
 const Reviews = ({ bookId }) => {
   const [reviews, setReviews] = useState([]);
   const [reviewText, setReviewText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
+  const [replyName, setReplyName] = useState('');
+  const [username, setUsername] = useState('');
+  const [error, setError] = useState('');
   const inputRef = useRef(null);
-  const colorScheme = useColorScheme(); // Get the current theme (light or dark)
-  
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
-  
-  // Use the Colors object to get the correct colors based on the current theme
-  const currentColors = Colors[colorScheme || 'light']; // Default to light theme
+  const { audioDetails } = useAudio();
+  const apiUrl = API_BASE_URL;
+  const backgroundColor = useThemeColor({}, 'background');
+  const surfaceColor = useThemeColor({}, 'surface');
+  const surfaceAltColor = useThemeColor({}, 'surfaceAlt');
+  const textColor = useThemeColor({}, 'text');
+  const mutedColor = useThemeColor({}, 'muted');
+  const primaryColor = useThemeColor({}, 'primary');
+  const borderColor = useThemeColor({}, 'border');
+  const placeholderColor = useThemeColor({}, 'placeholder');
+  const dangerColor = useThemeColor({}, 'danger');
 
-  useEffect(() => {
-    fetchReviews();
-  }, []);
-
-  const fetchReviews = async () => {
-    const token = await SecureStore.getItemAsync('authToken');
+  const fetchReviews = useCallback(async () => {
     setLoading(true);
     try {
+      const token = await SecureStore.getItemAsync('authToken');
       const { data } = await axios.get(`${apiUrl}/bookReviews/${bookId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
+      if (!Array.isArray(data)) throw new Error('The server returned an invalid comments list.');
       setReviews(data);
-    } catch (error) {
-      console.error('Error fetching reviews:', error);
+      setError('');
+    } catch (requestError) {
+      console.error('Error fetching reviews:', requestError);
+      setError(requestError.response?.data?.message || requestError.message || 'Unable to load comments.');
     } finally {
       setLoading(false);
     }
+  }, [apiUrl, bookId]);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchReviews);
+  }, [fetchReviews]);
+
+  const handleReply = (item) => {
+    setReplyTo(item._id);
+    setReplyName(item.reviewedBy || 'comment');
+    setTimeout(() => inputRef.current?.focus(), 100);
   };
 
   const handleAddReview = async () => {
-    if (!reviewText.trim()) return;
+    const sendingText = reviewText.trim();
+    if (!sendingText || sending) return;
 
-    const sendingText = reviewText;
-    setReviewText('');
-    const replyingTo = replyTo;
-    setReplyTo(null);
-
+    setSending(true);
+    setError('');
     try {
       const token = await SecureStore.getItemAsync('authToken');
       const userId = await SecureStore.getItemAsync('userId');
       const reviewedBy = await SecureStore.getItemAsync('username');
 
-      if (!token || !userId) {
-        console.error('User not logged in');
-        return;
+      if (!token || !userId || !reviewedBy) {
+        throw new Error('Sign in to post a comment.');
       }
 
-      const payload = {
-        bookId,
-        reviewedBy,
-        userId,
-        review: sendingText,
-        parentReview: replyingTo,
-      };
-
-      await axios.post(`${apiUrl}/addReview`, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      await axios.post(
+        `${apiUrl}/addReview`,
+        {
+          bookId,
+          reviewedBy,
+          userId,
+          review: sendingText,
+          parentReview: replyTo,
         },
-      });
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      fetchReviews(); // Refresh reviews after adding
-    } catch (error) {
-      console.error('Error adding review:', error);
+      setUsername(reviewedBy);
+      setReviewText('');
+      setReplyTo(null);
+      setReplyName('');
+      await fetchReviews();
+    } catch (requestError) {
+      console.error('Error adding review:', requestError);
+      setError(requestError.response?.data?.message || requestError.message || 'Unable to post your comment.');
+    } finally {
+      setSending(false);
     }
   };
 
-  const renderReview = ({ item }) => (
-    <View style={tw`mb-2 p-2 mx-6 rounded-lg shadow-md border border-gray-300 bg-[${currentColors.background}]`}>
-      <Text style={tw`font-bold text-base text-[${currentColors.primary}] mb-2 dark:text-[${currentColors.text}]`}>
-        {item.reviewedBy}
-      </Text>
-      <Text style={tw`text-md p-2 text-gray-700 mb-2 dark:text-[${currentColors.text}]`}>
-        {item.review}
-      </Text>
+  const renderReview = (item, depth = 0) => {
+    const displayName = item.reviewedBy || 'Reader';
+    const timeLabel = formatCommentTime(item.createdAt);
+    const isReply = depth > 0;
 
-      <TouchableOpacity
-    style={tw`flex-row items-center self-end mt-1 mr-3`}
-    onPress={() => {
-      setReplyTo(item._id);
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
-    }}
-  >
-    <MaterialCommunityIcons name="reply" size={16} color="#3B82F6" />
-    <Text style={tw`ml-1 text-sm text-blue-500 dark:text-blue-300`}>Reply</Text>
-  </TouchableOpacity>
+    return (
+      <View
+        key={item._id}
+        style={[
+          tw`rounded-xl border p-3`,
+          {
+            backgroundColor: isReply ? surfaceAltColor : surfaceColor,
+            borderColor,
+            marginTop: isReply ? 10 : 12,
+            marginLeft: Math.min(depth * 12, 32)
+          },
+        ]}
+      >
+        <View style={tw`flex-row`}>
+          <View
+            style={[
+              tw`w-9 h-9 rounded-full items-center justify-center`,
+              { backgroundColor: isReply ? surfaceColor : surfaceAltColor },
+            ]}
+          >
+            <Text style={[tw`text-xs font-bold`, { color: mutedColor }]}>
+              {getInitials(displayName)}
+            </Text>
+          </View>
 
+          <View style={tw`flex-1 ml-3`}>
+            <View style={tw`flex-row items-center`}>
+              <Text style={[tw`text-xs font-semibold`, { color: mutedColor }]} numberOfLines={1}>
+                {displayName}
+              </Text>
+              {timeLabel ? (
+                <Text style={[tw`text-xs ml-2`, { color: mutedColor }]}>{timeLabel}</Text>
+              ) : null}
+            </View>
 
-      {/* Nested Replies */}
-      {item.replies && item.replies.length > 0 && (
-        <View style={tw`border-l border-gray-300 dark:border-gray-600`}>
-          <FlatList
-            data={item.replies}
-            keyExtractor={(reply) => reply._id}
-            renderItem={renderReview}
-          />
+            <Text style={[tw`text-sm leading-5 mt-1`, { color: textColor }]}>
+              {item.review}
+            </Text>
+
+            <View style={tw`flex-row items-center mt-2`}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={`Reply to ${displayName}`}
+                onPress={() => handleReply(item)}
+                hitSlop={8}
+              >
+                <Text style={[tw`text-xs font-semibold`, { color: mutedColor }]}>Reply</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      )}
-    </View>
-  );
+
+        {item.replies?.map((reply) => renderReview(reply, depth + 1))}
+      </View>
+    );
+  };
 
   return (
-    <KeyboardAvoidingView style={[tw`flex-1`, { backgroundColor: currentColors.background }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      {/* Static Header and Add Review Input */}
-      <View style={[tw`p-3`, { backgroundColor: currentColors.headerBackground }]}>
-        
+    <KeyboardAvoidingView
+      style={[tw`flex-1`, { backgroundColor }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <View
+        style={[
+          tw`px-4 pt-3 pb-3 border-b`,
+          { backgroundColor: surfaceColor, borderColor },
+        ]}
+      >
+        {error ? (
+          <Text style={[tw`text-xs mb-2`, { color: dangerColor }]}>{error}</Text>
+        ) : null}
+
+        {replyTo ? (
+          <View style={tw`flex-row items-center justify-between mb-2`}>
+            <Text style={[tw`text-xs`, { color: mutedColor }]}>
+              Replying to <Text style={{ color: primaryColor }}>{replyName}</Text>
+            </Text>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Cancel reply"
+              onPress={() => {
+                setReplyTo(null);
+                setReplyName('');
+              }}
+              hitSlop={8}
+            >
+              <MaterialCommunityIcons name="close" size={17} color={mutedColor} />
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
         <View style={tw`flex-row items-center`}>
-          <TextInput
-            ref={inputRef}
+          <View
             style={[
-              tw`border rounded-lg px-3 py-2 flex-1 text-base`,
-              {
-                minHeight: 40,
-                maxHeight: 100,
-                color: currentColors.text,
-              },
+              tw`w-9 h-9 rounded-full items-center justify-center mr-3`,
+              { backgroundColor: surfaceAltColor },
             ]}
-            placeholder={replyTo ? 'Write a reply...' : 'Write a review...'}
-            value={reviewText}
-            onChangeText={setReviewText}
-            multiline
-            placeholderTextColor={currentColors.placeholder}
-          />
-          <TouchableOpacity onPress={handleAddReview} style={tw`ml-3`}>
-            <MaterialCommunityIcons name="send" size={28} color={currentColors.primary} />
-          </TouchableOpacity>
+          >
+            <Text style={[tw`text-xs font-bold`, { color: mutedColor }]}>
+              {username ? getInitials(username) : <MaterialCommunityIcons name="account" size={18} color={mutedColor} />}
+            </Text>
+          </View>
+
+          <View
+            style={[
+              tw`flex-1 flex-row items-center rounded-full px-4`,
+              { backgroundColor: surfaceAltColor, borderColor },
+            ]}
+          >
+            <TextInput
+              ref={inputRef}
+              style={[tw`flex-1 py-2 text-sm`, { color: textColor, maxHeight: 88 }]}
+              placeholder={replyTo ? 'Add a reply...' : 'Add a review...'}
+              value={reviewText}
+              onChangeText={setReviewText}
+              multiline
+              placeholderTextColor={placeholderColor}
+              accessibilityLabel={replyTo ? 'Write a reply' : 'Write a review'}
+            />
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={replyTo ? 'Post reply' : 'Post review'}
+              disabled={!reviewText.trim() || sending}
+              onPress={handleAddReview}
+              style={tw`ml-2 p-1`}
+            >
+              {sending ? (
+                <ActivityIndicator size="small" color={primaryColor} />
+              ) : (
+                <MaterialCommunityIcons
+                  name="send"
+                  size={20}
+                  color={reviewText.trim() ? primaryColor : mutedColor}
+                />
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
-      {/* Scrollable Review List */}
       <FlatList
+        style={tw`flex-1`}
         data={reviews}
         keyExtractor={(item) => item._id}
-        renderItem={renderReview}
-        contentContainerStyle={tw`pt-16`}  // Adds top padding to avoid overlap with the fixed input field
+        renderItem={({ item }) => renderReview(item)}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 2,
+          paddingBottom: audioDetails
+            ? MINI_AUDIO_PLAYER_CLEARANCE + TAB_BAR_CONTENT_HEIGHT
+            : 16,
+          flexGrow: 1,
+        }}
+        scrollIndicatorInsets={{
+          bottom: audioDetails
+            ? MINI_AUDIO_PLAYER_CLEARANCE + TAB_BAR_CONTENT_HEIGHT
+            : 0,
+        }}
         ListEmptyComponent={
-          <Text style={tw`text-center text-gray-400 dark:text-gray-500`}>
-            No reviews yet. Be the first!
-          </Text>
+          loading ? null : (
+            <View style={tw`flex-1 items-center justify-center py-12`}>
+              <MaterialCommunityIcons name="message-text-outline" size={30} color={mutedColor} />
+              <Text style={[tw`text-sm mt-2`, { color: mutedColor }]}>
+                No reviews yet. Start the conversation.
+              </Text>
+            </View>
+          )
         }
         ListFooterComponent={
-          loading ? (
-            <View style={tw`items-center justify-center`}>
-              <ActivityIndicator size="large" color={currentColors.primary} />
-            </View>
-          ) : null
+          loading ? <ActivityIndicator style={tw`py-4`} color={primaryColor} /> : null
         }
       />
+
     </KeyboardAvoidingView>
   );
 };

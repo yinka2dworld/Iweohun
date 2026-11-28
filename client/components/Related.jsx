@@ -8,21 +8,26 @@ import {
   View,
 } from 'react-native';
 import axios from 'axios';
-import Constants from 'expo-constants';
+import { API_BASE_URL } from '@/constants/api';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
+import { navigateToBookDetails } from '@/utils/navigation';
+import { useAudio } from '@/context/AudioContext';
+import { MINI_AUDIO_PLAYER_CLEARANCE } from '@/constants/layout';
 
 const Related = ({ bookId }) => {
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
+  const apiUrl = API_BASE_URL;
   const router = useRouter();
+  const { audioDetails } = useAudio();
 
   const backgroundColor = useThemeColor({}, 'background');
+  const surfaceColor = useThemeColor({}, 'surface');
+  const borderColor = useThemeColor({}, 'border');
   const primaryColor = useThemeColor({}, 'primary');
-  const secondaryColor = useThemeColor({}, 'secondary');
-  const textColor = '#070c70';
+  const mutedColor = useThemeColor({}, 'muted');
 
   const [relatedBooks, setRelatedBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +50,7 @@ const Related = ({ bookId }) => {
     };
 
     fetchRelatedBooks();
-  }, [bookId]);
+  }, [apiUrl, bookId]);
 
   if (loading) {
     return (
@@ -56,16 +61,22 @@ const Related = ({ bookId }) => {
   }
 
   return (
-    <ThemedView style={[tw`p-4`, { backgroundColor }]}>
+    <ThemedView style={[tw`flex-1 p-4`, { backgroundColor }]}>
       <FlatList
+        style={tw`flex-1`}
         data={relatedBooks}
         keyExtractor={(item) => item._id}
+        contentContainerStyle={{
+          paddingBottom: audioDetails ? MINI_AUDIO_PLAYER_CLEARANCE : 16,
+        }}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[
-              tw`flex-row items-center p-4 rounded-lg mb-4 border border-gray-300`]}
-            onPress={() => router.push(`/book-details/${item._id}`)}
+              tw`flex-row items-center p-4 rounded-lg mb-4 border`,
+              { backgroundColor: surfaceColor, borderColor },
+            ]}
+            onPress={() => navigateToBookDetails(router, item._id)}
           >
             <Image
               source={{ uri: item.bookCover }}
@@ -76,7 +87,7 @@ const Related = ({ bookId }) => {
               <ThemedText type="subtitle" style={{ color: primaryColor }}>
                 {item.bookName}
               </ThemedText>
-              <ThemedText type="link" style={{ color: secondaryColor }}>
+              <ThemedText type="link" style={{ color: mutedColor }}>
                 by {item.bookAuthor}
               </ThemedText>
             </View>

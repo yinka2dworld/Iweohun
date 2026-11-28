@@ -32,7 +32,11 @@ export default function BecomeACreator() {
   const textColor = useThemeColor({}, 'text');
   const borderColor = useThemeColor({}, 'border');
   const bgColor = useThemeColor({}, 'background');
-  const primaryColor = useThemeColor({}, 'tint');
+  const surfaceColor = useThemeColor({}, 'surface');
+  const surfaceAltColor = useThemeColor({}, 'surfaceAlt');
+  const placeholderColor = useThemeColor({}, 'placeholder');
+  const onPrimaryColor = useThemeColor({}, 'onPrimary');
+  const primaryColor = useThemeColor({}, 'primary');
 
   const [formData, setFormData] = useState({
     country: '',
@@ -58,7 +62,7 @@ export default function BecomeACreator() {
   const renderCountryItem = ({ item }) => (
     <Pressable
       key={item}
-      style={tw`p-3 border-b ${borderColor}`}
+      style={[tw`p-3 border-b`, { borderColor }]}
       onPress={() => {
         handleChange('country', item);
         setShowCountryModal(false);
@@ -94,7 +98,10 @@ export default function BecomeACreator() {
   };
 
   return (
-    <ScrollView style={tw`flex-1 px-4 py-6`} contentContainerStyle={{ paddingBottom: 80 }}>
+    <ScrollView
+      style={[tw`flex-1 px-4 py-6`, { backgroundColor: bgColor }]}
+      contentContainerStyle={{ paddingBottom: 80 }}
+    >
       {/* Header */}
       <View style={tw`flex-row items-center gap-4 mb-6`}>
         <TouchableOpacity onPress={() => router.back()} style={tw`p-2`}>
@@ -109,7 +116,7 @@ export default function BecomeACreator() {
       <Text style={[tw`mb-1`, { color: textColor }]}>Country</Text>
       <TouchableOpacity
         onPress={() => setShowCountryModal(true)}
-        style={tw`p-3 rounded-md border ${borderColor} mb-4`}
+        style={[tw`p-3 rounded-md border mb-4`, { borderColor, backgroundColor: surfaceColor }]}
       >
         <Text style={{ color: textColor }}>
           {formData.country || 'Select your country'}
@@ -118,7 +125,7 @@ export default function BecomeACreator() {
 
       {/* Currency Display */}
       <Text style={[tw`mb-1`, { color: textColor }]}>Currency</Text>
-      <View style={tw`p-3 rounded-md border ${borderColor} mb-4 bg-gray-100`}>
+      <View style={[tw`p-3 rounded-md border mb-4`, { borderColor, backgroundColor: surfaceAltColor }]}>
         <Text style={{ color: textColor }}>
           {formData.currency || 'Will be auto-filled'}
         </Text>
@@ -130,8 +137,8 @@ export default function BecomeACreator() {
         placeholder="e.g. Bank Transfer, PayPal, Mobile Money"
         value={formData.paymentMethod}
         onChangeText={(text) => handleChange('paymentMethod', text)}
-        style={tw`p-3 border rounded-md mb-4 ${borderColor}`}
-        placeholderTextColor="#888"
+        style={[tw`p-3 border rounded-md mb-4`, { borderColor, color: textColor, backgroundColor: surfaceColor }]}
+        placeholderTextColor={placeholderColor}
       />
 
       {/* Account Number / Email */}
@@ -140,8 +147,8 @@ export default function BecomeACreator() {
         placeholder="Enter your account number or PayPal email"
         value={formData.accountNumber}
         onChangeText={(text) => handleChange('accountNumber', text)}
-        style={tw`p-3 border rounded-md mb-4 ${borderColor}`}
-        placeholderTextColor="#888"
+        style={[tw`p-3 border rounded-md mb-4`, { borderColor, color: textColor, backgroundColor: surfaceColor }]}
+        placeholderTextColor={placeholderColor}
       />
 
       {/* Bank Name */}
@@ -150,8 +157,8 @@ export default function BecomeACreator() {
         placeholder="e.g. Zenith Bank, First Bank"
         value={formData.bankName}
         onChangeText={(text) => handleChange('bankName', text)}
-        style={tw`p-3 border rounded-md mb-4 ${borderColor}`}
-        placeholderTextColor="#888"
+        style={[tw`p-3 border rounded-md mb-4`, { borderColor, color: textColor, backgroundColor: surfaceColor }]}
+        placeholderTextColor={placeholderColor}
       />
 
       {/* SWIFT Code */}
@@ -162,8 +169,8 @@ export default function BecomeACreator() {
         placeholder="Optional - e.g. ABNGNGLA"
         value={formData.swiftCode}
         onChangeText={(text) => handleChange('swiftCode', text)}
-        style={tw`p-3 border rounded-md mb-4 ${borderColor}`}
-        placeholderTextColor="#888"
+        style={[tw`p-3 border rounded-md mb-4`, { borderColor, color: textColor, backgroundColor: surfaceColor }]}
+        placeholderTextColor={placeholderColor}
       />
 
       {/* Tax ID */}
@@ -174,22 +181,22 @@ export default function BecomeACreator() {
         placeholder="Optional"
         value={formData.taxId}
         onChangeText={(text) => handleChange('taxId', text)}
-        style={tw`p-3 border rounded-md mb-6 ${borderColor}`}
-        placeholderTextColor="#888"
+        style={[tw`p-3 border rounded-md mb-6`, { borderColor, color: textColor, backgroundColor: surfaceColor }]}
+        placeholderTextColor={placeholderColor}
       />
 
       {/* Submit Button */}
       <TouchableOpacity
         onPress={handleSubmit}
-        style={tw`bg-pink-600 py-3 rounded-md`}
+        style={[tw`py-3 rounded-md`, { backgroundColor: primaryColor }]}
       >
-        <Text style={tw`text-white text-center text-base font-bold`}>Submit Info</Text>
+        <Text style={[tw`text-center text-base font-bold`, { color: onPrimaryColor }]}>Submit Info</Text>
       </TouchableOpacity>
 
       {/* Country Picker Modal */}
       <Modal visible={showCountryModal} animationType="slide">
-        <View style={[tw`flex-1 p-4`, { backgroundColor: bgColor }]}>
-          <Text style={tw`text-lg font-bold mb-4`} style={{ color: textColor }}>
+        <View style={[tw`flex-1 p-4`, { backgroundColor: surfaceColor }]}>
+          <Text style={[tw`text-lg font-bold mb-4`, { color: textColor }]}>
             Select your Country
           </Text>
           <FlatList
@@ -198,7 +205,7 @@ export default function BecomeACreator() {
             renderItem={renderCountryItem}
           />
           <TouchableOpacity onPress={() => setShowCountryModal(false)} style={tw`mt-4`}>
-            <Text style={[tw`text-center`, { color: '#ff1493' }]}>Cancel</Text>
+            <Text style={[tw`text-center`, { color: primaryColor }]}>Cancel</Text>
           </TouchableOpacity>
         </View>
       </Modal>

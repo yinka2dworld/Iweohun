@@ -1,16 +1,16 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  SafeAreaView,
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  FlatList,
+  Keyboard,
   View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc';
 import axios from 'axios';
-import Constants from 'expo-constants';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { API_BASE_URL } from '@/constants/api';
+import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
 import Chapters from '@/components/Chapters';
 import Related from '@/components/Related';
 import Reviews from '@/components/Reviews';
@@ -20,7 +20,6 @@ import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import * as SecureStore from 'expo-secure-store';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useFocusEffect } from '@react-navigation/native';
 import { useAudio } from '@/context/AudioContext';
 
 export default function BookDetails() {
@@ -35,9 +34,10 @@ export default function BookDetails() {
   const [hasListened, setHasListened] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
+  const apiUrl = API_BASE_URL;
   const backgroundColor = useThemeColor({}, 'background');
   const primaryColor = useThemeColor({}, 'primary');
+  const mutedColor = useThemeColor({}, 'muted');
 
   useEffect(() => {
     const fetchBook = async () => {
@@ -63,7 +63,7 @@ export default function BookDetails() {
       }
     };
     fetchBook();
-  }, [bookId]);
+  }, [apiUrl, bookId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -141,6 +141,11 @@ export default function BookDetails() {
     }
   };
 
+  const handleTabChange = (tab) => {
+    Keyboard.dismiss();
+    setSelectedTab(tab);
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={[tw`flex-1 justify-center items-center` , { backgroundColor }]}>
@@ -160,66 +165,80 @@ export default function BookDetails() {
 
   return (
     <SafeAreaView style={[tw`flex-1`, { backgroundColor }]}>
-      <FlatList
-        ListHeaderComponent={
-          <View style={[tw`w-full`, { backgroundColor }]}>
-            {/* Top bar */}
-            <ThemedView style={tw`flex-row items-center pb-2 px-2`}>
-              <TouchableOpacity onPress={() => router.back()} style={tw`p-2`}>
-                <MaterialCommunityIcons name="arrow-left" size={28} color={primaryColor} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleSave} style={tw`ml-auto p-2`}>
-                <MaterialCommunityIcons
-                  name={isSaved ? 'bookmark' : 'bookmark-outline'}
-                  size={28}
-                  color={primaryColor}
-                />
-              </TouchableOpacity>
-            </ThemedView>
+      <View style={tw`flex-1`}>
+        <View style={[tw`w-full`, { backgroundColor }]}>
+          <ThemedView style={tw`flex-row items-center pb-2 px-2`}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={tw`p-2`}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
+              <MaterialCommunityIcons name="arrow-left" size={28} color={primaryColor} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleSave}
+              style={tw`ml-auto p-2`}
+              accessibilityRole="button"
+              accessibilityLabel={isSaved ? 'Remove saved book' : 'Save book'}
+            >
+              <MaterialCommunityIcons
+                name={isSaved ? 'bookmark' : 'bookmark-outline'}
+                size={28}
+                color={primaryColor}
+              />
+            </TouchableOpacity>
+          </ThemedView>
 
-            {/* Book Info */}
-            <ThemedView style={tw`items-center`}>
-              {book.bookCover ? (
-                <Image
-                  source={{ uri: book.bookCover }}
-                  style={tw`w-35 h-45 rounded-lg shadow-lg`}
-                  resizeMode="cover"
-                />
-              ) : (
-                <ThemedText style={tw`text-lg font-bold`}>No Cover Available</ThemedText>
-              )}
-              <ThemedText style={tw`text-xl font-bold mt-3`}>{book.bookName}</ThemedText>
-              <BookRatings bookId={bookId} />
-            </ThemedView>
+          <ThemedView style={tw`items-center`}>
+            {book.bookCover ? (
+              <Image
+                source={{ uri: book.bookCover }}
+                style={tw`w-35 h-45 rounded-lg shadow-lg`}
+                resizeMode="cover"
+              />
+            ) : (
+              <ThemedText style={tw`text-lg font-bold`}>No Cover Available</ThemedText>
+            )}
+            <ThemedText style={tw`text-xl font-bold mt-3`}>{book.bookName}</ThemedText>
+            <BookRatings bookId={bookId} />
+          </ThemedView>
 
-            {/* Tabs */}
-            <ThemedView style={tw`flex-row`}>
-              {['Chapters', 'Reviews', 'Related'].map((tab) => (
-                <TouchableOpacity key={tab} onPress={() => setSelectedTab(tab)} style={tw`flex-1`}>
+          <ThemedView style={tw`flex-row`}>
+            {['Chapters', 'Reviews', 'Related'].map((tab) => {
+              const isSelected = selectedTab === tab;
+              return (
+                <TouchableOpacity
+                  key={tab}
+                  onPress={() => handleTabChange(tab)}
+                  style={tw`flex-1`}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: isSelected }}
+                  accessibilityLabel={`${tab} tab`}
+                >
                   <ThemedView style={tw`items-center`}>
                     <ThemedText
                       style={[
                         tw`text-lg p-2 font-semibold`,
-                        { color: selectedTab === tab ? primaryColor : '#999' },
+                        { color: isSelected ? primaryColor : mutedColor },
                       ]}
                     >
                       {tab}
                     </ThemedText>
-                    {selectedTab === tab && (
+                    {isSelected && (
                       <ThemedView style={[tw`h-1 w-10 rounded-full`, { backgroundColor: primaryColor }]} />
                     )}
                   </ThemedView>
                 </TouchableOpacity>
-              ))}
-            </ThemedView>
-          </View>
-        }
-        data={[]}
-        renderItem={null}
-        ListFooterComponent={renderTabContent()}
-        keyExtractor={(item, index) => index.toString()}
-        stickyHeaderIndices={[0]}
-      />
+              );
+            })}
+          </ThemedView>
+        </View>
+
+        <View style={tw`flex-1`}>
+          {renderTabContent()}
+        </View>
+      </View>
     </SafeAreaView>
   );
 }

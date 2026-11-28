@@ -3,7 +3,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 
 
 export function useThemeColor(props, colorName) {
-  const theme = useColorScheme() || 'light';
+  const theme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const colorFromProps = props[theme];
 
   if (colorFromProps) {

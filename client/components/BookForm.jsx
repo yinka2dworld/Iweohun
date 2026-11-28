@@ -16,11 +16,11 @@ import * as SecureStore from 'expo-secure-store';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import axios from 'axios';
-import Constants from 'expo-constants';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { API_BASE_URL } from '@/constants/api';
+import {  useRouter } from 'expo-router';
 import tw from 'twrnc';
 import { MaterialIcons, FontAwesome, Ionicons, Entypo } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
+import { getAudioDuration } from '@/utils/audio';
 
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedText } from '@/components/ThemedText';
@@ -50,7 +50,7 @@ const LANGUAGES = [
   'Oromo'
 ];
 
-export default function BookForm({ type = 'add' }) {
+export default function BookForm({ mode = 'add', bookId }) {
   const [formData, setFormData] = useState({
     bookName: '',
     bookDescription: '',
@@ -63,7 +63,8 @@ export default function BookForm({ type = 'add' }) {
 
   const [bookCoverUri, setBookCoverUri] = useState(null);
   const [bookCoverFile, setBookCoverFile] = useState(null);
-  const [loading, setLoading] = useState(type === 'edit');
+  const [loading, setLoading] = useState(mode === 'edit');
+  const [loadError, setLoadError] = useState(null);
   const [chapterTitle, setChapterTitle] = useState('');
   const [chapterAudioUri, setChapterAudioUri] = useState(null);
   const [chapterAudioFile, setChapterAudioFile] = useState(null);
@@ -72,122 +73,150 @@ export default function BookForm({ type = 'add' }) {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
 
-  const { bookId } = useLocalSearchParams();
+  
   const router = useRouter();
-  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
+  const apiUrl = API_BASE_URL;
+  const isEditing = mode === 'edit';
 
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
   const primaryColor = useThemeColor({}, 'primary');
+  const onPrimaryColor = useThemeColor({}, 'onPrimary');
+  const surfaceColor = useThemeColor({}, 'surface');
+  const surfaceAltColor = useThemeColor({}, 'surfaceAlt');
+  const placeholderColor = useThemeColor({}, 'placeholder');
+  const dangerColor = useThemeColor({}, 'danger');
   const borderColor = useThemeColor({}, 'border');
+  const overlayColor = useThemeColor({}, 'overlay');
 
   useEffect(() => {
-    if (bookId) {
-      const fetchBook = async () => {
-        try {
-          const token = await SecureStore.getItemAsync('authToken');
-          const res = await axios.get(`${apiUrl}/book/${bookId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const book = res.data;
-          setFormData({
-            bookName: book.bookName || '',
-            bookDescription: book.bookDescription || '',
-            bookAuthor: book.bookAuthor || '',
-            reciter: book.reciter || '',
-            category: book.category || '',
-            language: book.language || '',
-            chapters: book.chapters || [],
-          });
-          setBookCoverUri(book.bookCover);
-        } catch (error) {
-          Alert.alert('Error', 'Failed to load book details');
-        } finally {
+    if (mode !== 'edit') {
+      return;
+    }
+
+    if (!bookId) {
+      setLoadError('The book ID is missing.');
+      setLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchBook = async () => {
+      try {
+        setLoading(true);
+        const token = await SecureStore.getItemAsync('authToken');
+        if (!token) {
+          throw new Error('You must be signed in to edit a book.');
+        }
+
+        const response = await axios.get(`${apiUrl}/book/${bookId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const book = response.data?.book || response.data;
+        if (!book) {
+          throw new Error('The requested book could not be found.');
+        }
+        if (!isMounted) return;
+
+        setFormData({
+          bookName: book.bookName || '',
+          bookDescription: book.bookDescription || '',
+          bookAuthor: book.bookAuthor || '',
+          reciter: book.reciter || '',
+          category: book.category || '',
+          language: book.language || '',
+          chapters: (Array.isArray(book.chapters) ? book.chapters : []).map((chapter) => ({
+            ...chapter,
+            audioUrl: chapter.bookAudio || chapter.audioUrl || '',
+            audioFile: null,
+          })),
+        });
+        setBookCoverUri(book.bookCover || null);
+      } catch (error) {
+        if (isMounted) {
+          const message = error.response?.data?.message || error.message || 'Failed to load book details.';
+          setLoadError(message);
+        }
+      } finally {
+        if (isMounted) {
           setLoading(false);
         }
-      };
-      fetchBook();
-    }
-  }, [bookId]);
+      }
+    };
 
+    fetchBook();
+    return () => {
+      isMounted = false;
+    };
+  }, [apiUrl, bookId, mode]);
+
+  
   const handleChange = (key, value) => {
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
 
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission required', 'We need camera roll permissions to select an image');
-      return;
-    }
-  
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes:  ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-      aspect: [4, 3],
-    });
-  
-    if (!result.canceled && result.assets.length > 0) {
-      const imageAsset = result.assets[0];
-      setBookCoverUri(imageAsset.uri);
-  
-      const file = {
-        uri: imageAsset.uri,
-        type: imageAsset.type || 'image/jpeg',
-        name: imageAsset.fileName || 'bookCover.jpg',
-      };
-      setBookCoverFile(file);
-    }
-  };
-  
-  
-    const pickAudio = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({ type: 'audio/*' });
-      if (result.assets && result.assets.length > 0) {
-        const audioAsset = result.assets[0];
-        const uri = audioAsset.uri;
-        setChapterAudioUri(uri);
-        const file = {
-          uri,
-          type: audioAsset.mimeType || 'audio/mpeg',
-          name: audioAsset.name || 'chapterAudio.mp3',
-        };
-        setChapterAudioFile(file);
-        await calculateAudioDuration(uri);
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission required', 'We need camera roll permissions to select an image.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 1,
+        aspect: [4, 3],
+      });
+
+      if (!result.canceled && result.assets.length > 0) {
+        const imageAsset = result.assets[0];
+        setBookCoverUri(imageAsset.uri);
+        setBookCoverFile({
+          uri: imageAsset.uri,
+          type: imageAsset.mimeType || 'image/jpeg',
+          name: imageAsset.fileName || 'bookCover.jpg',
+        });
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick audio file', error.message);
+      console.error('Error selecting book cover:', error);
+      Alert.alert('Unable to select cover', error.message || 'Please try again.');
     }
   };
-  
-  
-    const calculateAudioDuration = async (uri) => {
-      try {
-        setCalculatingDuration(true);
-        const { sound } = await Audio.Sound.createAsync(
-          { uri },
-          { shouldPlay: false }
-        );
-        const status = await sound.getStatusAsync();
-        const durationInSeconds = status.durationMillis / 1000;
-        const minutes = Math.floor(durationInSeconds / 60);
-        const seconds = Math.floor(durationInSeconds % 60);
-        const formattedDuration = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  
-        await sound.unloadAsync();
-        return formattedDuration;
-      } catch (error) {
-        console.error('Error calculating duration:', error);
-        return '00:00';
-      } finally {
-        setCalculatingDuration(false);
-      }
-    };
-    
-  
-const handleAddChapter = async () => {
+
+
+  const pickAudio = async () => {
+  try {
+    const result = await DocumentPicker.getDocumentAsync({ type: 'audio/*' });
+    if (result.assets && result.assets.length > 0) {
+      const audioAsset = result.assets[0];
+      const uri = audioAsset.uri;
+      setChapterAudioUri(uri);
+      const file = {
+        uri,
+        type: audioAsset.mimeType || 'audio/mpeg',
+        name: audioAsset.name || 'chapterAudio.mp3',
+      };
+      setChapterAudioFile(file);
+      await calculateAudioDuration(uri);
+    }
+  } catch (error) {
+    Alert.alert('Error', error.message || 'Failed to pick audio file.');
+  }
+};
+
+
+  const calculateAudioDuration = async (uri) => {
+    try {
+      setCalculatingDuration(true);
+      return await getAudioDuration(uri);
+    } finally {
+      setCalculatingDuration(false);
+    }
+  };
+
+  const handleAddChapter = async () => {
     if (!chapterTitle || !chapterAudioUri) {
       Alert.alert('Error', 'Chapter title and audio are required');
       return;
@@ -212,34 +241,52 @@ const handleAddChapter = async () => {
       setChapterAudioUri(null);
       setChapterAudioFile(null);
     } catch (error) {
-      console.log(error)
-      Alert.alert('Error', 'Failed to add chapter');
+      console.error('Error adding chapter:', error);
+      Alert.alert('Unable to add chapter', error.message || 'Please try again.');
     }
   };
 
-  
- const handleRemoveChapter = (indexToRemove) => {
+  const handleRemoveChapter = (indexToRemove) => {
   setFormData(prev => ({
     ...prev,
     chapters: prev.chapters.filter((_, index) => index !== indexToRemove),
   }));
 };
 
+  const handleSubmit = async () => {
+    const requiredFields = [
+      ['bookName', 'Book name'],
+      ['bookDescription', 'Description'],
+      ['bookAuthor', 'Author'],
+      ['reciter', 'Reciter'],
+      ['category', 'Category'],
+      ['language', 'Language'],
+    ];
+    const missingField = requiredFields.find(([key]) => !formData[key]?.trim());
 
-   const handleSubmit = async () => {
-    if (!formData.bookName || !formData.bookAuthor || !formData.category || !formData.language) {
-      Alert.alert('Error', 'Book name, author, category, and language are required');
+    if (missingField || (!isEditing && !bookCoverFile) || (isEditing && !bookCoverUri)) {
+      const missing = missingField?.[1] || 'Book cover';
+      Alert.alert('Required information', `Please provide ${missing.toLowerCase()} before saving.`);
       return;
     }
+
+    if (isEditing && !bookId) {
+      Alert.alert('Unable to update book', 'The book ID is missing.');
+      return;
+    }
+
     try {
       setLoading(true);
       const token = await SecureStore.getItemAsync('authToken');
-      const form = new FormData();
+      if (!token) {
+        throw new Error('You must be signed in to save a book.');
+      }
 
-      form.append('bookName', formData.bookName);
-      form.append('bookDescription', formData.bookDescription);
-      form.append('bookAuthor', formData.bookAuthor);
-      form.append('reciter', formData.reciter);
+      const form = new FormData();
+      form.append('bookName', formData.bookName.trim());
+      form.append('bookDescription', formData.bookDescription.trim());
+      form.append('bookAuthor', formData.bookAuthor.trim());
+      form.append('reciter', formData.reciter.trim());
       form.append('category', formData.category);
       form.append('language', formData.language);
 
@@ -251,17 +298,15 @@ const handleAddChapter = async () => {
         });
       }
 
-      // 📌 Chapters meta with existing audio URL if no new file
       const chaptersMeta = formData.chapters.map((chapter, index) => ({
         index,
         title: chapter.title,
         duration: chapter.duration,
-        progress: chapter.progress,
-        existingAudioUrl: chapter.audioUrl || '', // keep old audio if no replacement
+        progress: chapter.progress ?? 0,
+        existingAudioUrl: isEditing ? chapter.audioUrl || chapter.bookAudio || '' : '',
       }));
       form.append('chaptersMeta', JSON.stringify(chaptersMeta));
 
-      // 📌 Attach new chapter audio files
       formData.chapters.forEach((chapter, index) => {
         if (chapter.audioFile) {
           form.append(`chapterAudio_${index}`, {
@@ -272,26 +317,37 @@ const handleAddChapter = async () => {
         }
       });
 
-      const response = await axios.put(`${apiUrl}/updateBook/${bookId}`, form, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-        timeout: 60000,
-      });
+      const request = isEditing
+        ? axios.put(`${apiUrl}/updateBook/${bookId}`, form, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data',
+            },
+            timeout: 60000,
+          })
+        : axios.post(`${apiUrl}/addBook`, form, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data',
+            },
+            timeout: 60000,
+          });
+      const response = await request;
 
       if (response.data) {
-        Alert.alert('Success', 'Book updated successfully!');
-        router.push('/(tabs)/main');
+        Alert.alert(
+          'Success',
+          isEditing ? 'Book updated successfully!' : 'Book added successfully!',
+          [{ text: 'OK', onPress: () => router.replace('/(tabs)/main') }]
+        );
       }
     } catch (error) {
-      console.error('Error:', error.response?.data || error.message);
-      Alert.alert('Error', error?.response?.data?.message || error.message);
+      console.error('Error saving book:', error.response?.data || error.message);
+      Alert.alert('Unable to save book', error.response?.data?.message || error.message);
     } finally {
       setLoading(false);
     }
   };
-
 
   if (loading) {
     return (
@@ -301,9 +357,20 @@ const handleAddChapter = async () => {
     );
   }
 
+  if (loadError) {
+    return (
+      <ThemedView style={[tw`flex-1 justify-center items-center p-6`, { backgroundColor }]}>
+        <ThemedText style={tw`mb-4 text-center`}>{loadError}</ThemedText>
+        <TouchableOpacity onPress={() => router.back()} style={[tw`rounded-lg px-5 py-3`, { backgroundColor: primaryColor }]}>
+          <Text style={{ color: onPrimaryColor }}>Go back</Text>
+        </TouchableOpacity>
+      </ThemedView>
+    );
+  }
+
   const renderCategoryItem = ({ item }) => (
     <Pressable
-      style={tw`p-3 border-b ${borderColor}`}
+      style={[tw`p-3 border-b`, { borderColor }]}
       onPress={() => {
         handleChange('category', item);
         setShowCategoryModal(false);
@@ -315,7 +382,7 @@ const handleAddChapter = async () => {
 
   const renderLanguageItem = ({ item }) => (
     <Pressable
-      style={tw`p-3 border-b ${borderColor}`}
+      style={[tw`p-3 border-b`, { borderColor }]}
       onPress={() => {
         handleChange('language', item);
         setShowLanguageModal(false);
@@ -326,19 +393,20 @@ const handleAddChapter = async () => {
   );
 
   return (
-   <View style={[tw`flex-1`, { backgroundColor }]}>
+    <View style={[tw`flex-1`, { backgroundColor }]}>
       {/* Tab Navigation */}
-      <View style={tw`flex-row border-b mt-8 ${borderColor}`}>
+      <View style={[tw`flex-row border-b mt-8`, { borderColor }]}>
         <TouchableOpacity
           style={[
             tw`flex-1 items-center py-3`,
-            activeTab === 'details' && tw`border-b-2 ${primaryColor}`,
+            activeTab === 'details' && tw`border-b-2`,
+            activeTab === 'details' && { borderColor: primaryColor },
           ]}
           onPress={() => setActiveTab('details')}
         >
           <Text style={[
             tw`text-lg`,
-            activeTab === 'details' && { color: primaryColor }
+            { color: activeTab === 'details' ? primaryColor : textColor }
           ]}>
             <MaterialIcons name="book" size={20} color={activeTab === 'details' ? primaryColor : textColor} /> Details
           </Text>
@@ -346,24 +414,29 @@ const handleAddChapter = async () => {
         <TouchableOpacity
           style={[
             tw`flex-1 items-center py-3`,
-            activeTab === 'chapters' && tw`border-b-2 ${primaryColor}`,
+            activeTab === 'chapters' && tw`border-b-2`,
+            activeTab === 'chapters' && { borderColor: primaryColor },
           ]}
           onPress={() => setActiveTab('chapters')}
         >
           <Text style={[
             tw`text-lg`,
-            activeTab === 'chapters' && { color: primaryColor }
+            { color: activeTab === 'chapters' ? primaryColor : textColor }
           ]}>
             <Ionicons name="list" size={20} color={activeTab === 'chapters' ? primaryColor : textColor} /> Chapters ({formData.chapters.length})
           </Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={tw`p-4`}>
+      <ScrollView
+        style={tw`p-4`}
+        contentContainerStyle={tw`pb-6`}
+        keyboardShouldPersistTaps="handled"
+      >
         {activeTab === 'details' ? (
           <>
             <ThemedText style={tw`text-xl mb-4 text-center font-bold`}>
-               Update Book
+              {isEditing ? 'Edit Book' : 'Add New Book'}
             </ThemedText>
 
             {/* Book Cover */}
@@ -389,11 +462,35 @@ const handleAddChapter = async () => {
               </TouchableOpacity>
             </View>
 
-            {/* Description */}
+            {[
+              { key: 'bookName', label: 'Book Name', icon: 'book', required: true },
+              { key: 'bookAuthor', label: 'Author', icon: 'person', required: true },
+              { key: 'reciter', label: 'Reciter', icon: 'mic', required: true },
+            ].map(({ key, label, icon, required }) => (
+              <View key={key} style={tw`mb-4`}>
+                <View style={tw`flex-row items-center mb-1`}>
+                  <MaterialIcons name={icon} size={18} color={textColor} />
+                  <Text style={[tw`ml-2`, { color: textColor }]}>{label}{required && <Text style={{ color: dangerColor }}> *</Text>}</Text>
+                </View>
+                <TextInput
+                  placeholder={`Enter ${label}`}
+                  value={formData[key]}
+                  onChangeText={(text) => handleChange(key, text)}
+                  style={[
+                    tw`border rounded-lg p-3`,
+                    { borderColor, color: textColor, backgroundColor: surfaceColor }
+                  ]}
+                  placeholderTextColor={placeholderColor}
+                />
+              </View>
+            ))}
+
             <View style={tw`mb-4`}>
               <View style={tw`flex-row items-center mb-1`}>
                 <MaterialIcons name="description" size={18} color={textColor} />
-                <Text style={[tw`ml-2`, { color: textColor }]}>Description{<Text style={tw`text-red-500`}> *</Text>}</Text>
+                <Text style={[tw`ml-2`, { color: textColor }]}>
+                  Description<Text style={{ color: dangerColor }}> *</Text>
+                </Text>
               </View>
               <TextInput
                 placeholder="Enter book description"
@@ -403,46 +500,23 @@ const handleAddChapter = async () => {
                 numberOfLines={4}
                 style={[
                   tw`border rounded-lg p-3 h-24`,
-                  { borderColor, color: textColor }
+                  { borderColor, color: textColor, backgroundColor: surfaceColor },
                 ]}
+                placeholderTextColor={placeholderColor}
               />
             </View>
-
-            {/* Book Details Form */}
-            {[
-              { key: 'bookName', label: 'Book Name', icon: 'book', required: true },
-              { key: 'bookAuthor', label: 'Author', icon: 'person', required: true },
-              { key: 'reciter', label: 'Reciter', icon: 'mic', required: true },
-            ].map(({ key, label, icon, required }) => (
-              <View key={key} style={tw`mb-4`}>
-                <View style={tw`flex-row items-center mb-1`}>
-                  <MaterialIcons name={icon} size={18} color={textColor} />
-                  <Text style={[tw`ml-2`, { color: textColor }]}>{label}{required && <Text style={tw`text-red-500`}> *</Text>}</Text>
-                </View>
-                <TextInput
-                  placeholder={`Enter ${label}`}
-                  value={formData[key]}
-                  onChangeText={(text) => handleChange(key, text)}
-                  style={[
-                    tw`border rounded-lg p-3`,
-                    { borderColor, color: textColor }
-                  ]}
-                />
-              </View>
-            ))}
-
 
             {/* Category Dropdown */}
             <View style={tw`mb-4`}>
               <View style={tw`flex-row items-center mb-1`}>
                 <MaterialIcons name="category" size={18} color={textColor} />
-                <Text style={[tw`ml-2`, { color: textColor }]}>Category{!formData.category && <Text style={tw`text-red-500`}> *</Text>}</Text>
+                <Text style={[tw`ml-2`, { color: textColor }]}>Category{!formData.category && <Text style={{ color: dangerColor }}> *</Text>}</Text>
               </View>
               <TouchableOpacity
                 onPress={() => setShowCategoryModal(true)}
                 style={[
                   tw`border rounded-lg p-3 flex-row items-center justify-between`,
-                  { borderColor }
+                  { borderColor, backgroundColor: surfaceColor }
                 ]}
               >
                 <Text style={{ color: formData.category ? textColor : textColor + '80' }}>
@@ -452,18 +526,19 @@ const handleAddChapter = async () => {
               </TouchableOpacity>
             </View>
 
+
           
             {/* Language Dropdown */}
-            <View style={tw`mb-40`}>
+            <View style={tw`mb-8`}>
               <View style={tw`flex-row items-center mb-1`}>
                 <MaterialIcons name="language" size={18} color={textColor} />
-                <Text style={[tw`ml-2`, { color: textColor }]}>Language{!formData.language && <Text style={tw`text-red-500`}> *</Text>}</Text>
+                <Text style={[tw`ml-2`, { color: textColor }]}>Language{!formData.language && <Text style={{ color: dangerColor }}> *</Text>}</Text>
               </View>
               <TouchableOpacity
                 onPress={() => setShowLanguageModal(true)}
                 style={[
                   tw`border rounded-lg p-3 flex-row items-center justify-between`,
-                  { borderColor }
+                  { borderColor, backgroundColor: surfaceColor }
                 ]}
               >
                 <Text style={{ color: formData.language ? textColor : textColor + '80' }}>
@@ -478,11 +553,11 @@ const handleAddChapter = async () => {
         ) : (
           <>
             <ThemedText style={tw`text-xl mb-4 text-center font-bold`}>
-              Update Chapters
+              {isEditing ? 'Edit Chapters' : 'Add Chapters'}
             </ThemedText>
 
             {/* Add Chapter Form */}
-            <View style={tw`mb-6 p-4 rounded-lg`}>
+            <View style={[tw`mb-6 p-4 rounded-lg`, { backgroundColor: surfaceColor }]}>
               <View style={tw`mb-3`}>
                 <View style={tw`flex-row items-center mb-1`}>
                   <Text style={[tw`ml-2`, { color: textColor }]}>Chapter Title</Text>
@@ -493,8 +568,9 @@ const handleAddChapter = async () => {
                   onChangeText={setChapterTitle}
                   style={[
                     tw`border rounded-lg p-3`,
-                    { borderColor, color: textColor }
+                    { borderColor, color: textColor, backgroundColor: surfaceColor }
                   ]}
+                  placeholderTextColor={placeholderColor}
                 />
               </View>
 
@@ -507,7 +583,7 @@ const handleAddChapter = async () => {
                   onPress={pickAudio}
                   style={[
                     tw`border rounded-lg p-3 flex-row items-center justify-between mb-2`,
-                    { borderColor }
+                    { borderColor, backgroundColor: surfaceColor }
                   ]}
                 >
                   <Text style={{ color: textColor }}>
@@ -527,12 +603,13 @@ const handleAddChapter = async () => {
                 onPress={handleAddChapter}
                 disabled={!chapterTitle || !chapterAudioUri}
                 style={[
-                  tw`bg-[${primaryColor}] p-3 rounded-lg flex-row items-center justify-center`,
+                  tw`p-3 rounded-lg flex-row items-center justify-center`,
+                  { backgroundColor: primaryColor },
                   (!chapterTitle || !chapterAudioUri) && tw`opacity-50`
                 ]}
               >
-                <Entypo name="plus" size={18} color="white" />
-                <Text style={tw`text-white ml-2`}>Add Chapter</Text>
+                <Entypo name="plus" size={18} color={onPrimaryColor} />
+                <Text style={[tw`ml-2`, { color: onPrimaryColor }]}>Add Chapter</Text>
               </TouchableOpacity>
             </View>
 
@@ -545,7 +622,7 @@ const handleAddChapter = async () => {
                     key={index} 
                     style={[
                       tw`p-3 mb-2 rounded-lg flex-row justify-between items-center`,
-                      { backgroundColor: borderColor + '20' }
+                      { backgroundColor: surfaceAltColor }
                     ]}
                   >
                     <View style={tw`flex-1`}>
@@ -560,7 +637,7 @@ const handleAddChapter = async () => {
                       </Text>
                     </View>
                     <TouchableOpacity onPress={() => handleRemoveChapter(index)}>
-                      <MaterialIcons name="delete" size={24} color="#ff4444" />
+                      <MaterialIcons name="delete" size={24} color={dangerColor} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -584,9 +661,9 @@ const handleAddChapter = async () => {
         animationType="slide"
         onRequestClose={() => setShowCategoryModal(false)}
       >
-        <View style={[tw`flex-1 justify-center`, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
-          <View style={[tw`m-6 bg-white rounded-lg`, { backgroundColor }]}>
-            <View style={tw`p-4 border-b ${borderColor}`}>
+        <View style={[tw`flex-1 justify-center`, { backgroundColor: overlayColor }]}>
+          <View style={[tw`m-6 rounded-lg`, { backgroundColor: surfaceColor }]}>
+          <View style={[tw`p-4 border-b`, { borderColor }]}>
               <Text style={[tw`text-lg font-bold`, { color: textColor }]}>Select Category</Text>
             </View>
             <FlatList
@@ -596,7 +673,7 @@ const handleAddChapter = async () => {
               style={tw`max-h-64`}
             />
             <TouchableOpacity
-              style={tw`p-3 border-t ${borderColor} items-center`}
+              style={[tw`p-3 border-t items-center`, { borderColor }]}
               onPress={() => setShowCategoryModal(false)}
             >
               <Text style={{ color: primaryColor }}>Cancel</Text>
@@ -612,9 +689,9 @@ const handleAddChapter = async () => {
         animationType="slide"
         onRequestClose={() => setShowLanguageModal(false)}
       >
-        <View style={[tw`flex-1 justify-center`, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
-          <View style={[tw`m-6 bg-white rounded-lg`, { backgroundColor }]}>
-            <View style={tw`p-4 border-b ${borderColor}`}>
+        <View style={[tw`flex-1 justify-center`, { backgroundColor: overlayColor }]}>
+          <View style={[tw`m-6 rounded-lg`, { backgroundColor: surfaceColor }]}>
+          <View style={[tw`p-4 border-b`, { borderColor }]}>
               <Text style={[tw`text-lg font-bold`, { color: textColor }]}>Select Language</Text>
             </View>
             <FlatList
@@ -624,7 +701,7 @@ const handleAddChapter = async () => {
               style={tw`max-h-64`}
             />
             <TouchableOpacity
-              style={tw`p-3 border-t ${borderColor} items-center`}
+              style={[tw`p-3 border-t items-center`, { borderColor }]}
               onPress={() => setShowLanguageModal(false)}
             >
               <Text style={{ color: primaryColor }}>Cancel</Text>
@@ -634,27 +711,23 @@ const handleAddChapter = async () => {
       </Modal>
 
       {/* Submit Button */}
-      {activeTab === 'chapters' && (
-        <View style={tw`p-4 mb-25`}>
-          <TouchableOpacity
-            onPress={handleSubmit}
-            disabled={loading}
-            style={[
-              tw`bg-[${primaryColor}] p-4 rounded-lg flex-row items-center justify-center`,
-              loading && tw`opacity-70`
-            ]}
-          >
-            {loading ? (
-              <ActivityIndicator color="white" style={tw`mr-2`} />
-            ) : (
-              <MaterialIcons name={"add"} size={20} color="white" />
-            )}
-            <Text style={tw`text-white ml-2 text-lg font-medium`}>
-              Submit Book
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>  
+      <View style={[tw`p-4 border-t`, { backgroundColor, borderColor }]}>
+        <TouchableOpacity
+          onPress={handleSubmit}
+          disabled={loading}
+          style={[
+            tw`p-4 rounded-lg flex-row items-center justify-center`,
+            { backgroundColor: primaryColor },
+            loading && tw`opacity-70`,
+          ]}
+        >
+          <MaterialIcons name={isEditing ? 'save' : 'add'} size={20} color={onPrimaryColor} />
+          <Text style={[tw`ml-2 text-lg font-medium`, { color: onPrimaryColor }]}>
+            {isEditing ? 'Save Changes' : 'Add Book'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+    </View>
   );
 }

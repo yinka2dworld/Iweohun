@@ -20,7 +20,7 @@ router.post('/addReview', tokenChecker, addReview);
 router.get('/topChart', tokenChecker, topChart);
 router.get('/relatedBooks/:bookId', tokenChecker, getRelatedBooks);
 router.get('/book/:_id', tokenChecker, getBook);
-router.put('/updateBook/:bookId', upload.any(), updateBook);
+router.put('/updateBook/:bookId', tokenChecker, upload.any(), updateBook);
 router.delete('/deleteBook/:_id', tokenChecker, deleteBook);
 router.get('/searchBar', searchBook);
 router.post('/addListener/:bookId', tokenChecker, addListener);
