@@ -1,7 +1,10 @@
 import React, { useCallback, useState } from 'react';
-import * as SecureStore from 'expo-secure-store';
-import axios from 'axios';
+import SecureStore from '@/lib/SecureStore';
 import { ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+<<<<<<< HEAD
+=======
+import { useFocusEffect, useRouter } from 'expo-router';
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 import tw from 'twrnc';
 import Searchbar from '@/components/Searchbar';
 import LanguageList from '@/components/LanguageList';
@@ -9,12 +12,16 @@ import CategorySection from '@/components/CategorySection';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+<<<<<<< HEAD
 import { useFocusEffect, useRouter } from 'expo-router';
 import { API_BASE_URL } from '@/constants/api';
+=======
+import apiClient, { getApiErrorMessage } from '@/lib/api';
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 
 export default function Main() {
   const router = useRouter();
-  const [books, setBooks] = useState([]); 
+  const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [role, setRole] = useState(null);
@@ -22,39 +29,26 @@ export default function Main() {
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
   const primaryColor = useThemeColor({}, 'primary');
+<<<<<<< HEAD
   const onPrimaryColor = useThemeColor({}, 'onPrimary');
   const apiUrl = API_BASE_URL;
+=======
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 
   const fetchBooks = useCallback(async () => {
-    if (!apiUrl) {
-      setError("API URL is not defined.");
-      setLoading(false);
-      return;
-    }
-
     try {
-      const token = await SecureStore.getItemAsync('authToken');
-      const role = await SecureStore.getItemAsync('userRole');
-      setRole(role);
+      const userRole = await SecureStore.getItemAsync('userRole');
+      setRole(userRole);
 
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await axios.get(`${apiUrl}/books`, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setBooks(response.data.books || []);
+      const response = await apiClient.get('/books');
+      setBooks(Array.isArray(response.data?.books) ? response.data.books : []);
+      setError(null);
     } catch (error) {
-      setError(error.message || "Failed to fetch books.");
+      setError(getApiErrorMessage(error, 'Failed to fetch books.'));
     } finally {
       setLoading(false);
     }
-  }, [apiUrl]);
+  }, []);
 
   // ✅ Auto-refresh books when screen is focused
   useFocusEffect(
@@ -74,8 +68,18 @@ export default function Main() {
 
   if (error) {
     return (
-      <ThemedView style={[tw`flex-1 items-center justify-center`, { backgroundColor }]}>
-        <ThemedText style={{ color: textColor }}>Error: {error}</ThemedText>
+      <ThemedView style={[tw`flex-1 items-center justify-center px-8`, { backgroundColor }]}>
+        <ThemedText style={{ color: textColor, textAlign: 'center' }}>{error}</ThemedText>
+        <TouchableOpacity
+          onPress={() => {
+            setLoading(true);
+            setError(null);
+            fetchBooks();
+          }}
+          style={[tw`mt-6 rounded-full px-6 py-3`, { backgroundColor: primaryColor }]}
+        >
+          <ThemedText style={tw`text-white font-semibold`}>Try again</ThemedText>
+        </TouchableOpacity>
       </ThemedView>
     );
   }

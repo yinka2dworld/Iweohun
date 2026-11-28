@@ -1,15 +1,19 @@
 import React from 'react';
 import tw from 'twrnc';
+<<<<<<< HEAD
 import {
   ScrollView,
   TouchableOpacity,
   Alert,
   View
 } from 'react-native';
+=======
+import { ScrollView, TouchableOpacity, Alert, View } from 'react-native';
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { clearAuthSession } from '@/lib/api';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { ThemedText } from '@/components/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { useThemeSettings } from '@/context/ThemeContext';
@@ -22,6 +26,7 @@ const THEME_OPTIONS = [
 
 export default function Settings() {
   const primaryColor = useThemeColor({}, 'primary');
+<<<<<<< HEAD
   const onPrimaryColor = useThemeColor({}, 'onPrimary');
   const dangerColor = useThemeColor({}, 'danger');
   const backgroundColor = useThemeColor({}, 'background');
@@ -31,6 +36,9 @@ export default function Settings() {
   const mutedColor = useThemeColor({}, 'muted');
   const borderColor = useThemeColor({}, 'border');
   const { themePreference, setThemePreference } = useThemeSettings();
+=======
+  const backgroundColor = useThemeColor({}, 'background');
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
   const router = useRouter();
 
   const handleThemeChange = async (preference) => {
@@ -44,12 +52,7 @@ export default function Settings() {
 
   const handleSignOut = async () => {
     try {
-      await Promise.all([
-        SecureStore.deleteItemAsync('userId'),
-        SecureStore.deleteItemAsync('authToken'),
-        SecureStore.deleteItemAsync('userRole'),
-        SecureStore.deleteItemAsync('username'),
-      ]);
+      await clearAuthSession();
       router.replace('/auth/login');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -57,6 +60,7 @@ export default function Settings() {
   };
 
   return (
+<<<<<<< HEAD
  <SafeAreaView style={[tw`flex-1`, { backgroundColor }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
 
@@ -124,12 +128,59 @@ export default function Settings() {
             textColor={onPrimaryColor}
           />
           </ScrollView>
+=======
+    <SafeAreaView style={[tw`flex-1`, { backgroundColor }]}>
+      <View style={tw`flex-row items-center gap-4 px-4 pt-6 pb-4`}>
+        <TouchableOpacity onPress={() => router.back()} style={tw`p-1`}>
+          <MaterialCommunityIcons name="arrow-left" size={26} color={primaryColor} />
+        </TouchableOpacity>
+        <ThemedText style={[tw`text-xl font-bold`, { color: primaryColor }]}>
+          Settings
+        </ThemedText>
+      </View>
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 
+      <ScrollView
+        contentContainerStyle={tw`px-8 pt-2 pb-12`}
+        showsVerticalScrollIndicator={false}
+      >
+        <ProfileButton
+          label="Edit Profile"
+          iconName="account-edit"
+          onPress={() => router.push('/screens/edit-profile')}
+        />
+        <ProfileButton
+          label="Become a Creator"
+          iconName="star-outline"
+          onPress={() => router.push('/screens/become-creator')}
+        />
+        <ProfileButton
+          label="Notifications"
+          iconName="bell-outline"
+          onPress={() => router.push('/screens/notifications')}
+        />
+        <ProfileButton
+          label="Help & Support"
+          iconName="help-circle-outline"
+          onPress={() => router.push('/screens/support')}
+        />
+        <ProfileButton
+          label="Sign Out"
+          iconName="logout"
+          onPress={() =>
+            Alert.alert('Logout', 'Are you sure you want to logout?', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Logout', onPress: handleSignOut },
+            ])
+          }
+          buttonColor="#d9534f"
+        />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+<<<<<<< HEAD
 
 // Compact, reusable button
 function ProfileButton({ label, onPress, iconName, buttonColor, textColor }) {
@@ -146,7 +197,19 @@ function ProfileButton({ label, onPress, iconName, buttonColor, textColor }) {
     {label}
   </ThemedText>
 </TouchableOpacity>
+=======
+function ProfileButton({ label, onPress, iconName, buttonColor = '#070c70' }) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[
+        tw`flex-row items-center justify-center px-2 py-4 rounded-2xl mb-6`,
+        { backgroundColor: buttonColor },
+      ]}
+    >
+      <MaterialCommunityIcons name={iconName} size={22} color="white" />
+      <ThemedText style={tw`text-white text-lg font-semibold ml-3`}>{label}</ThemedText>
+    </TouchableOpacity>
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
   );
 }
-
-

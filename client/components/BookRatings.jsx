@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, TouchableOpacity, View } from 'react-native';
 import tw from 'twrnc';
@@ -34,6 +35,15 @@ const parseRatingStats = (data, fallbackUserRating = 0) => {
 
   return stats;
 };
+=======
+import React, { useCallback, useEffect, useState } from 'react';
+import tw from 'twrnc';
+import StarRating from 'react-native-star-rating-widget';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { useThemeColor } from '@/hooks/useThemeColor';
+import apiClient, { getApiErrorMessage } from '@/lib/api';
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 
 const BookRatings = ({ bookId }) => {
   const [avgRating, setAvgRating] = useState(0);
@@ -45,12 +55,16 @@ const BookRatings = ({ bookId }) => {
   const [error, setError] = useState(null);
   const submittingRef = useRef(false);
 
+<<<<<<< HEAD
   const apiUrl = API_BASE_URL;
+=======
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
   const primaryColor = useThemeColor({}, 'primary');
   const mutedColor = useThemeColor({}, 'muted');
   const dangerColor = useThemeColor({}, 'danger');
 
   const fetchRatings = useCallback(async () => {
+<<<<<<< HEAD
     try {
       const token = await SecureStore.getItemAsync('authToken');
       if (!apiUrl || !bookId) throw new Error('Rating information is unavailable.');
@@ -74,6 +88,28 @@ const BookRatings = ({ bookId }) => {
       setLoading(false);
     }
   }, [apiUrl, bookId]);
+=======
+    if (!bookId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await apiClient.get(`/getRatings/${bookId}`);
+
+      const { avgRating, total, userRating } = res.data;
+      setAvgRating(avgRating || 0);
+      setTotalRating(total || 0);
+      setUserRating(userRating || 0);
+    } catch (error) {
+      setError(getApiErrorMessage(error, 'Error fetching rating stats'));
+    } finally {
+      setLoading(false);
+    }
+  }, [bookId]);
+
+  useEffect(() => {
+    fetchRatings();
+  }, [fetchRatings]);
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 
   useEffect(() => {
     void Promise.resolve().then(fetchRatings);
@@ -96,6 +132,7 @@ const BookRatings = ({ bookId }) => {
     setError(null);
 
     try {
+<<<<<<< HEAD
       const token = await SecureStore.getItemAsync('authToken');
       if (!token) throw new Error('Please sign in to submit a rating.');
       const userId = await SecureStore.getItemAsync('userId');
@@ -123,6 +160,19 @@ const BookRatings = ({ bookId }) => {
     } finally {
       submittingRef.current = false;
       setIsSubmitting(false);
+=======
+      setError(null);
+      const res = await apiClient.post('/addRatings', {
+        bookId,
+        rating: Math.round(newRating),
+      });
+
+      setUserRating(Math.round(newRating));
+      setAvgRating(res.data.avgRating || newRating);
+      setTotalRating(res.data.total || 1);
+    } catch (error) {
+      setError(getApiErrorMessage(error, 'Failed to submit rating'));
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
     }
   }, [apiUrl, bookId, fetchRatings, userRating]);
 

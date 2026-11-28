@@ -1,93 +1,50 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import axios from 'axios';
 import tw from 'twrnc';
+import { useColorScheme } from 'react-native'; // for detecting dark mode
 import * as SecureStore from 'expo-secure-store';
-import { API_BASE_URL } from '@/constants/api';
-import { useThemeColor } from '@/hooks/useThemeColor';
-import { useAudio } from '@/context/AudioContext';
-import { MINI_AUDIO_PLAYER_CLEARANCE, TAB_BAR_CONTENT_HEIGHT } from '@/constants/layout';
+import Constants from 'expo-constants';
 
-const getInitials = (name = '') => {
-  const initials = name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('');
-  return initials.toUpperCase() || '?';
-};
-
-const formatCommentTime = (value) => {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-
-  const elapsedMinutes = Math.floor(Math.max(0, Date.now() - date.getTime()) / 60000);
-  if (elapsedMinutes < 1) return 'now';
-  if (elapsedMinutes < 60) return `${elapsedMinutes}m`;
-
-  const elapsedHours = Math.floor(elapsedMinutes / 60);
-  if (elapsedHours < 24) return `${elapsedHours}h`;
-
-  const elapsedDays = Math.floor(elapsedHours / 24);
-  if (elapsedDays < 7) return `${elapsedDays}d`;
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-};
+import { Colors } from '@/constants/Colors'; // Assuming you have Colors defined in your constants
 
 const Reviews = ({ bookId }) => {
   const [reviews, setReviews] = useState([]);
   const [reviewText, setReviewText] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sending, setSending] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const [replyName, setReplyName] = useState('');
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const inputRef = useRef(null);
-  const { audioDetails } = useAudio();
-  const apiUrl = API_BASE_URL;
-  const backgroundColor = useThemeColor({}, 'background');
-  const surfaceColor = useThemeColor({}, 'surface');
-  const surfaceAltColor = useThemeColor({}, 'surfaceAlt');
-  const textColor = useThemeColor({}, 'text');
-  const mutedColor = useThemeColor({}, 'muted');
-  const primaryColor = useThemeColor({}, 'primary');
-  const borderColor = useThemeColor({}, 'border');
-  const placeholderColor = useThemeColor({}, 'placeholder');
-  const dangerColor = useThemeColor({}, 'danger');
+  const colorScheme = useColorScheme(); // Get the current theme (light or dark)
+  
+  const apiUrl = Constants.expoConfig?.extra?.API_BASE_URL;
+  
+  // Use the Colors object to get the correct colors based on the current theme
+  const currentColors = Colors[colorScheme || 'light']; // Default to light theme
 
-  const fetchReviews = useCallback(async () => {
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const fetchReviews = async () => {
+    const token = await SecureStore.getItemAsync('authToken');
     setLoading(true);
+    setError(null);
     try {
-      const token = await SecureStore.getItemAsync('authToken');
       const { data } = await axios.get(`${apiUrl}/bookReviews/${bookId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-      if (!Array.isArray(data)) throw new Error('The server returned an invalid comments list.');
       setReviews(data);
-      setError('');
-    } catch (requestError) {
-      console.error('Error fetching reviews:', requestError);
-      setError(requestError.response?.data?.message || requestError.message || 'Unable to load comments.');
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
     } finally {
       setLoading(false);
     }
-  }, [apiUrl, bookId]);
-
-  useEffect(() => {
-    void Promise.resolve().then(fetchReviews);
-  }, [fetchReviews]);
-
-  const handleReply = (item) => {
-    setReplyTo(item._id);
-    setReplyName(item.reviewedBy || 'comment');
-    setTimeout(() => inputRef.current?.focus(), 100);
   };
 
   const handleAddReview = async () => {
@@ -101,78 +58,39 @@ const Reviews = ({ bookId }) => {
       const userId = await SecureStore.getItemAsync('userId');
       const reviewedBy = await SecureStore.getItemAsync('username');
 
-      if (!token || !userId || !reviewedBy) {
-        throw new Error('Sign in to post a comment.');
+      if (!token || !userId) {
+        console.error('User not logged in');
+        return;
       }
 
-      await axios.post(
-        `${apiUrl}/addReview`,
-        {
-          bookId,
-          reviewedBy,
-          userId,
-          review: sendingText,
-          parentReview: replyTo,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const payload = {
+        bookId,
+        reviewedBy,
+        userId,
+        review: sendingText,
+        parentReview: replyingTo,
+      };
 
-      setUsername(reviewedBy);
-      setReviewText('');
-      setReplyTo(null);
-      setReplyName('');
-      await fetchReviews();
-    } catch (requestError) {
-      console.error('Error adding review:', requestError);
-      setError(requestError.response?.data?.message || requestError.message || 'Unable to post your comment.');
-    } finally {
-      setSending(false);
+      await axios.post(`${apiUrl}/addReview`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      fetchReviews(); // Refresh reviews after adding
+    } catch (error) {
+      console.error('Error adding review:', error);
     }
   };
 
-  const renderReview = (item, depth = 0) => {
-    const displayName = item.reviewedBy || 'Reader';
-    const timeLabel = formatCommentTime(item.createdAt);
-    const isReply = depth > 0;
-
-    return (
-      <View
-        key={item._id}
-        style={[
-          tw`rounded-xl border p-3`,
-          {
-            backgroundColor: isReply ? surfaceAltColor : surfaceColor,
-            borderColor,
-            marginTop: isReply ? 10 : 12,
-            marginLeft: Math.min(depth * 12, 32)
-          },
-        ]}
-      >
-        <View style={tw`flex-row`}>
-          <View
-            style={[
-              tw`w-9 h-9 rounded-full items-center justify-center`,
-              { backgroundColor: isReply ? surfaceColor : surfaceAltColor },
-            ]}
-          >
-            <Text style={[tw`text-xs font-bold`, { color: mutedColor }]}>
-              {getInitials(displayName)}
-            </Text>
-          </View>
-
-          <View style={tw`flex-1 ml-3`}>
-            <View style={tw`flex-row items-center`}>
-              <Text style={[tw`text-xs font-semibold`, { color: mutedColor }]} numberOfLines={1}>
-                {displayName}
-              </Text>
-              {timeLabel ? (
-                <Text style={[tw`text-xs ml-2`, { color: mutedColor }]}>{timeLabel}</Text>
-              ) : null}
-            </View>
-
-            <Text style={[tw`text-sm leading-5 mt-1`, { color: textColor }]}>
-              {item.review}
-            </Text>
+  const renderReview = ({ item }) => (
+    <View style={tw`mb-2 p-2 mx-6 rounded-lg shadow-md border border-gray-300 bg-[${currentColors.background}]`}>
+      <Text style={tw`font-bold text-base text-[${currentColors.primary}] mb-2 dark:text-[${currentColors.text}]`}>
+        {item.reviewedBy}
+      </Text>
+      <Text style={tw`text-md p-2 text-gray-700 mb-2 dark:text-[${currentColors.text}]`}>
+        {item.review}
+      </Text>
 
             <View style={tw`flex-row items-center mt-2`}>
               <TouchableOpacity
@@ -279,29 +197,12 @@ const Reviews = ({ bookId }) => {
         style={tw`flex-1`}
         data={reviews}
         keyExtractor={(item) => item._id}
-        renderItem={({ item }) => renderReview(item)}
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 2,
-          paddingBottom: audioDetails
-            ? MINI_AUDIO_PLAYER_CLEARANCE + TAB_BAR_CONTENT_HEIGHT
-            : 16,
-          flexGrow: 1,
-        }}
-        scrollIndicatorInsets={{
-          bottom: audioDetails
-            ? MINI_AUDIO_PLAYER_CLEARANCE + TAB_BAR_CONTENT_HEIGHT
-            : 0,
-        }}
+        renderItem={renderReview}
+        contentContainerStyle={tw`pt-16`}  // Adds top padding to avoid overlap with the fixed input field
         ListEmptyComponent={
-          loading ? null : (
-            <View style={tw`flex-1 items-center justify-center py-12`}>
-              <MaterialCommunityIcons name="message-text-outline" size={30} color={mutedColor} />
-              <Text style={[tw`text-sm mt-2`, { color: mutedColor }]}>
-                No reviews yet. Start the conversation.
-              </Text>
-            </View>
-          )
+          <Text style={tw`text-center text-gray-400 dark:text-gray-500`}>
+            No reviews yet. Be the first!
+          </Text>
         }
         ListFooterComponent={
           loading ? <ActivityIndicator style={tw`py-4`} color={primaryColor} /> : null

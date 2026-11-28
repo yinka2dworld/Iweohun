@@ -12,15 +12,22 @@ import {
   Pressable,
   FlatList
 } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+<<<<<<<< HEAD:client/components/BookForm.jsx
 import axios from 'axios';
 import { API_BASE_URL } from '@/constants/api';
 import {  useRouter } from 'expo-router';
 import tw from 'twrnc';
 import { MaterialIcons, FontAwesome, Ionicons, Entypo } from '@expo/vector-icons';
 import { getAudioDuration } from '@/utils/audio';
+========
+import apiClient, { getApiErrorMessage } from '@/lib/api';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import tw from 'twrnc';
+import { MaterialIcons, FontAwesome, Ionicons, Entypo } from '@expo/vector-icons';
+import { createAudioPlayer } from 'expo-audio';
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
 
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedText } from '@/components/ThemedText';
@@ -44,6 +51,7 @@ const LANGUAGES = [
   'Hausa',
   'Igbo',
   'Amazigh',
+  'Somali',
   'Shona',
   'Fulani',
   'Malagasy',
@@ -63,8 +71,12 @@ export default function BookForm({ mode = 'add', bookId }) {
 
   const [bookCoverUri, setBookCoverUri] = useState(null);
   const [bookCoverFile, setBookCoverFile] = useState(null);
+<<<<<<<< HEAD:client/components/BookForm.jsx
   const [loading, setLoading] = useState(mode === 'edit');
   const [loadError, setLoadError] = useState(null);
+========
+  const [loading, setLoading] = useState(true);
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
   const [chapterTitle, setChapterTitle] = useState('');
   const [chapterAudioUri, setChapterAudioUri] = useState(null);
   const [chapterAudioFile, setChapterAudioFile] = useState(null);
@@ -75,8 +87,11 @@ export default function BookForm({ mode = 'add', bookId }) {
 
   
   const router = useRouter();
+<<<<<<<< HEAD:client/components/BookForm.jsx
   const apiUrl = API_BASE_URL;
   const isEditing = mode === 'edit';
+========
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
 
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
@@ -90,6 +105,7 @@ export default function BookForm({ mode = 'add', bookId }) {
   const overlayColor = useThemeColor({}, 'overlay');
 
   useEffect(() => {
+<<<<<<<< HEAD:client/components/BookForm.jsx
     if (mode !== 'edit') {
       return;
     }
@@ -139,6 +155,27 @@ export default function BookForm({ mode = 'add', bookId }) {
         }
       } finally {
         if (isMounted) {
+========
+    if (bookId) {
+      const fetchBook = async () => {
+        try {
+          const res = await apiClient.get(`/book/${bookId}`);
+          const book = res.data;
+          setFormData({
+            bookName: book.bookName || '',
+            bookDescription: book.bookDescription || '',
+            bookAuthor: book.bookAuthor || '',
+            reciter: book.reciter || '',
+            category: book.category || '',
+            language: book.language || '',
+            chapters: book.chapters || [],
+          });
+          setBookCoverUri(book.bookCover);
+        } catch (error) {
+          console.warn('Failed to load book details:', error.message);
+          Alert.alert('Error', 'Failed to load book details');
+        } finally {
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
           setLoading(false);
         }
       }
@@ -157,6 +194,36 @@ export default function BookForm({ mode = 'add', bookId }) {
 
 
   const pickImage = async () => {
+<<<<<<<< HEAD:client/components/BookForm.jsx
+========
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'We need camera roll permissions to select an image');
+      return;
+    }
+  
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 1,
+      aspect: [4, 3],
+    });
+  
+    if (!result.canceled && result.assets.length > 0) {
+      const imageAsset = result.assets[0];
+      setBookCoverUri(imageAsset.uri);
+  
+      const file = {
+        uri: imageAsset.uri,
+        type: imageAsset.type || 'image/jpeg',
+        name: imageAsset.fileName || 'bookCover.jpg',
+      };
+      setBookCoverFile(file);
+    }
+  };
+  
+  
+    const pickAudio = async () => {
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
@@ -184,6 +251,7 @@ export default function BookForm({ mode = 'add', bookId }) {
       Alert.alert('Unable to select cover', error.message || 'Please try again.');
     }
   };
+<<<<<<<< HEAD:client/components/BookForm.jsx
 
 
   const pickAudio = async () => {
@@ -217,6 +285,56 @@ export default function BookForm({ mode = 'add', bookId }) {
   };
 
   const handleAddChapter = async () => {
+========
+  
+  
+    const calculateAudioDuration = async (uri) => {
+      let player;
+      try {
+        setCalculatingDuration(true);
+        player = createAudioPlayer({ uri });
+
+        // Wait until the player has loaded so duration is known.
+        const status = await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            try { subscription?.remove(); } catch {}
+            reject(new Error('Timed out loading audio'));
+          }, 15000);
+
+          const subscription = player.addListener('playbackStatusUpdate', (s) => {
+            if (s?.isLoaded) {
+              clearTimeout(timeout);
+              try { subscription.remove(); } catch {}
+              resolve(s);
+            }
+          });
+
+          // Already loaded before the listener attached.
+          if (player.currentStatus?.isLoaded) {
+            clearTimeout(timeout);
+            try { subscription.remove(); } catch {}
+            resolve(player.currentStatus);
+          }
+        });
+
+        const durationInSeconds = status.duration || 0;
+        const minutes = Math.floor(durationInSeconds / 60);
+        const seconds = Math.floor(durationInSeconds % 60);
+        const formattedDuration = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+        return formattedDuration;
+      } catch (error) {
+        console.error('Error calculating duration:', error);
+        return '00:00';
+      } finally {
+        try { player?.remove(); } catch {}
+        setCalculatingDuration(false);
+      }
+    };
+    
+  
+const handleAddChapter = async () => {
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
     if (!chapterTitle || !chapterAudioUri) {
       Alert.alert('Error', 'Chapter title and audio are required');
       return;
@@ -277,10 +395,14 @@ export default function BookForm({ mode = 'add', bookId }) {
 
     try {
       setLoading(true);
+<<<<<<<< HEAD:client/components/BookForm.jsx
       const token = await SecureStore.getItemAsync('authToken');
       if (!token) {
         throw new Error('You must be signed in to save a book.');
       }
+========
+      const form = new FormData();
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
 
       const form = new FormData();
       form.append('bookName', formData.bookName.trim());
@@ -302,8 +424,13 @@ export default function BookForm({ mode = 'add', bookId }) {
         index,
         title: chapter.title,
         duration: chapter.duration,
+<<<<<<<< HEAD:client/components/BookForm.jsx
         progress: chapter.progress ?? 0,
         existingAudioUrl: isEditing ? chapter.audioUrl || chapter.bookAudio || '' : '',
+========
+        progress: chapter.progress,
+        existingAudioUrl: chapter.bookAudio || chapter.audioUrl || '', // keep old audio if no replacement
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
       }));
       form.append('chaptersMeta', JSON.stringify(chaptersMeta));
 
@@ -317,6 +444,7 @@ export default function BookForm({ mode = 'add', bookId }) {
         }
       });
 
+<<<<<<<< HEAD:client/components/BookForm.jsx
       const request = isEditing
         ? axios.put(`${apiUrl}/updateBook/${bookId}`, form, {
             headers: {
@@ -333,6 +461,11 @@ export default function BookForm({ mode = 'add', bookId }) {
             timeout: 60000,
           });
       const response = await request;
+========
+      const response = await apiClient.put(`/updateBook/${bookId}`, form, {
+        timeout: 120000,
+      });
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
 
       if (response.data) {
         Alert.alert(
@@ -342,8 +475,13 @@ export default function BookForm({ mode = 'add', bookId }) {
         );
       }
     } catch (error) {
+<<<<<<<< HEAD:client/components/BookForm.jsx
       console.error('Error saving book:', error.response?.data || error.message);
       Alert.alert('Unable to save book', error.response?.data?.message || error.message);
+========
+      console.error('Error:', error.response?.data || error.message);
+      Alert.alert('Error', getApiErrorMessage(error, 'Could not update this book.'));
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
     } finally {
       setLoading(false);
     }
@@ -370,7 +508,11 @@ export default function BookForm({ mode = 'add', bookId }) {
 
   const renderCategoryItem = ({ item }) => (
     <Pressable
+<<<<<<<< HEAD:client/components/BookForm.jsx
       style={[tw`p-3 border-b`, { borderColor }]}
+========
+      style={[tw`p-3 border-b`, { borderBottomColor: borderColor }]}
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
       onPress={() => {
         handleChange('category', item);
         setShowCategoryModal(false);
@@ -382,7 +524,11 @@ export default function BookForm({ mode = 'add', bookId }) {
 
   const renderLanguageItem = ({ item }) => (
     <Pressable
+<<<<<<<< HEAD:client/components/BookForm.jsx
       style={[tw`p-3 border-b`, { borderColor }]}
+========
+      style={[tw`p-3 border-b`, { borderBottomColor: borderColor }]}
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
       onPress={() => {
         handleChange('language', item);
         setShowLanguageModal(false);
@@ -395,12 +541,20 @@ export default function BookForm({ mode = 'add', bookId }) {
   return (
     <View style={[tw`flex-1`, { backgroundColor }]}>
       {/* Tab Navigation */}
+<<<<<<<< HEAD:client/components/BookForm.jsx
       <View style={[tw`flex-row border-b mt-8`, { borderColor }]}>
         <TouchableOpacity
           style={[
             tw`flex-1 items-center py-3`,
             activeTab === 'details' && tw`border-b-2`,
             activeTab === 'details' && { borderColor: primaryColor },
+========
+      <View style={[tw`flex-row border-b mt-8`, { borderBottomColor: borderColor }]}>
+        <TouchableOpacity
+          style={[
+            tw`flex-1 items-center py-3`,
+            activeTab === 'details' && [tw`border-b-2`, { borderColor: primaryColor }],
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
           ]}
           onPress={() => setActiveTab('details')}
         >
@@ -414,8 +568,12 @@ export default function BookForm({ mode = 'add', bookId }) {
         <TouchableOpacity
           style={[
             tw`flex-1 items-center py-3`,
+<<<<<<<< HEAD:client/components/BookForm.jsx
             activeTab === 'chapters' && tw`border-b-2`,
             activeTab === 'chapters' && { borderColor: primaryColor },
+========
+            activeTab === 'chapters' && [tw`border-b-2`, { borderColor: primaryColor }],
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
           ]}
           onPress={() => setActiveTab('chapters')}
         >
@@ -603,8 +761,12 @@ export default function BookForm({ mode = 'add', bookId }) {
                 onPress={handleAddChapter}
                 disabled={!chapterTitle || !chapterAudioUri}
                 style={[
+<<<<<<<< HEAD:client/components/BookForm.jsx
                   tw`p-3 rounded-lg flex-row items-center justify-center`,
                   { backgroundColor: primaryColor },
+========
+                  [tw`p-3 rounded-lg flex-row items-center justify-center`, { backgroundColor: primaryColor }],
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
                   (!chapterTitle || !chapterAudioUri) && tw`opacity-50`
                 ]}
               >
@@ -661,9 +823,15 @@ export default function BookForm({ mode = 'add', bookId }) {
         animationType="slide"
         onRequestClose={() => setShowCategoryModal(false)}
       >
+<<<<<<<< HEAD:client/components/BookForm.jsx
         <View style={[tw`flex-1 justify-center`, { backgroundColor: overlayColor }]}>
           <View style={[tw`m-6 rounded-lg`, { backgroundColor: surfaceColor }]}>
           <View style={[tw`p-4 border-b`, { borderColor }]}>
+========
+        <View style={[tw`flex-1 justify-center`, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+          <View style={[tw`m-6 bg-white rounded-lg`, { backgroundColor }]}>
+            <View style={[tw`p-4 border-b`, { borderBottomColor: borderColor }]}>
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
               <Text style={[tw`text-lg font-bold`, { color: textColor }]}>Select Category</Text>
             </View>
             <FlatList
@@ -673,7 +841,11 @@ export default function BookForm({ mode = 'add', bookId }) {
               style={tw`max-h-64`}
             />
             <TouchableOpacity
+<<<<<<<< HEAD:client/components/BookForm.jsx
               style={[tw`p-3 border-t items-center`, { borderColor }]}
+========
+              style={[tw`p-3 border-t items-center`, { borderTopColor: borderColor }]}
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
               onPress={() => setShowCategoryModal(false)}
             >
               <Text style={{ color: primaryColor }}>Cancel</Text>
@@ -689,9 +861,15 @@ export default function BookForm({ mode = 'add', bookId }) {
         animationType="slide"
         onRequestClose={() => setShowLanguageModal(false)}
       >
+<<<<<<<< HEAD:client/components/BookForm.jsx
         <View style={[tw`flex-1 justify-center`, { backgroundColor: overlayColor }]}>
           <View style={[tw`m-6 rounded-lg`, { backgroundColor: surfaceColor }]}>
           <View style={[tw`p-4 border-b`, { borderColor }]}>
+========
+        <View style={[tw`flex-1 justify-center`, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+          <View style={[tw`m-6 bg-white rounded-lg`, { backgroundColor }]}>
+            <View style={[tw`p-4 border-b`, { borderBottomColor: borderColor }]}>
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
               <Text style={[tw`text-lg font-bold`, { color: textColor }]}>Select Language</Text>
             </View>
             <FlatList
@@ -701,7 +879,11 @@ export default function BookForm({ mode = 'add', bookId }) {
               style={tw`max-h-64`}
             />
             <TouchableOpacity
+<<<<<<<< HEAD:client/components/BookForm.jsx
               style={[tw`p-3 border-t items-center`, { borderColor }]}
+========
+              style={[tw`p-3 border-t items-center`, { borderTopColor: borderColor }]}
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
               onPress={() => setShowLanguageModal(false)}
             >
               <Text style={{ color: primaryColor }}>Cancel</Text>
@@ -711,6 +893,7 @@ export default function BookForm({ mode = 'add', bookId }) {
       </Modal>
 
       {/* Submit Button */}
+<<<<<<<< HEAD:client/components/BookForm.jsx
       <View style={[tw`p-4 border-t`, { backgroundColor, borderColor }]}>
         <TouchableOpacity
           onPress={handleSubmit}
@@ -729,5 +912,29 @@ export default function BookForm({ mode = 'add', bookId }) {
       </View>
 
     </View>
+========
+      {activeTab === 'chapters' && (
+        <View style={tw`p-4 mb-25`}>
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={loading}
+            style={[
+              [tw`p-4 rounded-lg flex-row items-center justify-center`, { backgroundColor: primaryColor }],
+              loading && tw`opacity-70`
+            ]}
+          >
+            {loading ? (
+              <ActivityIndicator color="white" style={tw`mr-2`} />
+            ) : (
+              <MaterialIcons name={"add"} size={20} color="white" />
+            )}
+            <Text style={tw`text-white ml-2 text-lg font-medium`}>
+              Submit Book
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>  
+>>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6:client/app/edit-book/[bookId].jsx
   );
 }

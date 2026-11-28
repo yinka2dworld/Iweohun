@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Image,
@@ -12,17 +12,27 @@ import tw from 'twrnc';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+<<<<<<< HEAD
 import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
 import { API_BASE_URL } from '@/constants/api';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+=======
+import SecureStore from '@/lib/SecureStore';
+import apiClient, { getApiErrorMessage } from '@/lib/api';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 
 export default function Profile() {
   const router = useRouter();
   const [userData, setUserData] = useState({});
   const [loading, setLoading] = useState(true);
+<<<<<<< HEAD
 
   const apiUrl = API_BASE_URL;
+=======
+  const [error, setError] = useState(null);
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 
   const backgroundColor = useThemeColor({}, 'background');
   const buttonColor = useThemeColor({}, 'primary');
@@ -37,31 +47,41 @@ export default function Profile() {
       'https://static.vecteezy.com/system/resources/previews/018/765/757/original/user-profile-icon-in-flat-style-member-avatar-illustration-on-isolated-background-human-permission-sign-business-concept-vector.jpg',
   };
 
-  useEffect(() => {
-    const getUserData = async () => {
-      try {
-        const userId = await SecureStore.getItemAsync('userId');
-        const token = await SecureStore.getItemAsync('authToken');
-        if (!userId) throw new Error('User ID not found');
+  const getUserData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        const response = await axios.get(`${apiUrl}/user/${userId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        setUserData(response.data);
-      } catch (error) {
-        console.error('Error retrieving user data:', error);
-      } finally {
-        setLoading(false);
+      const userId = await SecureStore.getItemAsync('userId');
+      if (!userId) {
+        router.replace('/auth/login');
+        return;
       }
-    };
 
+      const response = await apiClient.get(`/user/${userId}`);
+      setUserData(response.data || {});
+    } catch (err) {
+      console.error('Error retrieving user data:', err.message);
+      setError(getApiErrorMessage(err, 'Could not load your profile.'));
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
+  useEffect(() => {
     getUserData();
-  }, []);
+  }, [getUserData]);
 
+  if (error) {
+    return (
+      <ThemedView style={[tw`flex-1 items-center justify-center px-8`, { backgroundColor }]}>
+        <ThemedText style={tw`text-center text-gray-500`}>{error}</ThemedText>
+        <TouchableOpacity onPress={getUserData} style={tw`mt-6`}>
+          <ThemedText style={{ color: '#ff1493' }}>Try again</ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
+    );
+  }
   
   if (loading) {
     return (

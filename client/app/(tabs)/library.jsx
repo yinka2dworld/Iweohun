@@ -11,14 +11,23 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc';
+<<<<<<< HEAD
 import * as SecureStore from 'expo-secure-store';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+=======
+import SecureStore from '@/lib/SecureStore';
+import { useRouter, useFocusEffect } from 'expo-router';
+import Icon from '@expo/vector-icons/MaterialIcons';
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LinearGradient } from 'expo-linear-gradient';
+<<<<<<< HEAD
 import { navigateToBookDetails } from '@/utils/navigation';
+=======
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 
 export default function Library() {
   const router = useRouter();

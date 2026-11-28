@@ -9,14 +9,23 @@ import {
 import tw from 'twrnc';
 import Slider from '@react-native-community/slider';
 import { Image } from 'expo-image';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useSegments } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
-import { useThemeColor } from '@/hooks/useThemeColor';
 import { useAudio } from '@/context/AudioContext';
 import { MINI_AUDIO_PLAYER_HEIGHT } from '@/constants/layout';
 
+<<<<<<< HEAD
 const AudioPlayer = ({ bottomOffset = 0, onCloseExpand }) => {
+=======
+// Default height of React Navigation's JS bottom tab bar (without the
+// safe-area inset, which is added separately via useSafeAreaInsets).
+const TAB_BAR_HEIGHT = 49;
+
+const AudioPlayer = ({ onCloseExpand }) => {
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
   const {
     audioDetails,
     isPlaying,
@@ -32,11 +41,26 @@ const AudioPlayer = ({ bottomOffset = 0, onCloseExpand }) => {
   } = useAudio();
 
   const [isExpanded, setIsExpanded] = useState(false);
+<<<<<<< HEAD
   const primaryColor = useThemeColor({}, 'primary');
   const surfaceColor = useThemeColor({}, 'surface');
   const textColor = useThemeColor({}, 'text');
   const mutedColor = useThemeColor({}, 'muted');
   const borderColor = useThemeColor({}, 'border');
+=======
+  const insets = useSafeAreaInsets();
+  const segments = useSegments();
+
+  // Standard mini-player placement: sit directly above the tab bar when a
+  // tab screen is visible, otherwise flush to the bottom of the screen.
+  const isInTabs = segments[0] === '(tabs)';
+  const miniPlayerBottom = isInTabs ? TAB_BAR_HEIGHT + insets.bottom : insets.bottom;
+
+  useEffect(() => {
+    // when audioDetails becomes null, collapse the player
+    if (!audioDetails) setIsExpanded(false);
+  }, [audioDetails]);
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 
   if (!audioDetails) return null;
 
@@ -96,10 +120,13 @@ const AudioPlayer = ({ bottomOffset = 0, onCloseExpand }) => {
   return (
     <>
       {isExpanded ? (
-        <ThemedView style={[tw`absolute inset-0 z-50`]}>
-          
-
-          <View style={tw`absolute top-10 left-5 right-5 flex-row justify-between items-center`}>
+        <ThemedView
+          style={[
+            tw`absolute inset-0 z-50`,
+            { backgroundColor: '#070c70', paddingTop: insets.top, paddingBottom: insets.bottom },
+          ]}
+        >
+          <View style={tw`flex-row justify-between items-center px-5 pt-2 pb-1`}>
             <TouchableOpacity onPress={() => setIsExpanded(false)}>
               <MaterialCommunityIcons name="chevron-down" size={40} color={primaryColor} />
             </TouchableOpacity>
@@ -112,19 +139,23 @@ const AudioPlayer = ({ bottomOffset = 0, onCloseExpand }) => {
             </TouchableOpacity>
           </View>
 
-          <View style={tw`items-center mt-30`}>
+          <View style={tw`items-center mt-6`}>
             {book?.bookCover && (
               <Image
                 source={{ uri: book.bookCover }}
+<<<<<<< HEAD
                 style={tw`w-50 h-70 rounded-xl shadow-2xl`}
+=======
+                style={tw`w-50 h-70 rounded-xl`}
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
                 contentFit="cover"
               />
             )}
           </View>
 
-          <View style={tw`items-center mt-8 px-6`}>
-            <ThemedText style={tw`text-xl font-bold text-center`}>{book?.bookName}</ThemedText>
-            <ThemedText style={tw`text-md font-bold text-center`}>{chapterTitle}</ThemedText>
+          <View style={tw`items-center mt-6 px-6`}>
+            <ThemedText style={tw`text-xl font-bold text-center text-white`}>{book?.bookName}</ThemedText>
+            <ThemedText style={tw`text-base font-bold text-center text-gray-300 mt-1`}>{chapterTitle}</ThemedText>
           </View>
 
           <View style={tw`flex-row justify-center items-center gap-12 mt-6`}>
@@ -145,13 +176,14 @@ const AudioPlayer = ({ bottomOffset = 0, onCloseExpand }) => {
             </TouchableOpacity>
           </View>
 
-          <View style={tw`px-5 mt-10`}>
+          <View style={tw`px-5 mt-8`}>
             <Slider
               style={{ width: '100%' }}
               minimumValue={0}
               maximumValue={durationMillis}
               value={positionMillis}
               onSlidingComplete={handleSeek}
+<<<<<<< HEAD
               accessibilityLabel="Playback position"
               minimumTrackTintColor={primaryColor}
               maximumTrackTintColor={borderColor}
@@ -170,6 +202,21 @@ const AudioPlayer = ({ bottomOffset = 0, onCloseExpand }) => {
               accessibilityLabel="Rewind 10 seconds"
             >
               <MaterialCommunityIcons name="rewind-10" size={25} color={textColor} />
+=======
+              minimumTrackTintColor="#ff1493"
+              maximumTrackTintColor="rgba(255,255,255,0.4)"
+              thumbTintColor="#ff1493"
+            />
+            <View style={tw`flex-row justify-between`}>
+              <ThemedText style={tw`text-xs text-gray-300`}>{formatTime(positionMillis)}</ThemedText>
+              <ThemedText style={tw`text-xs text-gray-300`}>{formatTime(durationMillis)}</ThemedText>
+            </View>
+          </View>
+
+          <View style={tw`flex-row justify-center items-center mt-2`}>
+            <TouchableOpacity onPress={skipBackward}>
+              <MaterialCommunityIcons name="rewind-10" size={25} color="#ffffff" />
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -190,16 +237,22 @@ const AudioPlayer = ({ bottomOffset = 0, onCloseExpand }) => {
               )}
             </TouchableOpacity>
 
+<<<<<<< HEAD
             <TouchableOpacity
               onPress={skipForward}
               accessibilityRole="button"
               accessibilityLabel="Forward 10 seconds"
             >
               <MaterialCommunityIcons name="fast-forward-10" size={25} color={textColor} />
+=======
+            <TouchableOpacity onPress={skipForward}>
+              <MaterialCommunityIcons name="fast-forward-10" size={25} color="#ffffff" />
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
             </TouchableOpacity>
           </View>
         </ThemedView>
       ) : (
+<<<<<<< HEAD
         <ThemedView style={[
           tw`absolute left-0 right-0 z-50`,
           {
@@ -233,6 +286,33 @@ const AudioPlayer = ({ bottomOffset = 0, onCloseExpand }) => {
                   {chapterTitle}
                 </ThemedText>
               </View>
+=======
+        <ThemedView style={[tw`absolute left-0 right-0 z-50`, { bottom: miniPlayerBottom }]}>
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.75)' }]} />
+
+          <TouchableOpacity
+            onPress={() => setIsExpanded(true)}
+            style={tw`flex-row items-center px-4 py-3`}
+            activeOpacity={0.9}
+          >
+            {book?.bookCover && (
+              <Image
+                source={{ uri: book.bookCover }}
+                style={tw`w-12 h-12 rounded-lg mr-4`}
+                contentFit="cover"
+              />
+            )}
+
+            <View style={tw`flex-1`}>
+              <ThemedText style={tw`font-bold text-white`}>{book?.bookName}</ThemedText>
+              <ThemedText numberOfLines={1} style={tw`text-sm text-gray-300`}>
+                {chapterTitle}
+              </ThemedText>
+            </View>
+
+            <TouchableOpacity onPress={togglePlay}>
+              <MaterialCommunityIcons name={isPlaying ? 'pause' : 'play'} size={40} color="#ff1493" />
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
             </TouchableOpacity>
 
             <TouchableOpacity

@@ -4,8 +4,18 @@
   "description": "",
   "main": "server.js",
   "scripts": {
+<<<<<<< HEAD
     "start": "node server",
     "dev": "nodemon server"
+=======
+    "start": "node init && node server.js",
+    "dev": "node init && nodemon server.js",
+    "migrate:listeners": "node scripts/normalize-listeners.js",
+    "sync:indexes": "node scripts/sync-indexes.js"
+  },
+  "engines": {
+    "node": ">=20"
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
   },
   "keywords": [],
   "author": "Adeyinka",

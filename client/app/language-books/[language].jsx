@@ -1,16 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import tw from 'twrnc';
-import axios from 'axios';
+import apiClient, { getApiErrorMessage } from '@/lib/api';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+<<<<<<< HEAD
 import { API_BASE_URL } from '@/constants/api';
 import * as SecureStore from 'expo-secure-store';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { navigateToBookDetails } from '@/utils/navigation';
+=======
+import { LinearGradient } from 'expo-linear-gradient';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 
 
 export default function LanguageBooks() {
@@ -22,6 +27,7 @@ export default function LanguageBooks() {
   const router = useRouter();
 
   const backgroundColor = useThemeColor({}, 'background');
+<<<<<<< HEAD
   const primaryColor = useThemeColor({}, 'primary');
   const gradientStart = useThemeColor({}, 'gradientStart');
   const gradientEnd = useThemeColor({}, 'gradientEnd');
@@ -57,8 +63,29 @@ export default function LanguageBooks() {
         setLoading(false);
       }
     };
+=======
+    const primaryColor = useThemeColor({}, 'primary');
+  const textColor = '#070c70';
+
+  const fetchBooks = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await apiClient.get(`/books/${encodeURIComponent(String(language || ''))}`);
+      const booksData = Array.isArray(response.data?.books) ? response.data.books : [];
+      setBooks(booksData);
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to fetch books'));
+    } finally {
+      setLoading(false);
+    }
+  }, [language]);
+
+  useEffect(() => {
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
     fetchBooks();
-  }, [apiUrl]);
+  }, [fetchBooks]);
 
   if (loading) {
     return (
@@ -71,8 +98,14 @@ export default function LanguageBooks() {
 
   if (error) {
     return (
-      <ThemedView style={[tw`flex-1 items-center justify-center`, { backgroundColor }]}>
-        <ThemedText style={{ color: textColor }}>Error: {error}</ThemedText>
+      <ThemedView style={[tw`flex-1 items-center justify-center px-8`, { backgroundColor }]}>
+        <ThemedText style={{ color: textColor, textAlign: 'center' }}>{error}</ThemedText>
+        <ThemedText
+          onPress={fetchBooks}
+          style={[tw`mt-6 font-semibold`, { color: '#ff1493' }]}
+        >
+          Try again
+        </ThemedText>
       </ThemedView>
     );
   }
@@ -97,6 +130,11 @@ export default function LanguageBooks() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={tw`py-6 px-4`}
+        ListEmptyComponent={
+          <ThemedText style={tw`text-center text-gray-500 py-8`}>
+            No books in {String(language || '')} yet.
+          </ThemedText>
+        }
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => navigateToBookDetails(router, item._id)}>
             <LinearGradient colors={[gradientStart, gradientEnd]} style={tw`mb-4 p-4 rounded-lg`}>

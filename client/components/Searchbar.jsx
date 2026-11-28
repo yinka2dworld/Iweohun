@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { TouchableOpacity, FlatList, View, TextInput, ActivityIndicator, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import tw from 'twrnc';
+<<<<<<< HEAD
 import axios from 'axios';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { API_BASE_URL } from '@/constants/api';
@@ -10,6 +11,12 @@ import { ThemedText } from '@/components/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { navigateToBookDetails } from '@/utils/navigation';
 import * as SecureStore from 'expo-secure-store';
+=======
+import apiClient, { getApiErrorMessage } from '@/lib/api';
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
+import { useThemeColor } from '@/hooks/useThemeColor';
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 
 export default function Searchbar() {
   const router = useRouter();
@@ -17,7 +24,10 @@ export default function Searchbar() {
   const [isPending, setIsPending] = useState(false);
   const [results, setResults] = useState([]);
   const [error, setError] = useState(null);
+<<<<<<< HEAD
   const apiUrl = API_BASE_URL;
+=======
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 
 
   const surfaceColor = useThemeColor({}, 'surface');
@@ -35,22 +45,12 @@ export default function Searchbar() {
     }
     setIsPending(true);
     try {
-      const token = await SecureStore.getItemAsync('authToken');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await axios.get(`${apiUrl}/searchBar?searchTerm=${query}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      setResults(response.data.books || []);
+      const response = await apiClient.get('/searchBar', { params: { searchTerm: query.trim() } });
+      setResults(Array.isArray(response.data?.books) ? response.data.books : []);
       setError(null);
     } catch (err) {
-      console.error('Search failed:', err);
-      setError('Failed to fetch results. Please try again.');
+      console.error('Search failed:', err.message);
+      setError(getApiErrorMessage(err, 'Failed to fetch results. Please try again.'));
     } finally {
       setIsPending(false);
     }

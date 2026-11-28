@@ -3,6 +3,7 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+<<<<<<< HEAD
   Keyboard,
   View
 } from 'react-native';
@@ -11,6 +12,16 @@ import tw from 'twrnc';
 import axios from 'axios';
 import { API_BASE_URL } from '@/constants/api';
 import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
+=======
+  FlatList,
+  View,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import tw from 'twrnc';
+import apiClient, { getApiErrorMessage } from '@/lib/api';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 import Chapters from '@/components/Chapters';
 import Related from '@/components/Related';
 import Reviews from '@/components/Reviews';
@@ -18,8 +29,13 @@ import BookRatings from '@/components/BookRatings';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
+<<<<<<< HEAD
 import * as SecureStore from 'expo-secure-store';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+=======
+import SecureStore from '@/lib/SecureStore';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 import { useAudio } from '@/context/AudioContext';
 
 export default function BookDetails() {
@@ -34,19 +50,21 @@ export default function BookDetails() {
   const [hasListened, setHasListened] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
+<<<<<<< HEAD
   const apiUrl = API_BASE_URL;
+=======
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
   const backgroundColor = useThemeColor({}, 'background');
   const primaryColor = useThemeColor({}, 'primary');
   const mutedColor = useThemeColor({}, 'muted');
 
-  useEffect(() => {
-    const fetchBook = async () => {
-      if (!bookId) return;
-      try {
-        setLoading(true);
-        const token = await SecureStore.getItemAsync('authToken');
-        if (!token) throw new Error('No authentication token found');
+  const fetchBook = useCallback(async () => {
+    if (!bookId) return;
+    try {
+      setLoading(true);
+      setError(null);
 
+<<<<<<< HEAD
         const response = await axios.get(`${apiUrl}/book/${bookId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -64,6 +82,21 @@ export default function BookDetails() {
     };
     fetchBook();
   }, [apiUrl, bookId]);
+=======
+      const response = await apiClient.get(`/book/${bookId}`);
+      setBook(response.data);
+      setHasListened(false);
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Unable to load this book'));
+    } finally {
+      setLoading(false);
+    }
+  }, [bookId]);
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
+
+  useEffect(() => {
+    fetchBook();
+  }, [fetchBook]);
 
   useFocusEffect(
     useCallback(() => {
@@ -103,22 +136,23 @@ export default function BookDetails() {
 
   const handleListen = async (id) => {
     try {
-      const userId = await SecureStore.getItemAsync('userId');
-      const token = await SecureStore.getItemAsync('authToken');
-      if (!userId || !token) return;
-
-      await axios.post(`${apiUrl}/addListener/${id}`, { userId }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await apiClient.post(`/addListener/${id}`);
     } catch (e) {
-      console.error('Error counting listener:', e);
+      console.warn('Error counting listener:', e.message);
     }
   };
 
   const handleChapterSelect = async (chapter) => {
     if (!book) return;
+
+    const audioUrl = chapter.bookAudio || chapter.audioUrl;
+    if (!audioUrl) {
+      Alert.alert('Audio unavailable', 'This chapter audio is not available yet.');
+      return;
+    }
+
     playChapter({
-      audioUrl: chapter.audioUrl,
+      audioUrl,
       chapterTitle: chapter.title,
       book
     });
@@ -131,7 +165,7 @@ export default function BookDetails() {
   const renderTabContent = () => {
     switch (selectedTab) {
       case 'Chapters':
-        return <Chapters book={book} apiUrl={apiUrl} onChapterSelect={handleChapterSelect} />;
+        return <Chapters book={book} onChapterSelect={handleChapterSelect} />;
       case 'Related':
         return <Related bookId={book._id} />;
       case 'Reviews':
@@ -158,12 +192,16 @@ export default function BookDetails() {
   if (error || !book) {
     return (
       <SafeAreaView style={[tw`flex-1 justify-center items-center p-4`, { backgroundColor }]}>
-        <ThemedText>{error ? `Error: ${error}` : 'Book not found'}</ThemedText>
+        <ThemedText style={tw`text-center`}>{error || 'Book not found'}</ThemedText>
+        <TouchableOpacity onPress={fetchBook} style={tw`mt-6`}>
+          <ThemedText style={{ color: primaryColor }}>Try again</ThemedText>
+        </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
   return (
+<<<<<<< HEAD
     <SafeAreaView style={[tw`flex-1`, { backgroundColor }]}>
       <View style={tw`flex-1`}>
         <View style={[tw`w-full`, { backgroundColor }]}>
@@ -189,6 +227,25 @@ export default function BookDetails() {
               />
             </TouchableOpacity>
           </ThemedView>
+=======
+    <View style={[tw`flex-1`, { backgroundColor }]}>
+      <FlatList
+        ListHeaderComponent={
+          <View style={[tw`w-full`, { backgroundColor }]}>
+            {/* Top bar */}
+            <ThemedView style={tw`flex-row items-center pb-2 px-2`}>
+              <TouchableOpacity onPress={() => router.back()} style={tw`p-2`}>
+                <MaterialCommunityIcons name="arrow-left" size={28} color={primaryColor} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleSave} style={tw`ml-auto p-2`}>
+                <MaterialCommunityIcons
+                  name={isSaved ? 'bookmark' : 'bookmark-outline'}
+                  size={28}
+                  color={primaryColor}
+                />
+              </TouchableOpacity>
+            </ThemedView>
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 
           <ThemedView style={tw`items-center`}>
             {book.bookCover ? (
@@ -230,6 +287,7 @@ export default function BookDetails() {
                     )}
                   </ThemedView>
                 </TouchableOpacity>
+<<<<<<< HEAD
               );
             })}
           </ThemedView>
@@ -240,5 +298,16 @@ export default function BookDetails() {
         </View>
       </View>
     </SafeAreaView>
+=======
+              ))}
+            </ThemedView>
+          </View>
+        }
+        data={[]}
+        ListFooterComponent={renderTabContent()}
+        keyExtractor={(item, index) => index.toString()}
+      />
+    </View>
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
   );
 }

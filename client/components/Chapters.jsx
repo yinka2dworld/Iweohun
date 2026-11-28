@@ -4,15 +4,19 @@ import tw from 'twrnc';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import * as SecureStore from 'expo-secure-store';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import SecureStore from '@/lib/SecureStore';
 import { useRouter } from 'expo-router';
+<<<<<<< HEAD
 import axios from 'axios';
 import { useAudio } from '@/context/AudioContext';
 import { MINI_AUDIO_PLAYER_CLEARANCE, TAB_BAR_CONTENT_HEIGHT } from '@/constants/layout';
+=======
+import apiClient, { getApiErrorMessage } from '@/lib/api';
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 
 
-const Chapters = ({ book, apiUrl, onChapterSelect }) => {
+const Chapters = ({ book, onChapterSelect }) => {
   const [showMoreInfo, setShowMoreInfo] = useState(false); 
   const primaryColor = useThemeColor({}, 'primary');
   const onPrimaryColor = useThemeColor({}, 'onPrimary');
@@ -75,6 +79,7 @@ const Chapters = ({ book, apiUrl, onChapterSelect }) => {
         style: 'destructive',
         onPress: async () => {
           try {
+<<<<<<< HEAD
             const token = await SecureStore.getItemAsync('authToken');
             if (!token) throw new Error('You must be signed in to delete this book.');
 
@@ -83,6 +88,9 @@ const Chapters = ({ book, apiUrl, onChapterSelect }) => {
                 Authorization: `Bearer ${token}`
               }
             });
+=======
+            const response = await apiClient.delete(`/deleteBook/${book._id}`);
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 
             if (response.status !== 200) {
               throw new Error("Failed to delete book");
@@ -90,7 +98,11 @@ const Chapters = ({ book, apiUrl, onChapterSelect }) => {
             router.back();
           } catch (error) {
             console.error("Delete error:", error);
+<<<<<<< HEAD
             Alert.alert('Error', error.response?.data?.message || error.message || 'Failed to delete the book.', [{ text: 'OK' }]);
+=======
+            Alert.alert('Error', getApiErrorMessage(error, 'Failed to delete the book.'), [{ text: 'OK' }]);
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
           }
         }
       }
@@ -102,6 +114,7 @@ const Chapters = ({ book, apiUrl, onChapterSelect }) => {
   return (
     <ThemedView style={tw`flex-1 px-2 pt-0`}>
       <TouchableOpacity
+<<<<<<< HEAD
         onPress={() => setShowMoreInfo((isExpanded) => !isExpanded)}
         accessibilityRole="button"
         accessibilityState={{ expanded: showMoreInfo }}
@@ -110,6 +123,17 @@ const Chapters = ({ book, apiUrl, onChapterSelect }) => {
           tw`flex-row items-center justify-between px-4 py-2 mb-2`]}>
 
         <ThemedText style={[tw`text-base font-semibold`, { color: primaryColor }]}>
+=======
+        onPress={() => setShowMoreInfo(prevState => !prevState)} // Toggle the visibility of more info
+        style={tw`flex-row items-center justify-start`}
+      >
+        <ThemedText
+          style={[
+            tw`text-base text-blue-500 m-5`,
+            { color: primaryColor },
+          ]}
+        >
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
           {showMoreInfo ? 'Show less info' : 'Show more info'}
         </ThemedText>
         <ThemedView style={[tw`w-8 h-8 rounded-full items-center justify-center`,]}>
@@ -155,6 +179,7 @@ const Chapters = ({ book, apiUrl, onChapterSelect }) => {
             </ThemedView>
           )}
 
+<<<<<<< HEAD
           <ThemedView style={tw`flex-row items-center flex-wrap gap-4 mb-3`}>
             <ThemedView style={tw`flex-row items-center gap-2`}>
               <MaterialCommunityIcons name="pencil" size={16} color={primaryColor} />
@@ -164,6 +189,50 @@ const Chapters = ({ book, apiUrl, onChapterSelect }) => {
               <MaterialCommunityIcons name="microphone" size={16} color={primaryColor} />
               <ThemedText>{book.reciter || 'N/A'}</ThemedText>
             </ThemedView>
+=======
+
+  <ThemedView style={tw`flex-row gap-5 justify-end my-4 mb-8`}>
+    {( role === 'superAdmin' || userId === book.postedBy?._id) && (
+      <TouchableOpacity
+        style={[tw`rounded-3xl px-6 py-2`, { backgroundColor: primaryColor }]}
+        onPress={() => router.push(`/edit-book/${book._id}`)}
+      >
+        <ThemedText style={tw`text-white text-lg font-semibold text-center`}>✎ Edit</ThemedText>
+      </TouchableOpacity>
+    )}
+
+    {(role === 'superAdmin' || role === 'admin')&& (
+      <TouchableOpacity
+        style={[tw`rounded-3xl px-4 py-2`, { backgroundColor: primaryColor }]}
+        onPress={handleDelete}>
+        <ThemedText style={tw`text-white text-lg font-semibold text-center`}>✖ Delete</ThemedText>
+      </TouchableOpacity>
+    )}
+  </ThemedView>
+
+
+
+     <ThemedView style={tw`flex-row items-center justify-start gap-2 flex-wrap`}>
+            {/* Author Icon and Text */}
+            <MaterialCommunityIcons
+              name="pencil"
+              size={16}
+              style={[{ color: primaryColor }]}
+            />
+            <ThemedText style={tw`text-base text-gray-600`}>
+              {book.bookAuthor}
+            </ThemedText>
+
+            {/* Reciter Icon and Text */}
+            <MaterialCommunityIcons
+              name="microphone"
+              size={16}
+              style={[{ color: primaryColor }]}
+            />
+            <ThemedText style={tw`text-base text-gray-600`}>
+              {book.reciter || 'N/A'}
+            </ThemedText>
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
           </ThemedView>
 
           <ThemedText style={[tw`text-sm`, { color: mutedColor }]}>

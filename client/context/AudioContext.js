@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, {
   createContext,
   useCallback,
@@ -8,6 +9,12 @@ import React, {
 } from 'react';
 import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import Constants from 'expo-constants';
+=======
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { isRunningInExpoGo } from 'expo';
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 import * as FileSystem from 'expo-file-system/legacy';
 import * as BackgroundTask from 'expo-background-task';
 import * as TaskManager from 'expo-task-manager';
@@ -16,8 +23,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const AudioContext = createContext();
 
 const PERSIST_KEY = 'audio_state_v1';
+<<<<<<< HEAD
 const PENDING_DOWNLOADS_KEY = 'audio_pending_downloads_v1';
 const DOWNLOADS_DIR = FileSystem.documentDirectory + 'downloads/';
+=======
+const DOWNLOADS_DIR = `${FileSystem.documentDirectory || ''}downloads/`;
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
 const BACKGROUND_TASK_NAME = 'AUDIO_DOWNLOAD_TASK_V1';
 const IS_EXPO_GO = Constants.appOwnership === 'expo';
 const PLAYER_LOAD_TIMEOUT_MS = 20000;
@@ -31,6 +42,7 @@ if (__DEV__ && IS_EXPO_GO) {
 
 // helper
 const ensureDownloadsDir = async () => {
+  if (Platform.OS === 'web') return;
   try {
     const info = await FileSystem.getInfoAsync(DOWNLOADS_DIR);
     if (!info.exists) {
@@ -59,7 +71,11 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
         }
       }
     }
+<<<<<<< HEAD
     await AsyncStorage.setItem(PENDING_DOWNLOADS_KEY, JSON.stringify(pending));
+=======
+    await AsyncStorage.setItem('audio_pending_downloads_v1', JSON.stringify(pending));
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
     return BackgroundTask.BackgroundTaskResult.Success;
   } catch (err) {
     console.warn('BG task error', err);
@@ -68,6 +84,7 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
 });
 
 export const AudioProvider = ({ children }) => {
+<<<<<<< HEAD
   const playerRef = useRef(null);
   const statusSubRef = useRef(null);
   const pendingSeekRef = useRef(null);
@@ -81,6 +98,10 @@ export const AudioProvider = ({ children }) => {
     downloadState: undefined,
   });
 
+=======
+  const soundRef = useRef(null);
+  const subRef = useRef(null);
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
   const [audioDetails, setAudioDetails] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [positionMillis, setPositionMillis] = useState(0);
@@ -90,15 +111,37 @@ export const AudioProvider = ({ children }) => {
   const [downloadState, setDownloadState] = useState(null);
   const [isRestored, setIsRestored] = useState(false);
 
+  // Tear down the current expo-audio player and its status subscription.
+  const teardownPlayer = () => {
+    try {
+      if (subRef.current) {
+        subRef.current.remove();
+        subRef.current = null;
+      }
+    } catch {}
+    try {
+      if (soundRef.current) {
+        soundRef.current.remove();
+        soundRef.current = null;
+      }
+    } catch {}
+  };
+
   // init audio mode
   useEffect(() => {
     (async () => {
       try {
         await setAudioModeAsync({
           allowsRecording: false,
+<<<<<<< HEAD
           playsInSilentMode: true,
           shouldPlayInBackground: true,
           interruptionMode: 'doNotMix',
+=======
+          shouldPlayInBackground: true,
+          interruptionMode: 'mixWithOthers',
+          playsInSilentMode: true,
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
           shouldRouteThroughEarpiece: false,
         });
 
@@ -127,6 +170,7 @@ export const AudioProvider = ({ children }) => {
   useEffect(() => {
     if (!isRestored) return undefined;
 
+<<<<<<< HEAD
     const snapshot = {
       audioDetails,
       positionMillis,
@@ -169,14 +213,23 @@ export const AudioProvider = ({ children }) => {
     };
   }, [audioDetails, positionMillis, isPlaying, playbackRate, downloadState, isRestored]);
 
+=======
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
   // background task registration
   useEffect(() => {
     (async () => {
+      // Background tasks are not supported inside Expo Go or on web; skip
+      // registration there so we don't trigger availability warnings.
+      if (Platform.OS === 'web' || isRunningInExpoGo()) return;
       try {
         const status = await BackgroundTask.getStatusAsync();
         if (status === BackgroundTask.BackgroundTaskStatus.Available) {
           await BackgroundTask.registerTaskAsync(BACKGROUND_TASK_NAME, {
+<<<<<<< HEAD
             minimumInterval: 30,
+=======
+            minimumInterval: 30, // minutes — system-controlled, min 15
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
           });
         }
       } catch (e) {
@@ -185,6 +238,7 @@ export const AudioProvider = ({ children }) => {
     })();
   }, []);
 
+<<<<<<< HEAD
   /**
    * Fully tears down the active player.
    *
@@ -248,6 +302,15 @@ export const AudioProvider = ({ children }) => {
           loadingTimeoutRef.current = null;
         }
         setLoading(false);
+=======
+  // load/unload sound when audioDetails changes
+  useEffect(() => {
+    if (!isRestored) return;
+    let isActive = true;
+    (async () => {
+      if (!audioDetails) {
+        teardownPlayer();
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
         setIsPlaying(false);
       }
       return;
@@ -371,6 +434,13 @@ export const AudioProvider = ({ children }) => {
         return;
       }
 
+<<<<<<< HEAD
+=======
+      setLoading(true);
+
+      teardownPlayer();
+
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
       try {
         const currentBookId = audioDetails?.book?._id;
         const selectedBookId = book?._id;
@@ -381,6 +451,7 @@ export const AudioProvider = ({ children }) => {
           && audioDetails?.chapterTitle === chapterTitle
           && isSameBook;
 
+<<<<<<< HEAD
         if (isSameTrack && playerRef.current) {
           if (playerRef.current.playing) {
             playerRef.current.pause();
@@ -404,6 +475,86 @@ export const AudioProvider = ({ children }) => {
       } catch (e) {
         console.warn('playChapter error', e);
         setLoading(false);
+=======
+        const player = createAudioPlayer(source, { updateInterval: 250 });
+
+        if (!isActive) {
+          try {
+            player.remove();
+          } catch {}
+          return;
+        }
+
+        soundRef.current = player;
+        subRef.current = player.addListener('playbackStatusUpdate', onPlaybackStatus);
+
+        player.setPlaybackRate(playbackRate);
+
+        if (isPlaying) {
+          player.play();
+        }
+
+        if (positionMillis > 0) {
+          try {
+            await player.seekTo(positionMillis / 1000);
+          } catch {}
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.warn('Error loading audio', err);
+        setLoading(false);
+      }
+    })();
+    return () => {
+      isActive = false;
+    };
+  }, [audioDetails, isRestored, downloadState]);
+
+  // status handler — expo-audio reports seconds; the UI consumes milliseconds
+  const onPlaybackStatus = (status) => {
+    if (!status) return;
+    if (status.isLoaded) {
+      setPositionMillis(Math.round((status.currentTime || 0) * 1000));
+      setDurationMillis(Math.round((status.duration || 0) * 1000) || 1);
+      setIsPlaying(status.playing || false);
+      if (status.didJustFinish) {
+        setIsPlaying(false);
+        setPositionMillis(0);
+      }
+    } else if (status.error) {
+      console.warn('Playback status error:', status.error);
+    }
+  };
+
+  // actions (play, pause, etc.) same as before...
+  const playChapter = async ({ audioUrl, chapterTitle, book }) => {
+    try {
+      setLoading(true);
+      if (audioDetails?.audioUrl === audioUrl && soundRef.current) {
+        if (soundRef.current.playing) {
+          soundRef.current.pause();
+          setIsPlaying(false);
+        } else {
+          soundRef.current.play();
+          setIsPlaying(true);
+        }
+        setLoading(false);
+        return;
+      }
+      setAudioDetails({ audioUrl, chapterTitle, book });
+      setIsPlaying(true);
+    } catch (e) {
+      console.warn('playChapter error', e);
+      setLoading(false);
+    }
+  };
+
+  const pause = async () => {
+    try {
+      if (soundRef.current) {
+        soundRef.current.pause();
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
         setIsPlaying(false);
       }
     },
@@ -423,8 +574,13 @@ export const AudioProvider = ({ children }) => {
 
   const resume = useCallback(async () => {
     try {
+<<<<<<< HEAD
       if (playerRef.current) {
         playerRef.current.play();
+=======
+      if (soundRef.current) {
+        soundRef.current.play();
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
         setIsPlaying(true);
       }
     } catch (e) {
@@ -434,8 +590,18 @@ export const AudioProvider = ({ children }) => {
 
   const stopAndUnload = useCallback(async () => {
     try {
+<<<<<<< HEAD
       releasePlayer();
       pendingSeekRef.current = null;
+=======
+      if (soundRef.current) {
+        const status = soundRef.current.currentStatus;
+        if (status?.isLoaded) {
+          setPositionMillis(Math.round((status.currentTime || 0) * 1000));
+        }
+        teardownPlayer();
+      }
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
       setAudioDetails(null);
       setDownloadState(null);
       setIsPlaying(false);
@@ -449,8 +615,13 @@ export const AudioProvider = ({ children }) => {
 
   const seekTo = useCallback(async (ms) => {
     try {
+<<<<<<< HEAD
       if (playerRef.current) {
         await playerRef.current.seekTo(ms / 1000);
+=======
+      if (soundRef.current) {
+        await soundRef.current.seekTo(ms / 1000);
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
         setPositionMillis(ms);
       }
     } catch (e) {
@@ -460,8 +631,13 @@ export const AudioProvider = ({ children }) => {
 
   const setRate = useCallback(async (rate) => {
     try {
+<<<<<<< HEAD
       if (playerRef.current) {
         playerRef.current.setPlaybackRate(rate);
+=======
+      if (soundRef.current) {
+        soundRef.current.setPlaybackRate(rate, 'high');
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
       }
       setPlaybackRate(rate);
     } catch (e) {
@@ -469,7 +645,14 @@ export const AudioProvider = ({ children }) => {
     }
   }, []);
 
+<<<<<<< HEAD
   const downloadCurrent = useCallback(async (remoteUri) => {
+=======
+  const downloadCurrent = async (remoteUri) => {
+    if (Platform.OS === 'web') {
+      return { success: false, reason: 'downloads-unsupported-on-web' };
+    }
+>>>>>>> f2780159c4f959ab1a343223f0569019255c3da6
     try {
       if (!remoteUri) return { success: false };
       setDownloadState({ status: 'downloading', remoteUri, localUri: null });
@@ -520,6 +703,9 @@ export const AudioProvider = ({ children }) => {
     setRate,
     downloadCurrent,
   };
+
+  // release the player when the provider unmounts
+  useEffect(() => () => teardownPlayer(), []);
 
   return <AudioContext.Provider value={value}>{children}</AudioContext.Provider>;
 };
